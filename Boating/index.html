@@ -916,7 +916,7 @@ async function loadForecast() {
             <span class="h-label${isNow ? ' now' : ''}">${lbl}</span>
             <div class="${cls}">
               <span style="line-height:1.1">${txt}</span>
-              <span style="font-size:0.5rem;font-weight:700;opacity:0.85;line-height:1.1">${ds}</span>
+              <span style="font-size:0.5rem;font-weight:700;opacity:0.85;line-height:1.1">${st === 'red' ? '—' : ds}</span>
             </div>
             <span class="h-wind">${h.wind.toFixed(0)}mph ${dirArrow(h.dir)}</span>
           </div>`;
