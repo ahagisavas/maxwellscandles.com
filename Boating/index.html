@@ -884,7 +884,7 @@ async function loadForecast() {
 
     // Apply condition theme
     const themeClass = 'theme-red'; // TEMP: force red for preview
-    libDisplayScore = 10; gwbDisplayScore = 10; // TEMP: force scores for preview
+    const libDisplayScoreFinal = 10, gwbDisplayScoreFinal = 10; // TEMP: force scores for preview
     document.body.className = themeClass;
 
     // Store globally for trip planner
@@ -1260,8 +1260,8 @@ async function loadForecast() {
       </div>
       <div class="content">
         <div class="routes" id="route-gauges">
-          ${routeGauge(libSt, libDisplayScore, 'StatueOfLibery.png', 'Statue of Liberty', 'Statue of Liberty', libBack, allClearText)}
-          ${routeGauge(gwbSt, gwbDisplayScore, 'GWBridge.PNG', 'GW Bridge', 'GW Bridge', gwbBack, allClearText)}
+          ${routeGauge(libSt, libDisplayScoreFinal, 'StatueOfLibery.png', 'Statue of Liberty', 'Statue of Liberty', libBack, allClearText)}
+          ${routeGauge(gwbSt, gwbDisplayScoreFinal, 'GWBridge.PNG', 'GW Bridge', 'GW Bridge', gwbBack, allClearText)}
         </div>
 
         ${routeCompareCard()}
