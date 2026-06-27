@@ -606,7 +606,7 @@ async function loadForecast() {
       <div class="cond-bar">
         <span>💨 <strong>${cur.wind.toFixed(0)} mph${gustBar} ${windLabel(cur.dir)}</strong></span>
         <span><strong>${weatherIcon(cur.code)}</strong></span>
-        <span>🌊 Tide: <strong>${tideNow === 'flood' ? '↑ Rising' : tideNow === 'ebb' ? '↓ Falling' : 'Slack'}</strong></span>
+        <span>🌊 Tide: <strong>${tideNow === 'flood' ? '↑ Rising' : tideNow === 'ebb' ? '↓ Falling' : '⟳ Still'}</strong></span>
         <span>🌧️ Rain: <strong>${cur.precip}%</strong></span>
       </div>
       <div class="content">
