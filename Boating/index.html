@@ -805,7 +805,7 @@ async function loadForecast() {
         ? `🌀 Current is running at ${currentInfo.speed.toFixed(1)} knots ${currentInfo.type === 'flood' ? 'flooding north toward the GW Bridge' : 'ebbing south toward the Statue of Liberty'}${currentInfo.estimated ? ' (estimated from tide data)' : ''}. ${currentInfo.speed >= 1.5 ? 'That\'s a strong current — expect significant chop if wind is blowing against it.' : 'A moderate current — noticeable but manageable.'}`
         : '',
       jetSki === 'extreme'
-        ? `🛥️ Expect extremely heavy jet ski traffic right now — ${isHoliday ? 'major holiday weekend, ' : isWeekend ? 'weekend, ' : ''}warm and sunny with calm water. The Hudson near the marina will be packed. Stay alert.`
+        ? `🛥️ Expect extremely heavy jet ski traffic right now — ${isHoliday ? 'major holiday weekend, ' : isWeekend ? 'weekend, ' : ''}warm${cur.code <= 1 ? ' and sunny' : cur.code <= 3 ? ', partly cloudy' : ''} with calm water. The Hudson near the marina will be packed. Stay alert.`
         : jetSki === 'high'
         ? `🛥️ High jet ski activity expected — ${isWeekend ? 'weekend' : 'weekday'} with warm weather and light wind. Expect frequent wakes near the marina and along the Liberty route.`
         : jetSki === 'moderate'
