@@ -545,11 +545,13 @@ function jetSkiIndex(hour, month, isWeekend, isHoliday, tempF, weatherCode, wind
   else if (tempF >= 64) score *= 0.6;
   else                  score *= 0.25;
 
-  // Sky/weather
-  if      (weatherCode <= 1)  score *= 1.3;  // clear
-  else if (weatherCode <= 3)  score *= 1.0;  // partly cloudy
-  else if (weatherCode <= 48) score *= 0.6;  // fog/overcast
-  else                        score *= 0.15; // rain/storm
+  // Rain/storms kill jet ski activity immediately
+  if (weatherCode > 48) return 'low';
+
+  // Sky/weather — clear sky required for extreme
+  if      (weatherCode <= 1)  score *= 1.3;  // clear/sunny
+  else if (weatherCode <= 3)  score *= 0.75; // partly cloudy — noticeably reduced
+  else                        score *= 0.4;  // overcast/fog
 
   // Calm water = more jet skis
   if      (windSpeed <= 8)  score *= 1.2;
@@ -557,8 +559,9 @@ function jetSkiIndex(hour, month, isWeekend, isHoliday, tempF, weatherCode, wind
   else if (windSpeed <= 20) score *= 0.65;
   else                      score *= 0.25;
 
-  if (score >= 3.2) return 'extreme';
-  if (score >= 1.8) return 'high';
+  // Extreme requires both a high score AND clear sunny skies
+  if (score >= 4.5 && weatherCode <= 1) return 'extreme';
+  if (score >= 2.2) return 'high';
   if (score >= 0.85) return 'moderate';
   if (score >= 0.35) return 'low';
   return 'none';
@@ -999,12 +1002,11 @@ async function loadForecast() {
     document.getElementById('app').innerHTML = `
       <div class="cond-bar">
         <span>💨 <strong>${cur.wind.toFixed(0)} mph${gustBar} ${windLabel(cur.dir)} <span style="color:${windTrendColor}">${windTrendArrow}</span></strong></span>
-        <span><strong>${weatherIcon(cur.code)}</strong></span>
+        <span><strong>${weatherIcon(cur.code)}${cur.code <= 48 && cur.precip > 20 ? ` · ${cur.precip}% rain chance` : ''}</strong></span>
         <span>🌡️ Pressure: <strong style="color:${pressureTrendColor}">${pressureTrendLabel}</strong></span>
         <span>🌊 Tide: <strong>${tideNow === 'flood' ? '↑ Rising' : tideNow === 'ebb' ? '↓ Falling' : '⟳ Still'}${tideBar}</strong></span>
         ${currentBar}
         ${sunset ? `<span>🌅 Sunset: <strong>${sunset}</strong></span>` : ''}
-        <span>🌧️ Rain: <strong>${cur.precip}%</strong></span>
         ${visBar}
         ${jetSki === 'extreme' ? `<span>🛥️ Jet skis: <strong style="color:var(--red)">Extreme</strong></span>` : jetSki === 'high' ? `<span>🛥️ Jet skis: <strong style="color:var(--yellow)">High</strong></span>` : jetSki === 'moderate' ? `<span>🛥️ Jet skis: <strong style="color:var(--gray1)">Moderate</strong></span>` : ''}
       </div>
