@@ -339,12 +339,12 @@
       z-index: 9999;
       transition: background 1.2s ease, box-shadow 1.2s ease;
     }
-    body.theme-green  { --navy: #061710; --navy-mid: #0c2016; background-color: #061710; }
-    body.theme-yellow { --navy: #151009; --navy-mid: #1d1710; background-color: #151009; }
-    body.theme-red    { --navy: #140808; --navy-mid: #1d0e0e; background-color: #140808; }
-    body.theme-green::before  { background: var(--green);  box-shadow: 0 0 14px rgba(46,204,113,0.9); }
-    body.theme-yellow::before { background: var(--yellow); box-shadow: 0 0 14px rgba(244,160,32,0.9); }
-    body.theme-red::before    { background: var(--red);    box-shadow: 0 0 14px rgba(231,76,60,0.9); }
+    body.theme-green  { --navy: #051a0d; --navy-mid: #0a2617; background-color: #051a0d; }
+    body.theme-yellow { --navy: #1a1005; --navy-mid: #261808; background-color: #1a1005; }
+    body.theme-red    { --navy: #1f0606; --navy-mid: #2e0a0a; background-color: #1f0606; }
+    body.theme-green::before  { background: var(--green);  box-shadow: 0 0 18px rgba(46,204,113,1); }
+    body.theme-yellow::before { background: var(--yellow); box-shadow: 0 0 18px rgba(244,160,32,1); }
+    body.theme-red::before    { background: var(--red);    box-shadow: 0 0 18px rgba(231,76,60,1); }
 
     /* ── COMBINED TIMELINE ── */
     .timeline-section {
@@ -1260,8 +1260,8 @@ async function loadForecast() {
       </div>
       <div class="content">
         <div class="routes" id="route-gauges">
-          ${routeGauge(libSt, libDisplayScoreFinal, 'StatueOfLibery.png', 'Statue of Liberty', 'Statue of Liberty', libBack, allClearText)}
-          ${routeGauge(gwbSt, gwbDisplayScoreFinal, 'GWBridge.PNG', 'GW Bridge', 'GW Bridge', gwbBack, allClearText)}
+          ${routeGauge('red', libDisplayScoreFinal, 'StatueOfLibery.png', 'Statue of Liberty', 'Statue of Liberty', null, allClearText)}
+          ${routeGauge('red', gwbDisplayScoreFinal, 'GWBridge.PNG', 'GW Bridge', 'GW Bridge', null, allClearText)}
         </div>
 
         ${routeCompareCard()}
