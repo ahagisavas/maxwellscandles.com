@@ -208,8 +208,8 @@
     .h-label { font-size: 0.55rem; color: var(--gray1); white-space: nowrap; }
     .h-label.now { color: var(--teal); font-weight: 700; }
     .h-box {
-      width: 34px; height: 34px; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
+      width: 34px; min-height: 44px; border-radius: 8px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
       font-size: 0.58rem; font-weight: 800; letter-spacing: 0.02em;
     }
     .h-box.green  { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green); }
@@ -853,7 +853,10 @@ async function loadForecast() {
           const cls = `h-box ${st}${past ? ' past' : ''}${isIdeal ? ' ideal' : ''}`;
           return `<div class="h-block">
             <span class="h-label${isNow ? ' now' : ''}">${lbl}</span>
-            <div class="${cls}">${txt}</div>
+            <div class="${cls}">
+              <span style="line-height:1.1">${txt}</span>
+              <span style="font-size:0.5rem;font-weight:700;opacity:0.85;line-height:1.1">${ds}</span>
+            </div>
             <span class="h-wind">${h.wind.toFixed(0)}mph ${dirArrow(h.dir)}</span>
           </div>`;
         }).join('');
