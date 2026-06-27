@@ -518,9 +518,13 @@ function isHolidayDate(date) {
 }
 
 // Returns 'none' | 'low' | 'moderate' | 'high' | 'extreme'
-function jetSkiIndex(hour, month, isWeekend, isHoliday, tempF, weatherCode, windSpeed) {
+function jetSkiIndex(hour, month, isWeekend, isHoliday, tempF, weatherCode, windSpeed, precipProb) {
   if (month < 5 || month > 9) return 'none';
   if (hour < 9  || hour > 18) return 'none';
+
+  // Rain kills jet ski activity — check both weather code and precip probability
+  if (weatherCode > 48 || precipProb >= 60) return 'none';
+  if (precipProb >= 35) return 'low';
 
   let score = 1.0;
 
@@ -544,9 +548,6 @@ function jetSkiIndex(hour, month, isWeekend, isHoliday, tempF, weatherCode, wind
   else if (tempF >= 72) score *= 1.0;
   else if (tempF >= 64) score *= 0.6;
   else                  score *= 0.25;
-
-  // Rain/storms kill jet ski activity immediately
-  if (weatherCode > 48) return 'low';
 
   // Sky/weather — clear sky required for extreme
   if      (weatherCode <= 1)  score *= 1.3;  // clear/sunny
@@ -669,7 +670,7 @@ async function loadForecast() {
     const ferryRush  = !isWeekend && ((nowH >= 6 && nowH < 9) || (nowH >= 17 && nowH < 20));
     const ferryActive = !isWeekend || (nowH >= 10 && nowH < 18);
     const manhattanWind = cur.dir >= 60 && cur.dir <= 120;
-    const jetSki = jetSkiIndex(nowH, new Date().getMonth() + 1, isWeekend, isHoliday, cur.temp, cur.code, cur.wind);
+    const jetSki = jetSkiIndex(nowH, new Date().getMonth() + 1, isWeekend, isHoliday, cur.temp, cur.code, cur.wind, cur.precip);
     const tideNow = tidePhaseAt(todayTides, nowH);
 
     // Wind trend: compare now to +2 hours
@@ -812,11 +813,7 @@ async function loadForecast() {
         ? `🌀 Current is running at ${currentInfo.speed.toFixed(1)} knots ${currentInfo.type === 'flood' ? 'flooding north toward the GW Bridge' : 'ebbing south toward the Statue of Liberty'}${currentInfo.estimated ? ' (estimated from tide data)' : ''}. ${currentInfo.speed >= 1.5 ? 'That\'s a strong current — expect significant chop if wind is blowing against it.' : 'A moderate current — noticeable but manageable.'}`
         : '',
       jetSki === 'extreme'
-        ? `🛥️ Expect extremely heavy jet ski traffic right now — ${isHoliday ? 'major holiday weekend, ' : isWeekend ? 'weekend, ' : ''}warm${cur.code <= 1 ? ' and sunny' : cur.code <= 3 ? ', partly cloudy' : ''} with calm water. The Hudson near the marina will be packed. Stay alert.`
-        : jetSki === 'high'
-        ? `🛥️ High jet ski activity expected — ${isWeekend ? 'weekend' : 'weekday'} with warm weather and light wind. Expect frequent wakes near the marina and along the Liberty route.`
-        : jetSki === 'moderate'
-        ? `🛥️ Some jet ski activity likely — moderate recreational traffic on the water right now.`
+        ? `🛥️ Expect extremely heavy jet ski traffic — ${isHoliday ? 'major holiday weekend, ' : isWeekend ? 'weekend, ' : ''}warm and sunny with calm water. The Hudson near the marina will be packed. Stay alert.`
         : ''
     ].filter(Boolean);
 
@@ -1008,7 +1005,7 @@ async function loadForecast() {
         ${currentBar}
         ${sunset ? `<span>🌅 Sunset: <strong>${sunset}</strong></span>` : ''}
         ${visBar}
-        ${jetSki === 'extreme' ? `<span>🛥️ Jet skis: <strong style="color:var(--red)">Extreme</strong></span>` : jetSki === 'high' ? `<span>🛥️ Jet skis: <strong style="color:var(--yellow)">High</strong></span>` : jetSki === 'moderate' ? `<span>🛥️ Jet skis: <strong style="color:var(--gray1)">Moderate</strong></span>` : ''}
+        ${jetSki === 'extreme' ? `<span>🛥️ Jet skis: <strong style="color:var(--red)">Extreme</strong></span>` : ''}
       </div>
       ${alertBannerHtml()}
       <div class="content">
