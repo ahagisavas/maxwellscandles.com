@@ -309,12 +309,10 @@
       color: var(--gray1);
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      margin-bottom: 0.25rem;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
+      margin-bottom: 0.2rem;
+      text-align: center;
     }
-    .gauge-icon-img { width: 26px; height: 26px; object-fit: cover; border-radius: 50%; }
+    .gauge-icon-img { width: 54px; height: 54px; object-fit: cover; border-radius: 50%; margin-bottom: 0.4rem; box-shadow: 0 0 10px rgba(0,180,216,0.3); }
     .gauge-badge {
       display: inline-block;
       padding: 0.3rem 1rem;
@@ -990,7 +988,8 @@ async function loadForecast() {
       const noteTxt = backBy ? `Be back by <strong>${fmtHour(backBy)}</strong>` : st !== 'red' ? allClear : 'Wait for conditions to improve';
       return `
         <div class="gauge-card">
-          <div class="gauge-route-name"><img src="${imgSrc}" alt="${imgAlt}" class="gauge-icon-img">${routeName}</div>
+          <img src="${imgSrc}" alt="${imgAlt}" class="gauge-icon-img">
+          <div class="gauge-route-name">${routeName}</div>
           <svg viewBox="0 0 200 110" style="width:100%;max-width:210px">
             <path d="M 15,100 A ${R},${R} 0 0,1 185,100"
               fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="15" stroke-linecap="round"/>
