@@ -131,12 +131,9 @@
         /* ── HERO ────────────────────────────────────────────────── */
         .hero {
             position: relative; min-height: 100vh;
-            display: flex; align-items: flex-start; justify-content: center;
-            padding: calc(var(--nav-h) + 32px) 24px 0; overflow: hidden;
+            display: flex; align-items: flex-end; justify-content: center;
+            padding: calc(var(--nav-h) + 32px) 24px 48px; overflow: hidden;
             background: #1a0800;
-        }
-        @media (max-width: 768px) {
-            .hero { min-height: 50vh; }
         }
         .hero-bg {
             position: absolute; inset: 0; overflow: hidden;
