@@ -329,6 +329,23 @@
     .gauge-note { font-size: 0.62rem; color: var(--gray1); line-height: 1.4; }
     .gauge-note strong { color: var(--white); }
 
+    /* ── CONDITION THEME ── */
+    body { transition: background-color 1.2s ease; }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      z-index: 9999;
+      transition: background 1.2s ease, box-shadow 1.2s ease;
+    }
+    body.theme-green  { --navy: #061710; --navy-mid: #0c2016; background-color: #061710; }
+    body.theme-yellow { --navy: #151009; --navy-mid: #1d1710; background-color: #151009; }
+    body.theme-red    { --navy: #140808; --navy-mid: #1d0e0e; background-color: #140808; }
+    body.theme-green::before  { background: var(--green);  box-shadow: 0 0 14px rgba(46,204,113,0.9); }
+    body.theme-yellow::before { background: var(--yellow); box-shadow: 0 0 14px rgba(244,160,32,0.9); }
+    body.theme-red::before    { background: var(--red);    box-shadow: 0 0 14px rgba(231,76,60,0.9); }
+
     /* ── COMBINED TIMELINE ── */
     .timeline-section {
       background: var(--navy-mid);
@@ -865,6 +882,10 @@ async function loadForecast() {
       heroLabel = '⚠ Use Caution';   heroSub = `${heroBest.name} route is your best option — watch conditions closely`; heroClass = 'hero-yellow';
     }
 
+    // Apply condition theme
+    const themeClass = heroClass === 'hero-green' ? 'theme-green' : heroClass === 'hero-yellow' ? 'theme-yellow' : 'theme-red';
+    document.body.className = themeClass;
+
     // Store globally for trip planner
     forecastData = { hours, tideEvents: todayTides, statuses, hourlyScores };
     lastLoadTime = Date.now();
@@ -1122,6 +1143,7 @@ async function loadForecast() {
         heroEl.innerHTML = `<div class="hero-label ${cls}">${lbl}</div>
           <div class="hero-sub">${sub}${h !== nowH ? ` <span style="color:var(--teal);font-weight:600">· ${fmtHour(h)}</span>` : ''}</div>`;
       }
+      document.body.className = cls === 'hero-green' ? 'theme-green' : cls === 'hero-yellow' ? 'theme-yellow' : 'theme-red';
     };
 
     function hourlyGrid(routeKey) {
