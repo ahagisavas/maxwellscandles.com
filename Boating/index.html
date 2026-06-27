@@ -270,10 +270,72 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .footer { text-align: center; font-size: 0.6rem; color: var(--gray2); margin-top: 0.5rem; }
 
+    /* ── HERO VERDICT ── */
+    .hero-verdict {
+      text-align: center;
+      padding: 1.8rem 1rem 1.5rem;
+      background: linear-gradient(180deg, var(--navy-mid) 0%, var(--navy) 100%);
+      border-bottom: 1px solid var(--teal-dim);
+    }
+    .hero-label {
+      font-size: 2.4rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .hero-sub { font-size: 0.8rem; color: var(--gray1); margin-top: 0.4rem; }
+    .hero-green  { color: var(--green);  animation: heroGlowG 2.5s ease-in-out infinite; }
+    .hero-yellow { color: var(--yellow); }
+    .hero-red    { color: var(--red); }
+    @keyframes heroGlowG {
+      0%,100% { text-shadow: 0 0 24px rgba(46,204,113,0.55); }
+      50%      { text-shadow: 0 0 52px rgba(46,204,113,0.95), 0 0 100px rgba(46,204,113,0.35); }
+    }
+
+    /* ── GAUGE CARDS ── */
+    .gauge-card {
+      background: var(--navy-mid);
+      border: 1px solid var(--teal-dim);
+      border-radius: 16px;
+      padding: 1rem 0.75rem 0.8rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .gauge-route-name {
+      font-size: 0.6rem;
+      color: var(--gray1);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .gauge-icon-img { width: 26px; height: 26px; object-fit: cover; border-radius: 50%; }
+    .gauge-badge {
+      display: inline-block;
+      padding: 0.3rem 1rem;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      margin-top: 0.25rem;
+      margin-bottom: 0.4rem;
+    }
+    .gauge-badge.green  { background: var(--green); color: #fff; box-shadow: 0 0 16px rgba(46,204,113,0.5); animation: goPulse 2s ease-in-out infinite; }
+    .gauge-badge.yellow { background: var(--yellow-bg); color: var(--yellow); border: 1.5px solid var(--yellow); }
+    .gauge-badge.red    { background: var(--red-bg);    color: var(--red);    border: 1.5px solid var(--red); }
+    .gauge-note { font-size: 0.62rem; color: var(--gray1); line-height: 1.4; }
+    .gauge-note strong { color: var(--white); }
+
     @media (max-width: 420px) {
       .routes { gap: 0.5rem; }
       .route-card { padding: 0.8rem 0.5rem; }
       .status-badge { font-size: 0.88rem; padding: 0.35rem 0.8rem; }
+      .hero-label { font-size: 1.9rem; }
     }
   </style>
 </head>
@@ -747,6 +809,21 @@ async function loadForecast() {
       routeDisplayScore(nextH.wind, nextH.gust, nextH.dir, tideNextPh, 'gwb', nowH + 1)
     );
 
+    // Hero verdict
+    const bothRed   = libSt === 'red' && gwbSt === 'red';
+    const bothGreen = libSt === 'green' && gwbSt === 'green';
+    const heroBest  = statusRank[libSt] <= statusRank[gwbSt] ? { st: libSt, score: libDisplayScore, name: 'Liberty' } : { st: gwbSt, score: gwbDisplayScore, name: 'GW Bridge' };
+    let heroLabel, heroSub, heroClass;
+    if (bothRed) {
+      heroLabel = '✗ Stay Docked';    heroSub = 'Conditions are too rough on both routes right now'; heroClass = 'hero-red';
+    } else if (heroBest.st === 'green' && heroBest.score >= 85) {
+      heroLabel = '✦ Ideal Conditions'; heroSub = bothGreen ? 'Both routes are looking great right now' : `${heroBest.name} route is your best option`; heroClass = 'hero-green';
+    } else if (heroBest.st === 'green') {
+      heroLabel = '✓ Good to Go';     heroSub = bothGreen ? 'Both routes are in good shape' : `${heroBest.name} route recommended`; heroClass = 'hero-green';
+    } else {
+      heroLabel = '⚠ Use Caution';   heroSub = `${heroBest.name} route is your best option — watch conditions closely`; heroClass = 'hero-yellow';
+    }
+
     // Store globally for trip planner
     forecastData = { hours, tideEvents: todayTides, statuses };
     lastLoadTime = Date.now();
@@ -904,6 +981,35 @@ async function loadForecast() {
       </div>`;
     }
 
+    function routeGauge(st, score, imgSrc, imgAlt, routeName, backBy, allClear) {
+      const R = 85, cx = 100, cy = 100;
+      const arcLen = (Math.PI * R).toFixed(1);
+      const color = st === 'green' ? '#2ecc71' : st === 'yellow' ? '#f4a020' : '#e74c3c';
+      const offset = (Math.PI * R * (1 - (st === 'red' ? 0 : score / 100))).toFixed(1);
+      const badgeTxt = st === 'green' ? (score >= 85 ? '✓ IDEAL' : '✓ GO') : st === 'yellow' ? '~ OK' : '✗ NO';
+      const noteTxt = backBy ? `Be back by <strong>${fmtHour(backBy)}</strong>` : st !== 'red' ? allClear : 'Wait for conditions to improve';
+      return `
+        <div class="gauge-card">
+          <div class="gauge-route-name"><img src="${imgSrc}" alt="${imgAlt}" class="gauge-icon-img">${routeName}</div>
+          <svg viewBox="0 0 200 110" style="width:100%;max-width:210px">
+            <path d="M 15,100 A ${R},${R} 0 0,1 185,100"
+              fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="15" stroke-linecap="round"/>
+            <path d="M 15,100 A ${R},${R} 0 0,1 185,100"
+              fill="none" stroke="${color}" stroke-width="15" stroke-linecap="round"
+              stroke-dasharray="${arcLen}" stroke-dashoffset="${offset}"
+              style="filter:drop-shadow(0 0 6px ${color})"/>
+            <text x="100" y="75" text-anchor="middle"
+              font-size="38" font-weight="900" fill="${color}"
+              font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${st === 'red' ? '—' : score}</text>
+            <text x="100" y="93" text-anchor="middle"
+              font-size="11" fill="rgba(255,255,255,0.3)"
+              font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">/ 100</text>
+          </svg>
+          <span class="gauge-badge ${st}">${badgeTxt}</span>
+          <div class="gauge-note">${noteTxt}</div>
+        </div>`;
+    }
+
     function hourlyGrid(routeKey) {
       return hours
         .filter(h => h.hour >= 6 && h.hour <= 20)
@@ -1008,28 +1114,14 @@ async function loadForecast() {
         ${jetSki === 'extreme' ? `<span>🛥️ Jet skis: <strong style="color:var(--red)">Extreme</strong></span>` : ''}
       </div>
       ${alertBannerHtml()}
+      <div class="hero-verdict">
+        <div class="hero-label ${heroClass}">${heroLabel}</div>
+        <div class="hero-sub">${heroSub}</div>
+      </div>
       <div class="content">
         <div class="routes">
-          <div class="route-card">
-            <div class="route-icon"><img src="StatueOfLibery.png" alt="Statue of Liberty"></div>
-            <div class="route-name">Statue of Liberty</div>
-            <span class="status-badge ${libSt}">${libSt === 'green' ? (libDisplayScore >= 85 ? '✓ IDEAL' : '✓ GO') : libSt === 'yellow' ? '~ OK' : '✗ NO'}</span>
-            <div class="route-score">
-              <div class="score-bar-bg"><div class="score-bar" style="width:${libSt === 'red' ? 0 : libDisplayScore}%;background:${libSt === 'green' ? 'var(--green)' : libSt === 'yellow' ? 'var(--yellow)' : 'var(--red)'}"></div></div>
-              <span class="score-num">${libSt === 'red' ? '— / 100' : libDisplayScore + ' / 100'}</span>
-            </div>
-            <div class="route-note">${libBack ? `Be back by <strong>${fmtHour(libBack)}</strong>` : libSt !== 'red' ? allClearText : 'Wait for conditions to improve'}</div>
-          </div>
-          <div class="route-card">
-            <div class="route-icon"><img src="GWBridge.PNG" alt="GW Bridge"></div>
-            <div class="route-name">GW Bridge</div>
-            <span class="status-badge ${gwbSt}">${gwbSt === 'green' ? (gwbDisplayScore >= 85 ? '✓ IDEAL' : '✓ GO') : gwbSt === 'yellow' ? '~ OK' : '✗ NO'}</span>
-            <div class="route-score">
-              <div class="score-bar-bg"><div class="score-bar" style="width:${gwbSt === 'red' ? 0 : gwbDisplayScore}%;background:${gwbSt === 'green' ? 'var(--green)' : gwbSt === 'yellow' ? 'var(--yellow)' : 'var(--red)'}"></div></div>
-              <span class="score-num">${gwbSt === 'red' ? '— / 100' : gwbDisplayScore + ' / 100'}</span>
-            </div>
-            <div class="route-note">${gwbBack ? `Be back by <strong>${fmtHour(gwbBack)}</strong>` : gwbSt !== 'red' ? allClearText : 'Wait for conditions to improve'}</div>
-          </div>
+          ${routeGauge(libSt, libDisplayScore, 'StatueOfLibery.png', 'Statue of Liberty', 'Statue of Liberty', libBack, allClearText)}
+          ${routeGauge(gwbSt, gwbDisplayScore, 'GWBridge.PNG', 'GW Bridge', 'GW Bridge', gwbBack, allClearText)}
         </div>
 
         ${routeCompareCard()}
