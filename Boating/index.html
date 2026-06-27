@@ -652,12 +652,15 @@ async function loadForecast() {
 
     const allClearText = nowH >= 18 ? 'Good through the evening ✓' : nowH >= 12 ? 'Good all afternoon ✓' : 'Good all day ✓';
 
-    // Hourly statuses
-    const statuses = { liberty: {}, gwb: {} };
+    // Hourly statuses and per-hour display scores
+    const statuses     = { liberty: {}, gwb: {} };
+    const hourlyScores = { liberty: {}, gwb: {} };
     for (const h of hours) {
       const ph = tidePhaseAt(todayTides, h.hour);
-      statuses.liberty[h.hour] = getStatus(h.wind, h.gust, h.dir, ph, 'liberty', h.hour);
-      statuses.gwb[h.hour]     = getStatus(h.wind, h.gust, h.dir, ph, 'gwb',     h.hour);
+      statuses.liberty[h.hour]     = getStatus(h.wind, h.gust, h.dir, ph, 'liberty', h.hour);
+      statuses.gwb[h.hour]         = getStatus(h.wind, h.gust, h.dir, ph, 'gwb',     h.hour);
+      hourlyScores.liberty[h.hour] = routeDisplayScore(h.wind, h.gust, h.dir, ph, 'liberty', h.hour);
+      hourlyScores.gwb[h.hour]     = routeDisplayScore(h.wind, h.gust, h.dir, ph, 'gwb',     h.hour);
     }
 
     const statusRank = { green: 0, yellow: 1, red: 2 };
@@ -841,9 +844,10 @@ async function loadForecast() {
         .filter(h => h.hour >= 6 && h.hour <= 20)
         .map(h => {
           const st      = statuses[routeKey][h.hour] || 'yellow';
+          const ds      = hourlyScores[routeKey][h.hour] || 0;
           const past    = h.hour < nowH;
           const isNow   = h.hour === nowH;
-          const isIdeal = isNow && st === 'green';
+          const isIdeal = st === 'green' && ds >= 85;
           const lbl = isNow ? 'NOW' : fmtHour(h.hour);
           const txt = isIdeal ? 'IDEAL' : st === 'green' ? 'GO' : st === 'yellow' ? 'OK' : 'NO';
           const cls = `h-box ${st}${past ? ' past' : ''}${isIdeal ? ' ideal' : ''}`;
@@ -933,7 +937,7 @@ async function loadForecast() {
           <div class="route-card">
             <div class="route-icon"><img src="StatueOfLibery.png" alt="Statue of Liberty"></div>
             <div class="route-name">Statue of Liberty</div>
-            <span class="status-badge ${libSt}">${libSt === 'green' ? '✓ IDEAL' : libSt === 'yellow' ? '~ OK' : '✗ NO'}</span>
+            <span class="status-badge ${libSt}">${libSt === 'green' ? (libDisplayScore >= 85 ? '✓ IDEAL' : '✓ GO') : libSt === 'yellow' ? '~ OK' : '✗ NO'}</span>
             <div class="route-score">
               <div class="score-bar-bg"><div class="score-bar" style="width:${libDisplayScore}%;background:${libSt === 'green' ? 'var(--green)' : libSt === 'yellow' ? 'var(--yellow)' : 'var(--red)'}"></div></div>
               <span class="score-num">${libDisplayScore} / 100</span>
@@ -943,7 +947,7 @@ async function loadForecast() {
           <div class="route-card">
             <div class="route-icon"><img src="GWBridge.PNG" alt="GW Bridge"></div>
             <div class="route-name">GW Bridge</div>
-            <span class="status-badge ${gwbSt}">${gwbSt === 'green' ? '✓ IDEAL' : gwbSt === 'yellow' ? '~ OK' : '✗ NO'}</span>
+            <span class="status-badge ${gwbSt}">${gwbSt === 'green' ? (gwbDisplayScore >= 85 ? '✓ IDEAL' : '✓ GO') : gwbSt === 'yellow' ? '~ OK' : '✗ NO'}</span>
             <div class="route-score">
               <div class="score-bar-bg"><div class="score-bar" style="width:${gwbDisplayScore}%;background:${gwbSt === 'green' ? 'var(--green)' : gwbSt === 'yellow' ? 'var(--yellow)' : 'var(--red)'}"></div></div>
               <span class="score-num">${gwbDisplayScore} / 100</span>
