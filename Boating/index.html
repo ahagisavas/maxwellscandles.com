@@ -505,6 +505,64 @@ function checkTrip() {
     </p>`;
 }
 
+// True on major summer holidays when jet ski traffic is extreme
+function isHolidayDate(date) {
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  const dow = date.getDay();
+  if (m === 7 && (d === 4 || (d === 3 && dow === 5) || (d === 5 && dow === 1))) return true; // July 4th
+  if (m === 5 && dow === 1 && d >= 25) return true; // Memorial Day
+  if (m === 9 && dow === 1 && d <= 7)  return true; // Labor Day
+  return false;
+}
+
+// Returns 'none' | 'low' | 'moderate' | 'high' | 'extreme'
+function jetSkiIndex(hour, month, isWeekend, isHoliday, tempF, weatherCode, windSpeed) {
+  if (month < 5 || month > 9) return 'none';
+  if (hour < 9  || hour > 18) return 'none';
+
+  let score = 1.0;
+
+  // Season weight
+  const monthFactor = { 5: 0.7, 6: 1.1, 7: 1.5, 8: 1.5, 9: 0.8 };
+  score *= monthFactor[month] || 0;
+
+  // Day type
+  if (isHoliday)       score *= 2.0;
+  else if (isWeekend)  score *= 1.5;
+  else                 score *= 0.55;
+
+  // Peak hours
+  if      (hour >= 11 && hour < 17) score *= 1.3;
+  else if (hour >= 9  && hour < 11) score *= 0.8;
+  else                              score *= 0.65;
+
+  // Feels-like temperature — warm = more riders
+  if      (tempF >= 88) score *= 1.6;
+  else if (tempF >= 80) score *= 1.3;
+  else if (tempF >= 72) score *= 1.0;
+  else if (tempF >= 64) score *= 0.6;
+  else                  score *= 0.25;
+
+  // Sky/weather
+  if      (weatherCode <= 1)  score *= 1.3;  // clear
+  else if (weatherCode <= 3)  score *= 1.0;  // partly cloudy
+  else if (weatherCode <= 48) score *= 0.6;  // fog/overcast
+  else                        score *= 0.15; // rain/storm
+
+  // Calm water = more jet skis
+  if      (windSpeed <= 8)  score *= 1.2;
+  else if (windSpeed <= 14) score *= 1.0;
+  else if (windSpeed <= 20) score *= 0.65;
+  else                      score *= 0.25;
+
+  if (score >= 3.2) return 'extreme';
+  if (score >= 1.8) return 'high';
+  if (score >= 0.85) return 'moderate';
+  if (score >= 0.35) return 'low';
+  return 'none';
+}
+
 // Rolling "X min ago" timer — runs independently of forecast refresh
 setInterval(() => {
   const el = document.getElementById('last-updated');
@@ -525,7 +583,7 @@ async function loadForecast() {
     const tomorrowDateStr = tomorrow.toISOString().slice(0,10).replace(/-/g,'');
 
     // Weather (2 days + visibility + gusts)
-    const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation_probability,weather_code,visibility&wind_speed_unit=mph&timezone=America/New_York&forecast_days=2`);
+    const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation_probability,weather_code,visibility,apparent_temperature&wind_speed_unit=mph&timezone=America/New_York&forecast_days=2`);
     if (!wRes.ok) throw new Error(`Weather API error: ${wRes.status}`);
     const weather = await wRes.json();
 
@@ -560,9 +618,10 @@ async function loadForecast() {
     }
 
     // Parse hourly data
-    const gustData = weather.hourly.wind_gusts_10m || [];
-    const codeData = weather.hourly.weather_code   || [];
-    const visData  = weather.hourly.visibility     || [];
+    const gustData = weather.hourly.wind_gusts_10m     || [];
+    const codeData = weather.hourly.weather_code        || [];
+    const visData  = weather.hourly.visibility          || [];
+    const tempData = weather.hourly.apparent_temperature || [];
 
     const allHours = weather.hourly.time.map((t, i) => ({
       date:   t.split('T')[0],
@@ -572,7 +631,8 @@ async function loadForecast() {
       dir:    weather.hourly.wind_direction_10m[i],
       precip: weather.hourly.precipitation_probability[i],
       code:   codeData[i] || 0,
-      vis:    visData[i] != null ? visData[i] : 10000
+      vis:    visData[i] != null ? visData[i] : 10000,
+      temp:   tempData[i] != null ? tempData[i] * 9/5 + 32 : 70
     }));
 
     const hours         = allHours.slice(0, 24);
@@ -583,9 +643,11 @@ async function loadForecast() {
     const nowMin = new Date().getMinutes();
     const cur    = hours[nowH] || hours[0];
     const isWeekend  = [0, 6].includes(new Date().getDay());
+    const isHoliday  = isHolidayDate(new Date());
     const ferryRush  = !isWeekend && ((nowH >= 6 && nowH < 9) || (nowH >= 17 && nowH < 20));
     const ferryActive = !isWeekend || (nowH >= 10 && nowH < 18);
     const manhattanWind = cur.dir >= 60 && cur.dir <= 120;
+    const jetSki = jetSkiIndex(nowH, new Date().getMonth() + 1, isWeekend, isHoliday, cur.temp, cur.code, cur.wind);
     const tideNow = tidePhaseAt(todayTides, nowH);
 
     const allClearText = nowH >= 18 ? 'Good through the evening ✓' : nowH >= 12 ? 'Good all afternoon ✓' : 'Good all day ✓';
@@ -677,7 +739,14 @@ async function loadForecast() {
         : visMiles < 3
         ? `🌫️ Reduced visibility — about ${visMiles.toFixed(1)} miles. Watch carefully for ferries and other boats.`
         : '',
-      cur.precip > 40 ? `${cur.precip}% chance of rain — visibility may be reduced.` : ''
+      cur.precip > 40 ? `${cur.precip}% chance of rain — visibility may be reduced.` : '',
+      jetSki === 'extreme'
+        ? `🛥️ Expect extremely heavy jet ski traffic right now — ${isHoliday ? 'major holiday weekend, ' : isWeekend ? 'weekend, ' : ''}warm and sunny with calm water. The Hudson near the marina will be packed. Stay alert.`
+        : jetSki === 'high'
+        ? `🛥️ High jet ski activity expected — ${isWeekend ? 'weekend' : 'weekday'} with warm weather and light wind. Expect frequent wakes near the marina and along the Liberty route.`
+        : jetSki === 'moderate'
+        ? `🛥️ Some jet ski activity likely — moderate recreational traffic on the water right now.`
+        : ''
     ].filter(Boolean);
 
     // Best window today (first consecutive run of both-green hours)
@@ -856,6 +925,7 @@ async function loadForecast() {
         ${sunset ? `<span>🌅 Sunset: <strong>${sunset}</strong></span>` : ''}
         <span>🌧️ Rain: <strong>${cur.precip}%</strong></span>
         ${visBar}
+        ${jetSki === 'extreme' ? `<span>🛥️ Jet skis: <strong style="color:var(--red)">Extreme</strong></span>` : jetSki === 'high' ? `<span>🛥️ Jet skis: <strong style="color:var(--yellow)">High</strong></span>` : jetSki === 'moderate' ? `<span>🛥️ Jet skis: <strong style="color:var(--gray1)">Moderate</strong></span>` : ''}
       </div>
       ${alertBannerHtml()}
       <div class="content">
