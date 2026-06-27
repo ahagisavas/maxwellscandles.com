@@ -387,14 +387,16 @@ async function loadForecast() {
       v: parseFloat(p.v)
     }));
 
+    const gustData  = weather.hourly.wind_gusts_10m || [];
+    const codeData  = weather.hourly.weather_code   || [];
     const allHours = weather.hourly.time.map((t, i) => ({
       date: t.split('T')[0],
       hour: parseInt(t.split('T')[1]),
       wind: weather.hourly.wind_speed_10m[i],
-      gust: weather.hourly.wind_gusts_10m[i] || 0,
+      gust: gustData[i] || 0,
       dir:  weather.hourly.wind_direction_10m[i],
       precip: weather.hourly.precipitation_probability[i],
-      code: weather.hourly.weather_code[i]
+      code: codeData[i] || 0
     }));
 
     const hours         = allHours.slice(0, 24); // today
