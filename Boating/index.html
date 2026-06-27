@@ -883,7 +883,7 @@ async function loadForecast() {
     }
 
     // Apply condition theme
-    const themeClass = heroClass === 'hero-green' ? 'theme-green' : heroClass === 'hero-yellow' ? 'theme-yellow' : 'theme-red';
+    const themeClass = 'theme-red'; // TEMP: force red for preview
     document.body.className = themeClass;
 
     // Store globally for trip planner
