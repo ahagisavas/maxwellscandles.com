@@ -67,6 +67,16 @@
     }
     .refresh-btn:hover { background: rgba(0,180,216,0.32); }
 
+    /* ── ALERT BANNER ── */
+    .alert-banner {
+      background: rgba(231,76,60,0.12);
+      border-bottom: 2px solid var(--red);
+      padding: 0.6rem 1.25rem;
+      font-size: 0.75rem;
+      color: #ffaaaa;
+      line-height: 1.5;
+    }
+
     /* ── CONDITIONS BAR ── */
     .cond-bar {
       background: var(--navy-mid);
@@ -213,6 +223,36 @@
     .h-wind { font-size: 0.5rem; color: var(--gray1); }
     .h-block .h-box.past ~ .h-wind, .h-wind.past { color: var(--gray2); }
 
+    /* ── TRIP PLANNER ── */
+    .tp-select {
+      background: var(--navy-light);
+      border: 1px solid var(--teal-dim);
+      border-radius: 8px;
+      color: var(--white);
+      padding: 0.38rem 0.6rem;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+    .tp-btn {
+      background: var(--teal-dim);
+      border: 1px solid var(--teal);
+      border-radius: 8px;
+      color: var(--teal);
+      padding: 0.38rem 0.85rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .tp-btn:hover { background: rgba(0,180,216,0.32); }
+    .tp-result { margin-top: 0.65rem; font-size: 0.78rem; line-height: 1.6; }
+    .tp-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.35rem 0.75rem;
+      font-size: 0.75rem;
+    }
+    .tp-col-head { color: var(--gray1); font-size: 0.68rem; }
+
     /* ── LOADING / ERROR ── */
     .loading { text-align: center; padding: 4rem 1rem; color: var(--gray1); }
     .spinner {
@@ -258,6 +298,11 @@ const ROUTES = {
   gwb:     { name: 'GW Bridge',         icon: '🌉', label: 'North Route', bearing: 355 }
 };
 
+let forecastData = null;
+let lastLoadTime = Date.now();
+
+// ── UTILITY ──────────────────────────────────────────────────────────────────
+
 function angleDiff(a, b) {
   let d = Math.abs(a - b) % 360;
   return d > 180 ? 360 - d : d;
@@ -267,14 +312,13 @@ function libertyTrafficMult(windDir, hour) {
   const isWeekend = [0, 6].includes(new Date().getDay());
   let ferryMult;
   if (!isWeekend) {
-    if      (hour >= 6  && hour < 9)  ferryMult = 1.22; // weekday AM rush — ferries every 10-15 min
-    else if (hour >= 17 && hour < 20) ferryMult = 1.18; // weekday PM rush
-    else                              ferryMult = 1.10; // weekday midday
+    if      (hour >= 6  && hour < 9)  ferryMult = 1.22;
+    else if (hour >= 17 && hour < 20) ferryMult = 1.18;
+    else                              ferryMult = 1.10;
   } else {
-    if (hour >= 10 && hour < 18)      ferryMult = 1.08; // weekend peak — tourist + water taxi traffic
+    if (hour >= 10 && hour < 18)      ferryMult = 1.08;
     else                              ferryMult = 1.03;
   }
-  // NE/E winds funnel through Lower Manhattan skyscrapers → unpredictable gusts near the Battery
   const manhattanTurbulence = (windDir >= 60 && windDir <= 120) ? 1.12 : 1.0;
   return ferryMult * manhattanTurbulence;
 }
@@ -302,7 +346,6 @@ function getScore(windSpeed, windDir, tidePhase, routeKey, hour) {
   return score;
 }
 
-// Consolidated: calls getScore, then adds gust thresholds on top
 function getStatus(windSpeed, gustSpeed, windDir, tidePhase, routeKey, hour) {
   const score = getScore(windSpeed, windDir, tidePhase, routeKey, hour);
   if (windSpeed >= 20 || gustSpeed >= 25 || score >= 28) return 'red';
@@ -328,7 +371,6 @@ function windLabel(deg) {
 }
 
 function windContext(deg) {
-  // Explains wind direction relative to Hoboken marina
   if (deg >= 338 || deg < 23)  return 'coming from the George Washington Bridge direction';
   if (deg >= 23  && deg < 68)  return 'coming from the George Washington Bridge direction, slightly inland';
   if (deg >= 68  && deg < 113) return 'coming from across the river — blowing in from Manhattan';
@@ -347,7 +389,7 @@ function fmtHour(h) {
 }
 
 function tidePhaseAt(tideEvents, hour) {
-  if (!tideEvents.length) return 'unknown';
+  if (!tideEvents || !tideEvents.length) return 'unknown';
   let before = null, after = null;
   for (const t of tideEvents) {
     if (t.hour <= hour) before = t;
@@ -369,81 +411,193 @@ function beBackBy(statuses, nowHour) {
   return last >= 22 ? null : last;
 }
 
+// Approximate sunset time for a given lat/lon using local timezone
+function sunsetTime(lat, lon) {
+  const now = new Date();
+  const dy  = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  const decl = -23.45 * Math.cos(2 * Math.PI * (dy + 10) / 365) * Math.PI / 180;
+  const latR = lat * Math.PI / 180;
+  const cosH = -Math.tan(latR) * Math.tan(decl);
+  if (Math.abs(cosH) > 1) return null;
+  const H = Math.acos(cosH) * 180 / Math.PI;
+  const solarNoonUTC = 12 - lon / 15;
+  let t = solarNoonUTC + H / 15 + (-now.getTimezoneOffset() / 60);
+  if (t >= 24) t -= 24;
+  const h = Math.floor(t);
+  const m = Math.round((t - h) * 60) % 60;
+  return `${h > 12 ? h - 12 : (h === 0 ? 12 : h)}:${m.toString().padStart(2, '0')}${h >= 12 ? 'pm' : 'am'}`;
+}
+
+// Rotated arrow showing wind direction
+function dirArrow(deg) {
+  return `<span style="display:inline-block;transform:rotate(${deg}deg);line-height:1;font-size:0.65rem">↑</span>`;
+}
+
+// Find the next H or L tide after now
+function nextTideEvent(tideEvents, nowH, nowMin) {
+  const nowTotal = nowH * 60 + nowMin;
+  return (tideEvents || []).find(t => (t.hour * 60 + (t.minute || 0)) > nowTotal) || null;
+}
+
+// "high tide in 2h 15m"
+function fmtTideCountdown(tide, nowH, nowMin) {
+  if (!tide) return '';
+  const diff = (tide.hour * 60 + (tide.minute || 0)) - (nowH * 60 + nowMin);
+  if (diff <= 0 || diff > 720) return '';
+  const h = Math.floor(diff / 60), m = diff % 60;
+  const parts = h > 0 ? [h + 'h', m > 0 ? m + 'm' : ''].filter(Boolean) : [m + 'm'];
+  return `${tide.type === 'H' ? 'high' : 'low'} tide in ${parts.join(' ')}`;
+}
+
+// Trip planner — called from onclick, uses global forecastData
+function checkTrip() {
+  if (!forecastData) return;
+  const { hours, tideEvents, statuses } = forecastData;
+  const dep = parseInt(document.getElementById('tp-depart').value);
+  const dur = parseInt(document.getElementById('tp-dur').value);
+  const ret = Math.min(dep + dur, 23);
+  const depH = hours.find(h => h.hour === dep) || hours[0];
+  const retH = hours.find(h => h.hour === ret) || hours[hours.length - 1];
+  const depLib = getStatus(depH.wind, depH.gust, depH.dir, tidePhaseAt(tideEvents, dep), 'liberty', dep);
+  const retLib = getStatus(retH.wind, retH.gust, retH.dir, tidePhaseAt(tideEvents, ret), 'liberty', ret);
+  const depGwb = getStatus(depH.wind, depH.gust, depH.dir, tidePhaseAt(tideEvents, dep), 'gwb', dep);
+  const retGwb = getStatus(retH.wind, retH.gust, retH.dir, tidePhaseAt(tideEvents, ret), 'gwb', ret);
+  const col   = s => s === 'green' ? 'var(--green)' : s === 'yellow' ? 'var(--yellow)' : 'var(--red)';
+  const lbl   = s => s === 'green' ? '✓ Ideal' : s === 'yellow' ? '~ Manageable' : '✗ Rough';
+  const allBad = depLib === 'red' && retLib === 'red' && depGwb === 'red' && retGwb === 'red';
+  const ok    = (depLib !== 'red' || depGwb !== 'red') && (retLib !== 'red' || retGwb !== 'red');
+  document.getElementById('tp-result').innerHTML = `
+    <div class="tp-grid">
+      <div class="tp-col-head">Leaving ${fmtHour(dep)}</div>
+      <div class="tp-col-head">Back by ${fmtHour(ret)}</div>
+      <div>🗽 <span style="color:${col(depLib)};font-weight:700">${lbl(depLib)}</span></div>
+      <div>🗽 <span style="color:${col(retLib)};font-weight:700">${lbl(retLib)}</span></div>
+      <div>🌉 <span style="color:${col(depGwb)};font-weight:700">${lbl(depGwb)}</span></div>
+      <div>🌉 <span style="color:${col(retGwb)};font-weight:700">${lbl(retGwb)}</span></div>
+    </div>
+    <p style="margin-top:0.5rem;font-size:0.72rem;color:${allBad ? 'var(--red)' : ok ? '#90ffc0' : 'var(--yellow)'}">
+      ${allBad ? '⚠️ Rough both ways — try a different time.' : ok ? '✓ Conditions look manageable for this trip.' : '⚠️ One leg may be rough — check the hourly grid above.'}
+    </p>`;
+}
+
+// Rolling "X min ago" timer — runs independently of forecast refresh
+setInterval(() => {
+  const el = document.getElementById('last-updated');
+  if (el) {
+    const mins = Math.floor((Date.now() - lastLoadTime) / 60000);
+    el.textContent = mins <= 0 ? 'just now' : `${mins} min ago`;
+  }
+}, 30000);
+
+// ── MAIN FORECAST ─────────────────────────────────────────────────────────────
+
 async function loadForecast() {
   document.getElementById('app').innerHTML =
     '<div class="loading"><div class="spinner"></div><p>Loading conditions…</p></div>';
   try {
     const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDateStr = tomorrow.toISOString().slice(0,10).replace(/-/g,'');
 
-    const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation_probability,weather_code&wind_speed_unit=mph&timezone=America/New_York&forecast_days=2`);
+    // Weather (2 days + visibility + gusts)
+    const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation_probability,weather_code,visibility&wind_speed_unit=mph&timezone=America/New_York&forecast_days=2`);
     if (!wRes.ok) throw new Error(`Weather API error: ${wRes.status}`);
     const weather = await wRes.json();
 
-    let tideEvents = [];
+    // Tides — today + tomorrow, split by date
+    let todayTides = [], tomorrowTides = [];
     try {
-      const tRes = await fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${dateStr}&end_date=${dateStr}&station=8518750&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&application=bcs_boating&format=json`);
+      const tRes = await fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${dateStr}&end_date=${tomorrowDateStr}&station=8518750&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&application=bcs_boating&format=json`);
       const tideJson = await tRes.json();
-      tideEvents = (tideJson.predictions || []).map(p => ({
-        hour: parseInt(p.t.split(' ')[1]),
-        type: p.type,
-        v: parseFloat(p.v)
-      }));
+      const todayFull    = dateStr.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+      const tomorrowFull = tomorrowDateStr.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+      const allTides = (tideJson.predictions || []).map(p => {
+        const [datePart, timePart] = p.t.split(' ');
+        const [tH, tM] = timePart.split(':').map(Number);
+        return { date: datePart, hour: tH, minute: tM, type: p.type, v: parseFloat(p.v) };
+      });
+      todayTides    = allTides.filter(t => t.date === todayFull);
+      tomorrowTides = allTides.filter(t => t.date === tomorrowFull);
     } catch (tideErr) {
-      console.warn('Tide fetch failed, continuing without tide data:', tideErr);
+      console.warn('Tide fetch failed:', tideErr);
     }
 
-    const gustData  = weather.hourly.wind_gusts_10m || [];
-    const codeData  = weather.hourly.weather_code   || [];
+    // NWS marine alerts for NY Harbor / Hudson River
+    let activeAlerts = [];
+    try {
+      const aRes = await fetch('https://api.weather.gov/alerts/active?zone=ANZ338,ANZ335');
+      const aJson = await aRes.json();
+      activeAlerts = (aJson.features || []).filter(f =>
+        ['Extreme','Severe','Moderate'].includes(f.properties.severity)
+      );
+    } catch (alertErr) {
+      console.warn('NWS alerts fetch failed:', alertErr);
+    }
+
+    // Parse hourly data
+    const gustData = weather.hourly.wind_gusts_10m || [];
+    const codeData = weather.hourly.weather_code   || [];
+    const visData  = weather.hourly.visibility     || [];
+
     const allHours = weather.hourly.time.map((t, i) => ({
-      date: t.split('T')[0],
-      hour: parseInt(t.split('T')[1]),
-      wind: weather.hourly.wind_speed_10m[i],
-      gust: gustData[i] || 0,
-      dir:  weather.hourly.wind_direction_10m[i],
+      date:   t.split('T')[0],
+      hour:   parseInt(t.split('T')[1]),
+      wind:   weather.hourly.wind_speed_10m[i],
+      gust:   gustData[i] || 0,
+      dir:    weather.hourly.wind_direction_10m[i],
       precip: weather.hourly.precipitation_probability[i],
-      code: codeData[i] || 0
+      code:   codeData[i] || 0,
+      vis:    visData[i] != null ? visData[i] : 10000
     }));
 
-    const hours         = allHours.slice(0, 24); // today
-    const tomorrowHours = allHours.slice(24, 48); // tomorrow
+    const hours         = allHours.slice(0, 24);
+    const tomorrowHours = allHours.slice(24, 48);
 
     // CRITICAL ORDER: cur must be defined before manhattanWind
-    const nowH = new Date().getHours();
-    const cur  = hours[nowH] || hours[0];
-    const isWeekend = [0, 6].includes(new Date().getDay());
-    const ferryRush = !isWeekend && ((nowH >= 6 && nowH < 9) || (nowH >= 17 && nowH < 20));
+    const nowH   = new Date().getHours();
+    const nowMin = new Date().getMinutes();
+    const cur    = hours[nowH] || hours[0];
+    const isWeekend  = [0, 6].includes(new Date().getDay());
+    const ferryRush  = !isWeekend && ((nowH >= 6 && nowH < 9) || (nowH >= 17 && nowH < 20));
     const ferryActive = !isWeekend || (nowH >= 10 && nowH < 18);
     const manhattanWind = cur.dir >= 60 && cur.dir <= 120;
-    const tideNow = tidePhaseAt(tideEvents, nowH);
+    const tideNow = tidePhaseAt(todayTides, nowH);
 
-    // Time-aware all-clear text used by both route cards and recHtml
     const allClearText = nowH >= 18 ? 'Good through the evening ✓' : nowH >= 12 ? 'Good all afternoon ✓' : 'Good all day ✓';
 
-    // Hourly statuses — now includes gust threshold
+    // Hourly statuses
     const statuses = { liberty: {}, gwb: {} };
     for (const h of hours) {
-      const ph = tidePhaseAt(tideEvents, h.hour);
+      const ph = tidePhaseAt(todayTides, h.hour);
       statuses.liberty[h.hour] = getStatus(h.wind, h.gust, h.dir, ph, 'liberty', h.hour);
       statuses.gwb[h.hour]     = getStatus(h.wind, h.gust, h.dir, ph, 'gwb',     h.hour);
     }
 
     const statusRank = { green: 0, yellow: 1, red: 2 };
     function worseStatus(a, b) { return statusRank[a] >= statusRank[b] ? a : b; }
-    const libSt = worseStatus(statuses.liberty[nowH] || 'yellow', statuses.liberty[nowH + 1] || 'yellow');
-    const gwbSt = worseStatus(statuses.gwb[nowH]     || 'yellow', statuses.gwb[nowH + 1]     || 'yellow');
+    const libSt   = worseStatus(statuses.liberty[nowH] || 'yellow', statuses.liberty[nowH + 1] || 'yellow');
+    const gwbSt   = worseStatus(statuses.gwb[nowH]     || 'yellow', statuses.gwb[nowH + 1]     || 'yellow');
     const libBack = beBackBy(statuses.liberty, nowH);
     const gwbBack = beBackBy(statuses.gwb, nowH);
 
+    // Store globally for trip planner
+    forecastData = { hours, tideEvents: todayTides, statuses };
+    lastLoadTime = Date.now();
+
+    // Derived display values
+    const nextTide      = nextTideEvent(todayTides, nowH, nowMin);
+    const tideCountdown = fmtTideCountdown(nextTide, nowH, nowMin);
+    const sunset        = sunsetTime(LAT, LON);
+    const visMiles      = cur.vis / 1609.34;
+
     // Summary text
-    const harborWindBad = cur.dir >= 150 && cur.dir <= 270;
+    const harborWindBad     = cur.dir >= 150 && cur.dir <= 270;
     const seaBreezeBuilding = nowH >= 9 && nowH < 14;
-    const seaBreezePeak = nowH >= 14;
-    const idealLibWindow = nowH >= 6 && nowH < 9;
-
-    const headingToLiberty = angleDiff(cur.dir, 170) < 45;
-    const headingToGWB     = angleDiff(cur.dir, 355) < 45;
-
-    const gustSuffix = cur.gust > cur.wind * 1.3 ? ` (gusting to ${cur.gust.toFixed(0)} mph)` : '';
+    const seaBreezePeak     = nowH >= 14;
+    const idealLibWindow    = nowH >= 6 && nowH < 9;
+    const headingToLiberty  = angleDiff(cur.dir, 170) < 45;
+    const headingToGWB      = angleDiff(cur.dir, 355) < 45;
+    const gustSuffix        = cur.gust > cur.wind * 1.3 ? ` (gusting to ${cur.gust.toFixed(0)} mph)` : '';
 
     const summaryParts = [
       `Wind is ${cur.wind.toFixed(0)} mph${gustSuffix} from the ${windLabel(cur.dir)} — ${windContext(cur.dir)}.`,
@@ -451,35 +605,57 @@ async function loadForecast() {
         ? 'That\'s a headwind leaving Hoboken toward the Statue of Liberty.'
         : headingToGWB
         ? 'That\'s a headwind leaving Hoboken toward the GW Bridge.'
-        : 'Wind is mostly crosswind on both routes leaving Hoboken — not directly in your face either way.',
+        : 'Wind is mostly crosswind on both routes — not directly in your face either way.',
       tideNow === 'flood'
         ? 'Tide is rising — water is flowing north toward the GW Bridge. Current is with you heading to GWB, against you heading to Liberty.'
         : tideNow === 'ebb'
         ? 'Tide is falling — water is flowing south toward the Statue of Liberty. Current is with you heading to Liberty, against you heading to GWB.'
-        : 'Tide is slack — minimal current in either direction, neutral for both routes.',
+        : 'Tide is still — minimal current in either direction, neutral for both routes.',
       tideNow !== 'unknown' && ((tideNow === 'flood' && (cur.dir >= 135 && cur.dir <= 225)) || (tideNow === 'ebb' && (cur.dir >= 315 || cur.dir <= 45)))
         ? 'Wind and current are pushing against each other right now — this creates short choppy waves even if the wind speed seems manageable.'
-        : 'Wind and current are moving in the same direction — this actually smooths the water out a bit.',
+        : 'Wind and current are moving in the same direction — this smooths the water out a bit.',
       harborWindBad && cur.wind >= 8
         ? 'The harbor is wide open to the south, so S/SW wind builds bigger waves on the way to Liberty — rougher than the GWB route right now.'
         : '',
       seaBreezePeak && cur.wind >= 8
-        ? '⚠️ Afternoon winds have picked up — the Liberty route is getting noticeably rougher leaving Hoboken. Best window was early morning (6–9 AM).'
+        ? '⚠️ Afternoon winds have picked up — the Liberty route is getting noticeably rougher. Best window was early morning (6–9 AM).'
         : seaBreezeBuilding && cur.wind >= 8
         ? 'Wind is building as the day heats up — expect a rougher ride to Liberty the later you leave. Try to head back before 2 PM.'
         : idealLibWindow
         ? '✅ Early morning sweet spot — calm harbor, wind hasn\'t picked up yet. Best time to leave Hoboken for the Statue of Liberty.'
         : '',
       ferryRush
-        ? '⛴️ NY Waterway ferry rush hour — ferries crossing your path to Liberty every 10–15 minutes. Expect frequent wakes hitting you from the side.'
+        ? '⛴️ NY Waterway ferry rush hour — ferries crossing your path to Liberty every 10–15 minutes. Expect frequent wakes.'
         : ferryActive
         ? '⛴️ NY Waterway ferries are running — watch for wakes crossing your path on the way to Liberty.'
         : '',
       manhattanWind
         ? 'Wind is coming from the Manhattan direction — it funnels through the downtown skyscrapers and can create unpredictable gusts near the Battery as you approach Liberty.'
         : '',
+      visMiles < 1
+        ? `🌫️ Very low visibility — less than 1 mile. Stay docked until it clears.`
+        : visMiles < 3
+        ? `🌫️ Reduced visibility — about ${visMiles.toFixed(1)} miles. Watch carefully for ferries and other boats.`
+        : '',
       cur.precip > 40 ? `${cur.precip}% chance of rain — visibility may be reduced.` : ''
     ].filter(Boolean);
+
+    // Best window today (first consecutive run of both-green hours)
+    function bestWindowText() {
+      let bestStart = null, bestEnd = null, bestLen = 0, runStart = null, runLen = 0;
+      for (const h of hours.filter(h => h.hour >= 6 && h.hour <= 20)) {
+        if (statuses.liberty[h.hour] === 'green' && statuses.gwb[h.hour] === 'green') {
+          if (runStart === null) runStart = h.hour;
+          runLen++;
+          if (runLen > bestLen) { bestLen = runLen; bestStart = runStart; bestEnd = h.hour; }
+        } else { runStart = null; runLen = 0; }
+      }
+      if (!bestStart || bestEnd < nowH) return '';
+      const from = Math.max(bestStart, nowH);
+      if (from > bestEnd) return '';
+      return `✅ Best window today: ${fmtHour(from)}–${fmtHour(bestEnd + 1)} — both routes in ideal shape.`;
+    }
+    const bestWindow = bestWindowText();
 
     function recHtml() {
       if (libSt === 'red' && gwbSt === 'red') {
@@ -505,10 +681,10 @@ async function loadForecast() {
     }
 
     function routeCompareCard() {
-      const curH  = hours.find(h => h.hour === nowH)     || hours[0];
-      const next  = hours.find(h => h.hour === nowH + 1) || curH;
-      const ph    = tidePhaseAt(tideEvents, nowH);
-      const ph1   = tidePhaseAt(tideEvents, nowH + 1);
+      const curH = hours.find(h => h.hour === nowH)     || hours[0];
+      const next = hours.find(h => h.hour === nowH + 1) || curH;
+      const ph   = tidePhaseAt(todayTides, nowH);
+      const ph1  = tidePhaseAt(todayTides, nowH + 1);
       const libScore = Math.max(
         getScore(curH.wind, curH.dir, ph,  'liberty', nowH),
         getScore(next.wind, next.dir, ph1, 'liberty', nowH + 1)
@@ -518,8 +694,6 @@ async function loadForecast() {
         getScore(next.wind, next.dir, ph1, 'gwb', nowH + 1)
       );
       const diff = Math.abs(libScore - gwbScore);
-
-      let iconImg, winner, reason;
       if (diff < 2) {
         return `<div class="compare-card">
           <div class="compare-icon">⚖️</div>
@@ -529,22 +703,19 @@ async function loadForecast() {
           </div>
         </div>`;
       }
+      let iconImg, winner, reason;
       if (libScore < gwbScore) {
         iconImg = '<img src="StatueOfLibery.png" alt="Statue of Liberty">';
-        winner = 'Statue of Liberty is smoother';
-        const margin = ((gwbScore - libScore) / gwbScore * 100).toFixed(0);
-        reason = `Harbor chop score ~${margin}% lower than GWB right now.`;
+        winner  = 'Statue of Liberty is smoother';
+        reason  = `Harbor chop score ~${((gwbScore - libScore) / gwbScore * 100).toFixed(0)}% lower than GWB right now.`;
       } else {
         iconImg = '<img src="GWBridge.PNG" alt="GW Bridge">';
-        winner = 'GW Bridge is smoother';
-        const fromHarbor = curH.dir >= 150 && curH.dir <= 270;
-        const seaBreeze  = nowH >= 11 && curH.wind >= 8;
+        winner  = 'GW Bridge is smoother';
         const parts = [];
-        if (fromHarbor && curH.wind >= 8) parts.push('S/SW wind drives long harbor fetch toward Liberty');
-        if (seaBreeze)                    parts.push('sea breeze is building into the harbor');
-        if (!parts.length)                parts.push('overall chop score is lower on the Hudson');
-        reason = parts.join('; ') + '.';
-        reason = reason.charAt(0).toUpperCase() + reason.slice(1);
+        if (curH.dir >= 150 && curH.dir <= 270 && curH.wind >= 8) parts.push('S/SW wind drives long harbor fetch toward Liberty');
+        if (nowH >= 11 && curH.wind >= 8) parts.push('sea breeze is building into the harbor');
+        if (!parts.length) parts.push('overall chop score is lower on the Hudson');
+        reason = (parts.join('; ') + '.').replace(/^./, c => c.toUpperCase());
       }
       return `<div class="compare-card">
         <div class="compare-icon">${iconImg}</div>
@@ -560,17 +731,17 @@ async function loadForecast() {
       return hours
         .filter(h => h.hour >= 6 && h.hour <= 20)
         .map(h => {
-          let st = statuses[routeKey][h.hour] || 'yellow';
+          const st      = statuses[routeKey][h.hour] || 'yellow';
           const past    = h.hour < nowH;
           const isNow   = h.hour === nowH;
           const isIdeal = isNow && st === 'green';
-          const lbl  = isNow ? 'NOW' : fmtHour(h.hour);
-          const txt  = isIdeal ? 'IDEAL' : st === 'green' ? 'GO' : st === 'yellow' ? 'OK' : 'NO';
-          const cls  = `h-box ${st}${past ? ' past' : ''}${isIdeal ? ' ideal' : ''}`;
+          const lbl = isNow ? 'NOW' : fmtHour(h.hour);
+          const txt = isIdeal ? 'IDEAL' : st === 'green' ? 'GO' : st === 'yellow' ? 'OK' : 'NO';
+          const cls = `h-box ${st}${past ? ' past' : ''}${isIdeal ? ' ideal' : ''}`;
           return `<div class="h-block">
             <span class="h-label${isNow ? ' now' : ''}">${lbl}</span>
             <div class="${cls}">${txt}</div>
-            <span class="h-wind">${h.wind.toFixed(0)}mph</span>
+            <span class="h-wind">${h.wind.toFixed(0)}mph ${dirArrow(h.dir)}</span>
           </div>`;
         }).join('');
     }
@@ -578,37 +749,75 @@ async function loadForecast() {
     function tomorrowMorningCard() {
       const morning = tomorrowHours.filter(h => h.hour >= 6 && h.hour <= 8);
       if (!morning.length) return '';
-      const avgWindNum = morning.reduce((s, h) => s + h.wind, 0) / morning.length;
-      const maxGust    = Math.max(...morning.map(h => h.gust || 0));
-      const rank = { green: 0, yellow: 1, red: 2 };
-      const libSts = morning.map(h => getStatus(h.wind, h.gust, h.dir, 'unknown', 'liberty', h.hour));
-      const gwbSts = morning.map(h => getStatus(h.wind, h.gust, h.dir, 'unknown', 'gwb',     h.hour));
-      const worstLib = libSts.reduce((w, s) => rank[s] > rank[w] ? s : w, 'green');
-      const worstGwb = gwbSts.reduce((w, s) => rank[s] > rank[w] ? s : w, 'green');
-      const libTxt = worstLib === 'green' ? '✓ IDEAL' : worstLib === 'yellow' ? '~ OK' : '✗ NO';
-      const gwbTxt = worstGwb === 'green' ? '✓ IDEAL' : worstGwb === 'yellow' ? '~ OK' : '✗ NO';
-      const gustNote = maxGust > avgWindNum * 1.3 ? ` · gusts to ${maxGust.toFixed(0)} mph` : '';
+      const avgWind = morning.reduce((s, h) => s + h.wind, 0) / morning.length;
+      const maxGust = Math.max(...morning.map(h => h.gust || 0));
+      const rank    = { green: 0, yellow: 1, red: 2 };
+      const libSts  = morning.map(h => getStatus(h.wind, h.gust, h.dir, tidePhaseAt(tomorrowTides, h.hour), 'liberty', h.hour));
+      const gwbSts  = morning.map(h => getStatus(h.wind, h.gust, h.dir, tidePhaseAt(tomorrowTides, h.hour), 'gwb',     h.hour));
+      const wLib    = libSts.reduce((w, s) => rank[s] > rank[w] ? s : w, 'green');
+      const wGwb    = gwbSts.reduce((w, s) => rank[s] > rank[w] ? s : w, 'green');
+      const libTxt  = wLib === 'green' ? '✓ IDEAL' : wLib === 'yellow' ? '~ OK' : '✗ NO';
+      const gwbTxt  = wGwb === 'green' ? '✓ IDEAL' : wGwb === 'yellow' ? '~ OK' : '✗ NO';
+      const gustNote = maxGust > avgWind * 1.3 ? ` · gusts to ${maxGust.toFixed(0)} mph` : '';
+      const tideNote = tomorrowTides.length ? '' : ' · tide not factored in';
       return `<div class="summary-card">
         <div class="card-title">🌅 Tomorrow — Early Morning Window (6–9 AM)</div>
-        <p class="summary-text" style="margin-bottom:0.6rem">Wind forecast: ~${avgWindNum.toFixed(0)} mph${gustNote} · tide not factored in</p>
+        <p class="summary-text" style="margin-bottom:0.6rem">Wind forecast: ~${avgWind.toFixed(0)} mph${gustNote}${tideNote}</p>
         <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
-          <span style="font-size:0.78rem">🗽 Liberty: <span class="status-badge ${worstLib}" style="font-size:0.72rem;padding:0.22rem 0.75rem;vertical-align:middle">${libTxt}</span></span>
-          <span style="font-size:0.78rem">🌉 GWB: <span class="status-badge ${worstGwb}" style="font-size:0.72rem;padding:0.22rem 0.75rem;vertical-align:middle">${gwbTxt}</span></span>
+          <span style="font-size:0.78rem">🗽 Liberty: <span class="status-badge ${wLib}" style="font-size:0.72rem;padding:0.22rem 0.75rem;vertical-align:middle">${libTxt}</span></span>
+          <span style="font-size:0.78rem">🌉 GWB: <span class="status-badge ${wGwb}" style="font-size:0.72rem;padding:0.22rem 0.75rem;vertical-align:middle">${gwbTxt}</span></span>
         </div>
       </div>`;
     }
 
-    const rec     = recHtml();
-    const updated = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    const gustBar = cur.gust > cur.wind * 1.3 ? ` (gusts ${cur.gust.toFixed(0)})` : '';
+    function tripPlannerCard() {
+      const startH = Math.max(nowH, 6);
+      const opts   = Array.from({length: 15}, (_, i) => i + 6)
+        .map(h => `<option value="${h}"${h === startH ? ' selected' : ''}>${fmtHour(h)}</option>`)
+        .join('');
+      return `<div class="summary-card">
+        <div class="card-title">🗺️ Trip Planner</div>
+        <p class="summary-text" style="color:var(--gray1);margin-bottom:0.65rem">Pick a departure time and trip length to see conditions both ways.</p>
+        <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
+          <select id="tp-depart" class="tp-select">${opts}</select>
+          <select id="tp-dur" class="tp-select">
+            <option value="1">1 hour</option>
+            <option value="2" selected>2 hours</option>
+            <option value="3">3 hours</option>
+            <option value="4">4 hours</option>
+            <option value="5">5 hours</option>
+          </select>
+          <button class="tp-btn" onclick="checkTrip()">Check →</button>
+        </div>
+        <div id="tp-result" class="tp-result"></div>
+      </div>`;
+    }
+
+    function alertBannerHtml() {
+      if (!activeAlerts.length) return '';
+      return activeAlerts.map(a => {
+        const evt  = a.properties.event    || 'Marine Alert';
+        const head = a.properties.headline || '';
+        return `<div class="alert-banner">⚠️ <strong>${evt}</strong>${head ? ' — ' + head : ''}</div>`;
+      }).join('');
+    }
+
+    const rec      = recHtml();
+    const updated  = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const gustBar  = cur.gust > cur.wind * 1.3 ? ` (gusts ${cur.gust.toFixed(0)})` : '';
+    const tideBar  = tideCountdown ? ` · ${tideCountdown}` : '';
+    const visBar   = visMiles < 5 ? `<span>👁️ <strong>${visMiles < 1 ? 'Dense fog' : 'Reduced visibility'}: ${visMiles.toFixed(1)} mi</strong></span>` : '';
 
     document.getElementById('app').innerHTML = `
       <div class="cond-bar">
         <span>💨 <strong>${cur.wind.toFixed(0)} mph${gustBar} ${windLabel(cur.dir)}</strong></span>
         <span><strong>${weatherIcon(cur.code)}</strong></span>
-        <span>🌊 Tide: <strong>${tideNow === 'flood' ? '↑ Rising' : tideNow === 'ebb' ? '↓ Falling' : '⟳ Still'}</strong></span>
+        <span>🌊 Tide: <strong>${tideNow === 'flood' ? '↑ Rising' : tideNow === 'ebb' ? '↓ Falling' : '⟳ Still'}${tideBar}</strong></span>
+        ${sunset ? `<span>🌅 Sunset: <strong>${sunset}</strong></span>` : ''}
         <span>🌧️ Rain: <strong>${cur.precip}%</strong></span>
+        ${visBar}
       </div>
+      ${alertBannerHtml()}
       <div class="content">
         <div class="routes">
           <div class="route-card">
@@ -630,6 +839,7 @@ async function loadForecast() {
         <div class="summary-card">
           <div class="card-title">⚓ Conditions Summary</div>
           <p class="summary-text">${summaryParts.join(' ')}</p>
+          ${bestWindow ? `<p class="summary-text" style="margin-top:0.65rem;color:#90ffc0">${bestWindow}</p>` : ''}
           <div class="rec-box ${rec.cls}">${rec.html}</div>
         </div>
 
@@ -645,7 +855,9 @@ async function loadForecast() {
 
         ${tomorrowMorningCard()}
 
-        <p class="footer">Updated ${updated} · Auto-refreshes every 15 min · Wind: Open-Meteo · Tides: NOAA (The Battery)</p>
+        ${tripPlannerCard()}
+
+        <p class="footer">Updated ${updated} (<span id="last-updated">just now</span>) · Auto-refreshes every 15 min · Wind: Open-Meteo · Tides: NOAA (The Battery)</p>
       </div>`;
 
   } catch (err) {
