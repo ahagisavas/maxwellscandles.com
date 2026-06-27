@@ -333,50 +333,44 @@
     .timeline-section {
       background: var(--navy-mid);
       border-bottom: 2px solid var(--teal-dim);
-      padding: 0.7rem 0 0.6rem;
+      padding: 0.8rem 0 0.7rem;
     }
     .tl-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 1rem;
-      margin-bottom: 0.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1rem; margin-bottom: 0.55rem;
     }
-    .tl-title { font-size: 0.6rem; color: var(--teal); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700; }
-    .tl-viewing { font-size: 0.65rem; color: var(--white); font-weight: 600; }
-    .tl-hint { font-size: 0.55rem; color: var(--gray2); }
-    .tl-body { display: flex; align-items: stretch; }
-    .tl-route-labels {
-      display: flex; flex-direction: column; justify-content: space-around;
-      padding: 1.2rem 0.4rem 0.2rem 0.75rem; gap: 6px; flex-shrink: 0;
+    .tl-title  { font-size: 0.62rem; color: var(--teal); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; }
+    .tl-viewing { font-size: 0.7rem; color: var(--white); font-weight: 700; }
+    .tl-legend {
+      display: flex; gap: 1rem; padding: 0 1rem; margin-bottom: 0.4rem;
     }
-    .tl-route-label {
-      display: flex; align-items: center; gap: 0.3rem;
-      font-size: 0.48rem; color: var(--gray1); text-transform: uppercase;
-      letter-spacing: 0.08em; white-space: nowrap;
+    .tl-legend-item {
+      display: flex; align-items: center; gap: 0.35rem;
+      font-size: 0.55rem; color: var(--gray1); text-transform: uppercase; letter-spacing: 0.08em;
     }
-    .tl-route-label img { width: 14px; height: 14px; border-radius: 50%; object-fit: cover; }
+    .tl-legend-item img { width: 16px; height: 16px; border-radius: 50%; object-fit: cover; }
     .tl-scroll {
-      display: flex; gap: 3px; overflow-x: auto;
-      padding: 0 0.75rem 0.4rem; flex: 1; scroll-behavior: smooth;
+      display: flex; gap: 4px; overflow-x: auto;
+      padding: 0 0.75rem 0.5rem; scroll-behavior: smooth;
     }
     .tl-scroll::-webkit-scrollbar { height: 3px; }
     .tl-scroll::-webkit-scrollbar-thumb { background: var(--teal-dim); border-radius: 2px; }
     .t-col {
       display: flex; flex-direction: column; align-items: center; gap: 5px;
-      flex-shrink: 0; width: 34px; cursor: pointer; border-radius: 8px;
-      padding: 4px 2px; transition: background 0.15s; user-select: none;
+      flex-shrink: 0; width: 42px; cursor: pointer; border-radius: 9px;
+      padding: 5px 3px 4px; transition: background 0.15s; user-select: none; -webkit-tap-highlight-color: transparent;
     }
-    .t-col:hover { background: rgba(0,180,216,0.1); }
+    .t-col:active { background: rgba(0,180,216,0.2); }
     .t-col.t-selected { background: rgba(0,180,216,0.18); outline: 1.5px solid var(--teal); outline-offset: -1px; }
-    .t-col.t-past { opacity: 0.3; }
-    .t-hour-lbl { font-size: 0.42rem; color: var(--gray2); white-space: nowrap; }
-    .t-col.t-now .t-hour-lbl, .t-col.t-selected .t-hour-lbl { color: var(--teal); font-weight: 700; }
-    .t-dot { width: 28px; height: 20px; border-radius: 5px; border: 1px solid; }
+    .t-col.t-past { opacity: 0.28; }
+    .t-hour-lbl { font-size: 0.5rem; color: var(--gray2); white-space: nowrap; font-weight: 500; }
+    .t-col.t-now .t-hour-lbl   { color: var(--teal); font-weight: 800; font-size: 0.52rem; }
+    .t-col.t-selected .t-hour-lbl { color: var(--teal); font-weight: 700; }
+    .t-dot { width: 34px; height: 24px; border-radius: 6px; border: 1px solid; }
     .t-dot.green  { background: var(--green-bg);  border-color: var(--green); }
     .t-dot.yellow { background: var(--yellow-bg); border-color: var(--yellow); }
     .t-dot.red    { background: var(--red-bg);    border-color: var(--red); }
-    .t-dot.ideal  { background: var(--green); border-color: var(--green); box-shadow: 0 0 5px rgba(46,204,113,0.7); }
+    .t-dot.ideal  { background: var(--green); border-color: var(--green); box-shadow: 0 0 6px rgba(46,204,113,0.7); }
 
     @media (max-width: 420px) {
       .routes { gap: 0.5rem; }
@@ -1082,13 +1076,11 @@ async function loadForecast() {
           <span class="tl-title">📅 Tap a time to explore</span>
           <span class="tl-viewing" id="tl-viewing">Now</span>
         </div>
-        <div class="tl-body">
-          <div class="tl-route-labels">
-            <div class="tl-route-label"><img src="StatueOfLibery.png" alt="">Liberty</div>
-            <div class="tl-route-label"><img src="GWBridge.PNG" alt="">GWB</div>
-          </div>
-          <div class="tl-scroll" id="tl-scroll">${cols}</div>
+        <div class="tl-legend">
+          <div class="tl-legend-item"><img src="StatueOfLibery.png" alt="">Liberty (top)</div>
+          <div class="tl-legend-item"><img src="GWBridge.PNG" alt="">GW Bridge (bottom)</div>
         </div>
+        <div class="tl-scroll" id="tl-scroll">${cols}</div>
       </div>`;
     }
 
