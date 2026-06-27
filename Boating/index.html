@@ -865,12 +865,16 @@ async function loadForecast() {
       const avgWind = morning.reduce((s, h) => s + h.wind, 0) / morning.length;
       const maxGust = Math.max(...morning.map(h => h.gust || 0));
       const rank    = { green: 0, yellow: 1, red: 2 };
-      const libSts  = morning.map(h => getStatus(h.wind, h.gust, h.dir, tidePhaseAt(tomorrowTides, h.hour), 'liberty', h.hour));
-      const gwbSts  = morning.map(h => getStatus(h.wind, h.gust, h.dir, tidePhaseAt(tomorrowTides, h.hour), 'gwb',     h.hour));
-      const wLib    = libSts.reduce((w, s) => rank[s] > rank[w] ? s : w, 'green');
-      const wGwb    = gwbSts.reduce((w, s) => rank[s] > rank[w] ? s : w, 'green');
-      const libTxt  = wLib === 'green' ? '✓ IDEAL' : wLib === 'yellow' ? '~ OK' : '✗ NO';
-      const gwbTxt  = wGwb === 'green' ? '✓ IDEAL' : wGwb === 'yellow' ? '~ OK' : '✗ NO';
+      const libSts    = morning.map(h => getStatus(h.wind, h.gust, h.dir, tidePhaseAt(tomorrowTides, h.hour), 'liberty', h.hour));
+      const gwbSts    = morning.map(h => getStatus(h.wind, h.gust, h.dir, tidePhaseAt(tomorrowTides, h.hour), 'gwb',     h.hour));
+      const libScores = morning.map(h => routeDisplayScore(h.wind, h.gust, h.dir, tidePhaseAt(tomorrowTides, h.hour), 'liberty', h.hour));
+      const gwbScores = morning.map(h => routeDisplayScore(h.wind, h.gust, h.dir, tidePhaseAt(tomorrowTides, h.hour), 'gwb',     h.hour));
+      const wLib      = libSts.reduce((w, s) => rank[s] > rank[w] ? s : w, 'green');
+      const wGwb      = gwbSts.reduce((w, s) => rank[s] > rank[w] ? s : w, 'green');
+      const avgLibScore = Math.round(libScores.reduce((a, b) => a + b, 0) / libScores.length);
+      const avgGwbScore = Math.round(gwbScores.reduce((a, b) => a + b, 0) / gwbScores.length);
+      const libTxt  = wLib === 'green' ? (avgLibScore >= 85 ? '✓ IDEAL' : '✓ GO') : wLib === 'yellow' ? '~ OK' : '✗ NO';
+      const gwbTxt  = wGwb === 'green' ? (avgGwbScore >= 85 ? '✓ IDEAL' : '✓ GO') : wGwb === 'yellow' ? '~ OK' : '✗ NO';
       const gustNote = maxGust > avgWind * 1.3 ? ` · gusts to ${maxGust.toFixed(0)} mph` : '';
       const tideNote = tomorrowTides.length ? '' : ' · tide not factored in';
       return `<div class="summary-card">
