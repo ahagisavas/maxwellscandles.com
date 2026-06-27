@@ -1,0 +1,10 @@
+﻿<!DOCTYPE html>
+<meta charset="utf-8">
+<script>
+  var path = window.location.pathname.toLowerCase();
+  if (path === '/boating' || path === '/boating/') {
+    window.location.replace('/Boating/');
+  } else {
+    document.write('<h1>404 Not Found</h1>');
+  }
+</script>
