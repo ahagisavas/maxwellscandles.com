@@ -374,18 +374,23 @@ async function loadForecast() {
     '<div class="loading"><div class="spinner"></div><p>Loading conditions…</p></div>';
   try {
     const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
-    const [wRes, tRes] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation_probability,weather_code&wind_speed_unit=mph&timezone=America/New_York&forecast_days=2`),
-      fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${dateStr}&end_date=${dateStr}&station=8518750&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&application=bcs_boating&format=json`)
-    ]);
-    const weather = await wRes.json();
-    const tideJson = await tRes.json();
 
-    const tideEvents = (tideJson.predictions || []).map(p => ({
-      hour: parseInt(p.t.split(' ')[1]),
-      type: p.type,
-      v: parseFloat(p.v)
-    }));
+    const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation_probability,weather_code&wind_speed_unit=mph&timezone=America/New_York&forecast_days=2`);
+    if (!wRes.ok) throw new Error(`Weather API error: ${wRes.status}`);
+    const weather = await wRes.json();
+
+    let tideEvents = [];
+    try {
+      const tRes = await fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${dateStr}&end_date=${dateStr}&station=8518750&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&application=bcs_boating&format=json`);
+      const tideJson = await tRes.json();
+      tideEvents = (tideJson.predictions || []).map(p => ({
+        hour: parseInt(p.t.split(' ')[1]),
+        type: p.type,
+        v: parseFloat(p.v)
+      }));
+    } catch (tideErr) {
+      console.warn('Tide fetch failed, continuing without tide data:', tideErr);
+    }
 
     const gustData  = weather.hourly.wind_gusts_10m || [];
     const codeData  = weather.hourly.weather_code   || [];
