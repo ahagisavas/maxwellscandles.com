@@ -678,7 +678,11 @@ async function loadForecast() {
     // Pressure trend: compare now to 3 hours ago (falling = deteriorating)
     const pressurePrev  = (hours[Math.max(nowH - 3, 0)] || cur).pressure;
     const pressureDiff  = cur.pressure - pressurePrev;
-    const pressureTrendLabel = pressureDiff < -1.5 ? '↓ Falling' : pressureDiff > 1.5 ? '↑ Rising' : '→ Steady';
+    const pressureTrendLabel = pressureDiff < -3   ? '↓ Falling fast (deteriorating quickly)'
+                             : pressureDiff < -1.5 ? '↓ Falling (conditions worsening)'
+                             : pressureDiff > 3    ? '↑ Rising fast (clearing up)'
+                             : pressureDiff > 1.5  ? '↑ Rising (conditions improving)'
+                             :                       '→ Steady (stable conditions)';
     const pressureTrendColor = pressureDiff < -1.5 ? 'var(--yellow)' : pressureDiff > 1.5 ? 'var(--green)' : 'var(--gray1)';
 
     // Hudson current — from NOAA if available, otherwise estimate from tide timing
