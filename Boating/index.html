@@ -129,6 +129,10 @@
     .status-badge.red    { background: var(--red-bg);    color: var(--red);    border: 2px solid var(--red);    }
     .route-note { font-size: 0.63rem; color: var(--gray1); margin-top: 0.5rem; line-height: 1.4; }
     .route-note strong { color: var(--white); }
+    .route-score { margin-top: 0.55rem; }
+    .score-bar-bg { height: 5px; background: var(--navy-light); border-radius: 3px; margin-bottom: 0.25rem; }
+    .score-bar { height: 5px; border-radius: 3px; transition: width 0.4s ease; }
+    .score-num { font-size: 0.62rem; color: var(--gray1); }
 
     /* ── SUMMARY ── */
     .summary-card {
@@ -411,6 +415,18 @@ function beBackBy(statuses, nowHour) {
   return last >= 22 ? null : last;
 }
 
+// 0–100 score: 100 = perfect, 0 = stay docked
+// Uses same chop model as getScore/getStatus, inverted and scaled
+function routeDisplayScore(windSpeed, gustSpeed, windDir, tidePhase, routeKey, hour) {
+  const chop = getScore(windSpeed, windDir, tidePhase, routeKey, hour);
+  const effective = Math.max(
+    chop,
+    windSpeed >= 20 ? 40 : windSpeed >= 11 ? 16 : windSpeed * 0.7,
+    gustSpeed >= 25 ? 40 : gustSpeed >= 17 ? 16 : 0
+  );
+  return Math.max(0, Math.min(100, Math.round(100 - effective * 2.3)));
+}
+
 // Approximate sunset time for a given lat/lon using local timezone
 function sunsetTime(lat, lon) {
   const now = new Date();
@@ -579,6 +595,10 @@ async function loadForecast() {
     const gwbSt   = worseStatus(statuses.gwb[nowH]     || 'yellow', statuses.gwb[nowH + 1]     || 'yellow');
     const libBack = beBackBy(statuses.liberty, nowH);
     const gwbBack = beBackBy(statuses.gwb, nowH);
+
+    const tideNowPh     = tidePhaseAt(todayTides, nowH);
+    const libDisplayScore = routeDisplayScore(cur.wind, cur.gust, cur.dir, tideNowPh, 'liberty', nowH);
+    const gwbDisplayScore = routeDisplayScore(cur.wind, cur.gust, cur.dir, tideNowPh, 'gwb',     nowH);
 
     // Store globally for trip planner
     forecastData = { hours, tideEvents: todayTides, statuses };
@@ -824,12 +844,20 @@ async function loadForecast() {
             <div class="route-icon"><img src="StatueOfLibery.png" alt="Statue of Liberty"></div>
             <div class="route-name">Statue of Liberty</div>
             <span class="status-badge ${libSt}">${libSt === 'green' ? '✓ IDEAL' : libSt === 'yellow' ? '~ OK' : '✗ NO'}</span>
+            <div class="route-score">
+              <div class="score-bar-bg"><div class="score-bar" style="width:${libDisplayScore}%;background:${libSt === 'green' ? 'var(--green)' : libSt === 'yellow' ? 'var(--yellow)' : 'var(--red)'}"></div></div>
+              <span class="score-num">${libDisplayScore} / 100</span>
+            </div>
             <div class="route-note">${libBack ? `Be back by <strong>${fmtHour(libBack)}</strong>` : libSt !== 'red' ? allClearText : 'Wait for conditions to improve'}</div>
           </div>
           <div class="route-card">
             <div class="route-icon"><img src="GWBridge.PNG" alt="GW Bridge"></div>
             <div class="route-name">GW Bridge</div>
             <span class="status-badge ${gwbSt}">${gwbSt === 'green' ? '✓ IDEAL' : gwbSt === 'yellow' ? '~ OK' : '✗ NO'}</span>
+            <div class="route-score">
+              <div class="score-bar-bg"><div class="score-bar" style="width:${gwbDisplayScore}%;background:${gwbSt === 'green' ? 'var(--green)' : gwbSt === 'yellow' ? 'var(--yellow)' : 'var(--red)'}"></div></div>
+              <span class="score-num">${gwbDisplayScore} / 100</span>
+            </div>
             <div class="route-note">${gwbBack ? `Be back by <strong>${fmtHour(gwbBack)}</strong>` : gwbSt !== 'red' ? allClearText : 'Wait for conditions to improve'}</div>
           </div>
         </div>
