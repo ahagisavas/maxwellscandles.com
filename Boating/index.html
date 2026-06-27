@@ -647,7 +647,8 @@ async function loadForecast() {
     console.error(err);
     document.getElementById('app').innerHTML = `
       <div class="loading">
-        <p style="color:var(--red)">⚠️ Could not load forecast. Check your connection and try again.</p>
+        <p style="color:var(--red)">⚠️ Could not load forecast.</p>
+        <p style="color:var(--gray1);font-size:0.7rem;margin-top:0.5rem">${err}</p>
         <br><button class="refresh-btn" onclick="loadForecast()">↻ Try Again</button>
       </div>`;
   }
