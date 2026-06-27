@@ -314,6 +314,8 @@ function angleDiff(a, b) {
 
 function libertyTrafficMult(windDir, hour) {
   const isWeekend = [0, 6].includes(new Date().getDay());
+
+  // NY Waterway commuter ferries — Hoboken ↔ Manhattan crossings
   let ferryMult;
   if (!isWeekend) {
     if      (hour >= 6  && hour < 9)  ferryMult = 1.22;
@@ -323,8 +325,15 @@ function libertyTrafficMult(windDir, hour) {
     if (hour >= 10 && hour < 18)      ferryMult = 1.08;
     else                              ferryMult = 1.03;
   }
+
+  // Liberty Cruises / Statue Cruises — large sightseeing vessels, massive wakes
+  // Depart every ~30 min from Liberty State Park & Battery Park, ~9am–5:30pm
+  const libertyCruisesMult = (hour >= 9 && hour < 18)
+    ? (isWeekend ? 1.45 : 1.30)
+    : 1.0;
+
   const manhattanTurbulence = (windDir >= 60 && windDir <= 120) ? 1.12 : 1.0;
-  return ferryMult * manhattanTurbulence;
+  return ferryMult * libertyCruisesMult * manhattanTurbulence;
 }
 
 function getScore(windSpeed, windDir, tidePhase, routeKey, hour) {
@@ -653,9 +662,12 @@ async function loadForecast() {
         ? '✅ Early morning sweet spot — calm harbor, wind hasn\'t picked up yet. Best time to leave Hoboken for the Statue of Liberty.'
         : '',
       ferryRush
-        ? '⛴️ NY Waterway ferry rush hour — ferries crossing your path to Liberty every 10–15 minutes. Expect frequent wakes.'
+        ? '⛴️ NY Waterway ferry rush hour — commuter ferries crossing your path to Liberty every 10–15 minutes. Expect frequent wakes.'
         : ferryActive
         ? '⛴️ NY Waterway ferries are running — watch for wakes crossing your path on the way to Liberty.'
+        : '',
+      (nowH >= 9 && nowH < 18)
+        ? `🚢 Liberty Cruises sightseeing boats are running right now (9am–5:30pm) — these are large vessels that create significant wakes near the Statue of Liberty.${isWeekend ? ' It\'s a weekend so expect heavier traffic and more frequent wakes.' : ''}`
         : '',
       manhattanWind
         ? 'Wind is coming from the Manhattan direction — it funnels through the downtown skyscrapers and can create unpredictable gusts near the Battery as you approach Liberty.'
