@@ -979,37 +979,18 @@ async function loadForecast() {
       </div>`;
     }
 
-    function routeGauge(routeKey, st, score, imgSrc, imgAlt, routeName, backBy, allClear) {
-      const R = 85;
+    function routeGauge(st, score, imgSrc, imgAlt, routeName, backBy, allClear) {
+      const R = 85, cx = 100, cy = 100;
       const arcLen = (Math.PI * R).toFixed(1);
       const color = st === 'green' ? '#2ecc71' : st === 'yellow' ? '#f4a020' : '#e74c3c';
       const offset = (Math.PI * R * (1 - (st === 'red' ? 0 : score / 100))).toFixed(1);
       const badgeTxt = st === 'green' ? (score >= 85 ? '✓ IDEAL' : '✓ GO') : st === 'yellow' ? '~ OK' : '✗ NO';
       const noteTxt = backBy ? `Be back by <strong>${fmtHour(backBy)}</strong>` : st !== 'red' ? allClear : 'Wait for conditions to improve';
-
-      // Mini hourly strip — compact colored dots for each hour
-      const miniStrip = hours
-        .filter(h => h.hour >= 6 && h.hour <= 20)
-        .map(h => {
-          const hst = statuses[routeKey][h.hour] || 'yellow';
-          const hds = hourlyScores[routeKey][h.hour] || 0;
-          const past = h.hour < nowH;
-          const isNow = h.hour === nowH;
-          const isIdeal = hst === 'green' && hds >= 85;
-          const hColor = hst === 'green' ? 'var(--green)' : hst === 'yellow' ? 'var(--yellow)' : 'var(--red)';
-          const bg = isIdeal ? hColor : hst === 'green' ? 'var(--green-bg)' : hst === 'yellow' ? 'var(--yellow-bg)' : 'var(--red-bg)';
-          const lbl = isNow ? '▼' : fmtHour(h.hour).replace(':00','').replace(' ','');
-          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;opacity:${past?0.28:1}">
-            <span style="font-size:0.38rem;color:${isNow?'var(--teal)':'var(--gray2)'};font-weight:${isNow?700:400};white-space:nowrap">${lbl}</span>
-            <div style="width:18px;height:18px;border-radius:4px;background:${bg};border:1px solid ${hColor};${isIdeal?`box-shadow:0 0 5px ${hColor}`:''}"></div>
-          </div>`;
-        }).join('');
-
       return `
         <div class="gauge-card">
           <img src="${imgSrc}" alt="${imgAlt}" class="gauge-icon-img">
           <div class="gauge-route-name">${routeName}</div>
-          <svg viewBox="0 0 200 110" style="width:100%;max-width:200px">
+          <svg viewBox="0 0 200 110" style="width:100%;max-width:210px">
             <path d="M 15,100 A ${R},${R} 0 0,1 185,100"
               fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="15" stroke-linecap="round"/>
             <path d="M 15,100 A ${R},${R} 0 0,1 185,100"
@@ -1025,7 +1006,6 @@ async function loadForecast() {
           </svg>
           <span class="gauge-badge ${st}">${badgeTxt}</span>
           <div class="gauge-note">${noteTxt}</div>
-          <div style="width:100%;border-top:1px solid rgba(255,255,255,0.06);margin-top:0.6rem;padding-top:0.5rem;display:flex;gap:3px;overflow-x:auto;justify-content:center;flex-wrap:nowrap">${miniStrip}</div>
         </div>`;
     }
 
@@ -1139,10 +1119,11 @@ async function loadForecast() {
       </div>
       <div class="content">
         <div class="routes">
-          ${routeGauge('liberty', libSt, libDisplayScore, 'StatueOfLibery.png', 'Statue of Liberty', 'Statue of Liberty', libBack, allClearText)}
-          ${routeGauge('gwb',     gwbSt, gwbDisplayScore, 'GWBridge.PNG',       'GW Bridge',         'GW Bridge',         gwbBack, allClearText)}
+          ${routeGauge(libSt, libDisplayScore, 'StatueOfLibery.png', 'Statue of Liberty', 'Statue of Liberty', libBack, allClearText)}
+          ${routeGauge(gwbSt, gwbDisplayScore, 'GWBridge.PNG', 'GW Bridge', 'GW Bridge', gwbBack, allClearText)}
         </div>
 
+        ${routeCompareCard()}
 
         <div class="summary-card">
           <div class="card-title">⚓ Conditions Summary</div>
