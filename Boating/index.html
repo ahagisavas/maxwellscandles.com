@@ -596,9 +596,17 @@ async function loadForecast() {
     const libBack = beBackBy(statuses.liberty, nowH);
     const gwbBack = beBackBy(statuses.gwb, nowH);
 
-    const tideNowPh     = tidePhaseAt(todayTides, nowH);
-    const libDisplayScore = routeDisplayScore(cur.wind, cur.gust, cur.dir, tideNowPh, 'liberty', nowH);
-    const gwbDisplayScore = routeDisplayScore(cur.wind, cur.gust, cur.dir, tideNowPh, 'gwb',     nowH);
+    const tideNowPh  = tidePhaseAt(todayTides, nowH);
+    const tideNextPh = tidePhaseAt(todayTides, nowH + 1);
+    const nextH      = hours[nowH + 1] || cur;
+    const libDisplayScore = Math.min(
+      routeDisplayScore(cur.wind,  cur.gust,  cur.dir,  tideNowPh,  'liberty', nowH),
+      routeDisplayScore(nextH.wind, nextH.gust, nextH.dir, tideNextPh, 'liberty', nowH + 1)
+    );
+    const gwbDisplayScore = Math.min(
+      routeDisplayScore(cur.wind,  cur.gust,  cur.dir,  tideNowPh,  'gwb', nowH),
+      routeDisplayScore(nextH.wind, nextH.gust, nextH.dir, tideNextPh, 'gwb', nowH + 1)
+    );
 
     // Store globally for trip planner
     forecastData = { hours, tideEvents: todayTides, statuses };
