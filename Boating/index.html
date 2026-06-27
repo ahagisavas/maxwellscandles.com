@@ -302,54 +302,24 @@ function getScore(windSpeed, windDir, tidePhase, routeKey, hour) {
   return score;
 }
 
-function getStatus(windSpeed, windDir, tidePhase, routeKey, hour) {
-  // Fetch factor: N/S winds travel full river length → bigger waves
-  const riverAlign = angleDiff(windDir % 180, 0); // 0 = N/S wind, 90 = E/W wind
-  const fetchFactor = 1 + 0.45 * (1 - riverAlign / 90);
-
-  // Tide opposition: wind vs current = choppier
-  const fromNorth = windDir >= 315 || windDir <= 45;
-  const fromSouth = windDir >= 135 && windDir <= 225;
-  let tideMult = 1.0;
-  if (tidePhase === 'flood') { // current flows north
-    if (fromSouth) tideMult = 1.28;
-    else if (fromNorth) tideMult = 0.85;
-  } else if (tidePhase === 'ebb') { // current flows south
-    if (fromNorth) tideMult = 1.28;
-    else if (fromSouth) tideMult = 0.85;
-  }
-
-  // Headwind penalty on the outbound leg
-  const headwind = angleDiff(windDir, ROUTES[routeKey].bearing);
-  const headFactor = headwind < 45 ? 1.15 : 1.0;
-
-  let score = windSpeed * fetchFactor * tideMult * headFactor;
-
-  // ── LIBERTY-SPECIFIC FACTORS ──────────────────────────────────────────
-  if (routeKey === 'liberty') {
-    // Harbor exposure: Upper NY Bay is wide open to S/SW — far longer fetch
-    // than the narrow, Palisades-sheltered Hudson going north
-    const fromHarborSector = windDir >= 150 && windDir <= 270; // SSE to W
-    const fromDirectSouth  = windDir >= 160 && windDir <= 200; // direct fetch across bay
-    if (fromDirectSouth)  score *= 1.45; // worst: wind straight up the harbor
-    else if (fromHarborSector) score *= 1.25;
-
-    // Thermal sea breeze: land heats up through the day, coastal wind builds
-    // from ~10am, peaks 2–4pm. 6–9am is the calm window before it kicks in.
-    if      (hour >= 14) score *= 1.38; // 2pm+: strong sea breeze + peak boat traffic
-    else if (hour >= 11) score *= 1.22; // 11am–2pm: building
-    else if (hour >= 9)  score *= 1.10; // 9–11am: early warmup
-    // 6–9am: no penalty — ideal window
-
-    // Baseline: Hudson/Bay current convergence + ferry/tanker traffic year-round
-    score *= 1.18;
-    // Ferry wakes + Manhattan wind turbulence
-    score *= libertyTrafficMult(windDir, hour);
-  }
-
-  if (windSpeed >= 20 || score >= 28) return 'red';
-  if (windSpeed >= 11 || score >= 16) return 'yellow';
+// Consolidated: calls getScore, then adds gust thresholds on top
+function getStatus(windSpeed, gustSpeed, windDir, tidePhase, routeKey, hour) {
+  const score = getScore(windSpeed, windDir, tidePhase, routeKey, hour);
+  if (windSpeed >= 20 || gustSpeed >= 25 || score >= 28) return 'red';
+  if (windSpeed >= 11 || gustSpeed >= 17 || score >= 16) return 'yellow';
   return 'green';
+}
+
+function weatherIcon(code) {
+  if (code === 0)  return '☀️ Clear';
+  if (code <= 3)   return '⛅ Partly cloudy';
+  if (code <= 48)  return '🌫️ Foggy';
+  if (code <= 57)  return '🌦️ Drizzle';
+  if (code <= 67)  return '🌧️ Rain';
+  if (code <= 77)  return '❄️ Snow';
+  if (code <= 82)  return '🌦️ Showers';
+  if (code >= 95)  return '⛈️ Storm';
+  return '🌤️';
 }
 
 function windLabel(deg) {
@@ -392,11 +362,11 @@ function tidePhaseAt(tideEvents, hour) {
 function beBackBy(statuses, nowHour) {
   if (statuses[nowHour] === 'red') return null;
   let last = nowHour;
-  for (let h = nowHour; h <= 21; h++) {
+  for (let h = nowHour; h <= 22; h++) {
     if (!statuses[h] || statuses[h] === 'red') break;
     last = h;
   }
-  return last >= 21 ? null : last;
+  return last >= 22 ? null : last;
 }
 
 async function loadForecast() {
@@ -405,7 +375,7 @@ async function loadForecast() {
   try {
     const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
     const [wRes, tRes] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=wind_speed_10m,wind_direction_10m,precipitation_probability,weather_code&wind_speed_unit=mph&timezone=America/New_York&forecast_days=1`),
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation_probability,weather_code&wind_speed_unit=mph&timezone=America/New_York&forecast_days=2`),
       fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${dateStr}&end_date=${dateStr}&station=8518750&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&application=bcs_boating&format=json`)
     ]);
     const weather = await wRes.json();
@@ -417,13 +387,20 @@ async function loadForecast() {
       v: parseFloat(p.v)
     }));
 
-    const hours = weather.hourly.time.map((t, i) => ({
+    const allHours = weather.hourly.time.map((t, i) => ({
+      date: t.split('T')[0],
       hour: parseInt(t.split('T')[1]),
       wind: weather.hourly.wind_speed_10m[i],
+      gust: weather.hourly.wind_gusts_10m[i] || 0,
       dir:  weather.hourly.wind_direction_10m[i],
-      precip: weather.hourly.precipitation_probability[i]
+      precip: weather.hourly.precipitation_probability[i],
+      code: weather.hourly.weather_code[i]
     }));
 
+    const hours         = allHours.slice(0, 24); // today
+    const tomorrowHours = allHours.slice(24, 48); // tomorrow
+
+    // CRITICAL ORDER: cur must be defined before manhattanWind
     const nowH = new Date().getHours();
     const cur  = hours[nowH] || hours[0];
     const isWeekend = [0, 6].includes(new Date().getDay());
@@ -432,12 +409,15 @@ async function loadForecast() {
     const manhattanWind = cur.dir >= 60 && cur.dir <= 120;
     const tideNow = tidePhaseAt(tideEvents, nowH);
 
-    // Hourly statuses
+    // Time-aware all-clear text used by both route cards and recHtml
+    const allClearText = nowH >= 18 ? 'Good through the evening ✓' : nowH >= 12 ? 'Good all afternoon ✓' : 'Good all day ✓';
+
+    // Hourly statuses — now includes gust threshold
     const statuses = { liberty: {}, gwb: {} };
     for (const h of hours) {
       const ph = tidePhaseAt(tideEvents, h.hour);
-      statuses.liberty[h.hour] = getStatus(h.wind, h.dir, ph, 'liberty', h.hour);
-      statuses.gwb[h.hour]     = getStatus(h.wind, h.dir, ph, 'gwb',     h.hour);
+      statuses.liberty[h.hour] = getStatus(h.wind, h.gust, h.dir, ph, 'liberty', h.hour);
+      statuses.gwb[h.hour]     = getStatus(h.wind, h.gust, h.dir, ph, 'gwb',     h.hour);
     }
 
     const statusRank = { green: 0, yellow: 1, red: 2 };
@@ -448,19 +428,18 @@ async function loadForecast() {
     const gwbBack = beBackBy(statuses.gwb, nowH);
 
     // Summary text
-    const windAlong = angleDiff(cur.dir % 180, 0) < 45;
-    const tidePhraseMap = { flood: 'rising', ebb: 'falling', unknown: 'unknown' };
-
     const harborWindBad = cur.dir >= 150 && cur.dir <= 270;
     const seaBreezeBuilding = nowH >= 9 && nowH < 14;
     const seaBreezePeak = nowH >= 14;
     const idealLibWindow = nowH >= 6 && nowH < 9;
 
-    const headingToLiberty = angleDiff(cur.dir, 170) < 45; // wind in your face going south
-    const headingToGWB     = angleDiff(cur.dir, 355) < 45; // wind in your face going north
+    const headingToLiberty = angleDiff(cur.dir, 170) < 45;
+    const headingToGWB     = angleDiff(cur.dir, 355) < 45;
+
+    const gustSuffix = cur.gust > cur.wind * 1.3 ? ` (gusting to ${cur.gust.toFixed(0)} mph)` : '';
 
     const summaryParts = [
-      `Wind is ${cur.wind.toFixed(0)} mph from the ${windLabel(cur.dir)} — ${windContext(cur.dir)}.`,
+      `Wind is ${cur.wind.toFixed(0)} mph${gustSuffix} from the ${windLabel(cur.dir)} — ${windContext(cur.dir)}.`,
       headingToLiberty
         ? 'That\'s a headwind leaving Hoboken toward the Statue of Liberty.'
         : headingToGWB
@@ -501,18 +480,16 @@ async function loadForecast() {
       }
       const lines = [];
       if (libSt !== 'red') {
-        const libAllClear = nowH >= 18 ? 'Good through the evening. ✓' : nowH >= 12 ? 'Good all afternoon. ✓' : 'Good all day. ✓';
         lines.push(libBack
           ? `🗽 Liberty route: <strong>head out now — be back by ${fmtHour(libBack)}</strong>.`
-          : `🗽 Liberty route: ${libAllClear}`);
+          : `🗽 Liberty route: ${allClearText}`);
       } else {
         lines.push('🗽 Liberty route: not recommended — too rough heading south.');
       }
       if (gwbSt !== 'red') {
-        const gwbAllClear = nowH >= 18 ? 'Good through the evening. ✓' : nowH >= 12 ? 'Good all afternoon. ✓' : 'Good all day. ✓';
         lines.push(gwbBack
           ? `🌉 GWB route: <strong>head out now — be back by ${fmtHour(gwbBack)}</strong>.`
-          : `🌉 GWB route: ${gwbAllClear}`);
+          : `🌉 GWB route: ${allClearText}`);
       } else {
         lines.push('🌉 GWB route: not recommended — too rough heading north.');
       }
@@ -521,16 +498,16 @@ async function loadForecast() {
     }
 
     function routeCompareCard() {
-      const cur  = hours.find(h => h.hour === nowH)     || hours[0];
-      const next = hours.find(h => h.hour === nowH + 1) || cur;
-      const ph   = tidePhaseAt(tideEvents, nowH);
-      const ph1  = tidePhaseAt(tideEvents, nowH + 1);
+      const curH  = hours.find(h => h.hour === nowH)     || hours[0];
+      const next  = hours.find(h => h.hour === nowH + 1) || curH;
+      const ph    = tidePhaseAt(tideEvents, nowH);
+      const ph1   = tidePhaseAt(tideEvents, nowH + 1);
       const libScore = Math.max(
-        getScore(cur.wind,  cur.dir,  ph,  'liberty', nowH),
+        getScore(curH.wind, curH.dir, ph,  'liberty', nowH),
         getScore(next.wind, next.dir, ph1, 'liberty', nowH + 1)
       );
       const gwbScore = Math.max(
-        getScore(cur.wind,  cur.dir,  ph,  'gwb', nowH),
+        getScore(curH.wind, curH.dir, ph,  'gwb', nowH),
         getScore(next.wind, next.dir, ph1, 'gwb', nowH + 1)
       );
       const diff = Math.abs(libScore - gwbScore);
@@ -553,12 +530,12 @@ async function loadForecast() {
       } else {
         iconImg = '<img src="GWBridge.PNG" alt="GW Bridge">';
         winner = 'GW Bridge is smoother';
-        const fromHarbor = cur.dir >= 150 && cur.dir <= 270;
-        const seaBreeze  = nowH >= 11 && cur.wind >= 8;
+        const fromHarbor = curH.dir >= 150 && curH.dir <= 270;
+        const seaBreeze  = nowH >= 11 && curH.wind >= 8;
         const parts = [];
-        if (fromHarbor && cur.wind >= 8)  parts.push('S/SW wind drives long harbor fetch toward Liberty');
+        if (fromHarbor && curH.wind >= 8) parts.push('S/SW wind drives long harbor fetch toward Liberty');
         if (seaBreeze)                    parts.push('sea breeze is building into the harbor');
-        if (!parts.length) parts.push('overall chop score is lower on the Hudson');
+        if (!parts.length)                parts.push('overall chop score is lower on the Hudson');
         reason = parts.join('; ') + '.';
         reason = reason.charAt(0).toUpperCase() + reason.slice(1);
       }
@@ -591,12 +568,37 @@ async function loadForecast() {
         }).join('');
     }
 
-    const rec = recHtml();
+    function tomorrowMorningCard() {
+      const morning = tomorrowHours.filter(h => h.hour >= 6 && h.hour <= 8);
+      if (!morning.length) return '';
+      const avgWindNum = morning.reduce((s, h) => s + h.wind, 0) / morning.length;
+      const maxGust    = Math.max(...morning.map(h => h.gust || 0));
+      const rank = { green: 0, yellow: 1, red: 2 };
+      const libSts = morning.map(h => getStatus(h.wind, h.gust, h.dir, 'unknown', 'liberty', h.hour));
+      const gwbSts = morning.map(h => getStatus(h.wind, h.gust, h.dir, 'unknown', 'gwb',     h.hour));
+      const worstLib = libSts.reduce((w, s) => rank[s] > rank[w] ? s : w, 'green');
+      const worstGwb = gwbSts.reduce((w, s) => rank[s] > rank[w] ? s : w, 'green');
+      const libTxt = worstLib === 'green' ? '✓ IDEAL' : worstLib === 'yellow' ? '~ OK' : '✗ NO';
+      const gwbTxt = worstGwb === 'green' ? '✓ IDEAL' : worstGwb === 'yellow' ? '~ OK' : '✗ NO';
+      const gustNote = maxGust > avgWindNum * 1.3 ? ` · gusts to ${maxGust.toFixed(0)} mph` : '';
+      return `<div class="summary-card">
+        <div class="card-title">🌅 Tomorrow — Early Morning Window (6–9 AM)</div>
+        <p class="summary-text" style="margin-bottom:0.6rem">Wind forecast: ~${avgWindNum.toFixed(0)} mph${gustNote} · tide not factored in</p>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:0.78rem">🗽 Liberty: <span class="status-badge ${worstLib}" style="font-size:0.72rem;padding:0.22rem 0.75rem;vertical-align:middle">${libTxt}</span></span>
+          <span style="font-size:0.78rem">🌉 GWB: <span class="status-badge ${worstGwb}" style="font-size:0.72rem;padding:0.22rem 0.75rem;vertical-align:middle">${gwbTxt}</span></span>
+        </div>
+      </div>`;
+    }
+
+    const rec     = recHtml();
     const updated = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const gustBar = cur.gust > cur.wind * 1.3 ? ` (gusts ${cur.gust.toFixed(0)})` : '';
 
     document.getElementById('app').innerHTML = `
       <div class="cond-bar">
-        <span>💨 <strong>${cur.wind.toFixed(0)} mph ${windLabel(cur.dir)}</strong></span>
+        <span>💨 <strong>${cur.wind.toFixed(0)} mph${gustBar} ${windLabel(cur.dir)}</strong></span>
+        <span><strong>${weatherIcon(cur.code)}</strong></span>
         <span>🌊 Tide: <strong>${tideNow === 'flood' ? '↑ Rising' : tideNow === 'ebb' ? '↓ Falling' : 'Slack'}</strong></span>
         <span>🌧️ Rain: <strong>${cur.precip}%</strong></span>
       </div>
@@ -606,13 +608,13 @@ async function loadForecast() {
             <div class="route-icon"><img src="StatueOfLibery.png" alt="Statue of Liberty"></div>
             <div class="route-name">Statue of Liberty</div>
             <span class="status-badge ${libSt}">${libSt === 'green' ? '✓ IDEAL' : libSt === 'yellow' ? '~ OK' : '✗ NO'}</span>
-            <div class="route-note">${libBack ? `Be back by <strong>${fmtHour(libBack)}</strong>` : libSt !== 'red' ? 'Good all afternoon' : 'Wait for conditions to improve'}</div>
+            <div class="route-note">${libBack ? `Be back by <strong>${fmtHour(libBack)}</strong>` : libSt !== 'red' ? allClearText : 'Wait for conditions to improve'}</div>
           </div>
           <div class="route-card">
             <div class="route-icon"><img src="GWBridge.PNG" alt="GW Bridge"></div>
             <div class="route-name">GW Bridge</div>
             <span class="status-badge ${gwbSt}">${gwbSt === 'green' ? '✓ IDEAL' : gwbSt === 'yellow' ? '~ OK' : '✗ NO'}</span>
-            <div class="route-note">${gwbBack ? `Be back by <strong>${fmtHour(gwbBack)}</strong>` : gwbSt !== 'red' ? 'Good all afternoon' : 'Wait for conditions to improve'}</div>
+            <div class="route-note">${gwbBack ? `Be back by <strong>${fmtHour(gwbBack)}</strong>` : gwbSt !== 'red' ? allClearText : 'Wait for conditions to improve'}</div>
           </div>
         </div>
 
@@ -634,7 +636,9 @@ async function loadForecast() {
           <div class="hourly-scroll">${hourlyGrid('gwb')}</div>
         </div>
 
-        <p class="footer">Updated ${updated} · Wind: Open-Meteo · Tides: NOAA (The Battery)</p>
+        ${tomorrowMorningCard()}
+
+        <p class="footer">Updated ${updated} · Auto-refreshes every 15 min · Wind: Open-Meteo · Tides: NOAA (The Battery)</p>
       </div>`;
 
   } catch (err) {
@@ -648,6 +652,7 @@ async function loadForecast() {
 }
 
 loadForecast();
+setInterval(loadForecast, 15 * 60 * 1000);
 </script>
 </body>
 </html>
