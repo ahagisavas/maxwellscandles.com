@@ -486,14 +486,14 @@ async function loadForecast() {
           ? `🗽 Liberty route: <strong>head out now — be back by ${fmtHour(libBack)}</strong>.`
           : `🗽 Liberty route: ${allClearText}`);
       } else {
-        lines.push('🗽 Liberty route: not recommended — too rough heading south.');
+        lines.push('<span style="color:var(--red)">🗽 Liberty route: not recommended — too rough heading south.</span>');
       }
       if (gwbSt !== 'red') {
         lines.push(gwbBack
           ? `🌉 GWB route: <strong>head out now — be back by ${fmtHour(gwbBack)}</strong>.`
           : `🌉 GWB route: ${allClearText}`);
       } else {
-        lines.push('🌉 GWB route: not recommended — too rough heading north.');
+        lines.push('<span style="color:var(--red)">🌉 GWB route: not recommended — too rough heading north.</span>');
       }
       const cls = (libSt === 'green' || gwbSt === 'green') ? 'green' : 'yellow';
       return { cls, html: lines.join('<br>') };
