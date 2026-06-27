@@ -329,6 +329,55 @@
     .gauge-note { font-size: 0.62rem; color: var(--gray1); line-height: 1.4; }
     .gauge-note strong { color: var(--white); }
 
+    /* ── COMBINED TIMELINE ── */
+    .timeline-section {
+      background: var(--navy-mid);
+      border-bottom: 2px solid var(--teal-dim);
+      padding: 0.7rem 0 0.6rem;
+    }
+    .tl-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .tl-title { font-size: 0.6rem; color: var(--teal); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700; }
+    .tl-viewing { font-size: 0.65rem; color: var(--white); font-weight: 600; }
+    .tl-hint { font-size: 0.55rem; color: var(--gray2); }
+    .tl-body { display: flex; align-items: stretch; }
+    .tl-route-labels {
+      display: flex; flex-direction: column; justify-content: space-around;
+      padding: 1.2rem 0.4rem 0.2rem 0.75rem; gap: 6px; flex-shrink: 0;
+    }
+    .tl-route-label {
+      display: flex; align-items: center; gap: 0.3rem;
+      font-size: 0.48rem; color: var(--gray1); text-transform: uppercase;
+      letter-spacing: 0.08em; white-space: nowrap;
+    }
+    .tl-route-label img { width: 14px; height: 14px; border-radius: 50%; object-fit: cover; }
+    .tl-scroll {
+      display: flex; gap: 3px; overflow-x: auto;
+      padding: 0 0.75rem 0.4rem; flex: 1; scroll-behavior: smooth;
+    }
+    .tl-scroll::-webkit-scrollbar { height: 3px; }
+    .tl-scroll::-webkit-scrollbar-thumb { background: var(--teal-dim); border-radius: 2px; }
+    .t-col {
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      flex-shrink: 0; width: 34px; cursor: pointer; border-radius: 8px;
+      padding: 4px 2px; transition: background 0.15s; user-select: none;
+    }
+    .t-col:hover { background: rgba(0,180,216,0.1); }
+    .t-col.t-selected { background: rgba(0,180,216,0.18); outline: 1.5px solid var(--teal); outline-offset: -1px; }
+    .t-col.t-past { opacity: 0.3; }
+    .t-hour-lbl { font-size: 0.42rem; color: var(--gray2); white-space: nowrap; }
+    .t-col.t-now .t-hour-lbl, .t-col.t-selected .t-hour-lbl { color: var(--teal); font-weight: 700; }
+    .t-dot { width: 28px; height: 20px; border-radius: 5px; border: 1px solid; }
+    .t-dot.green  { background: var(--green-bg);  border-color: var(--green); }
+    .t-dot.yellow { background: var(--yellow-bg); border-color: var(--yellow); }
+    .t-dot.red    { background: var(--red-bg);    border-color: var(--red); }
+    .t-dot.ideal  { background: var(--green); border-color: var(--green); box-shadow: 0 0 5px rgba(46,204,113,0.7); }
+
     @media (max-width: 420px) {
       .routes { gap: 0.5rem; }
       .route-card { padding: 0.8rem 0.5rem; }
@@ -823,7 +872,7 @@ async function loadForecast() {
     }
 
     // Store globally for trip planner
-    forecastData = { hours, tideEvents: todayTides, statuses };
+    forecastData = { hours, tideEvents: todayTides, statuses, hourlyScores };
     lastLoadTime = Date.now();
 
     // Derived display values
@@ -1009,6 +1058,80 @@ async function loadForecast() {
         </div>`;
     }
 
+    function combinedTimeline() {
+      const cols = hours
+        .filter(h => h.hour >= 6 && h.hour <= 20)
+        .map(h => {
+          const libSt  = statuses.liberty[h.hour] || 'yellow';
+          const gwbSt  = statuses.gwb[h.hour]     || 'yellow';
+          const libDs  = hourlyScores.liberty[h.hour] || 0;
+          const gwbDs  = hourlyScores.gwb[h.hour]     || 0;
+          const past   = h.hour < nowH;
+          const isNow  = h.hour === nowH;
+          const libCls = libDs >= 85 && libSt === 'green' ? 'ideal' : libSt;
+          const gwbCls = gwbDs >= 85 && gwbSt === 'green' ? 'ideal' : gwbSt;
+          const lbl    = isNow ? 'NOW' : fmtHour(h.hour);
+          return `<div class="t-col${past ? ' t-past' : ''}${isNow ? ' t-now t-selected' : ''}" data-hour="${h.hour}" onclick="window._selectHour(${h.hour})">
+            <span class="t-hour-lbl">${lbl}</span>
+            <div class="t-dot ${libCls}"></div>
+            <div class="t-dot ${gwbCls}"></div>
+          </div>`;
+        }).join('');
+      return `<div class="timeline-section">
+        <div class="tl-header">
+          <span class="tl-title">📅 Tap a time to explore</span>
+          <span class="tl-viewing" id="tl-viewing">Now</span>
+        </div>
+        <div class="tl-body">
+          <div class="tl-route-labels">
+            <div class="tl-route-label"><img src="StatueOfLibery.png" alt="">Liberty</div>
+            <div class="tl-route-label"><img src="GWBridge.PNG" alt="">GWB</div>
+          </div>
+          <div class="tl-scroll" id="tl-scroll">${cols}</div>
+        </div>
+      </div>`;
+    }
+
+    window._selectHour = function(h) {
+      document.querySelectorAll('.t-col').forEach(el =>
+        el.classList.toggle('t-selected', parseInt(el.dataset.hour) === h));
+      const viewEl = document.getElementById('tl-viewing');
+      if (viewEl) viewEl.textContent = h === nowH ? 'Now' : fmtHour(h);
+
+      const libSt    = statuses.liberty[h] || 'yellow';
+      const gwbSt    = statuses.gwb[h]     || 'yellow';
+      const libScore = hourlyScores.liberty[h] || 0;
+      const gwbScore = hourlyScores.gwb[h]     || 0;
+
+      const gaugesEl = document.getElementById('route-gauges');
+      if (gaugesEl) {
+        gaugesEl.innerHTML =
+          routeGauge(libSt, libScore, 'StatueOfLibery.png', 'Statue of Liberty', 'Statue of Liberty', h === nowH ? libBack : null, allClearText) +
+          routeGauge(gwbSt, gwbScore, 'GWBridge.PNG',       'GW Bridge',         'GW Bridge',         h === nowH ? gwbBack : null, allClearText);
+      }
+
+      const heroEl = document.getElementById('hero-verdict-inner');
+      if (heroEl) {
+        const bRed = libSt === 'red'   && gwbSt === 'red';
+        const bGrn = libSt === 'green' && gwbSt === 'green';
+        const best = statusRank[libSt] <= statusRank[gwbSt]
+          ? { st: libSt,  score: libScore, name: 'Liberty'   }
+          : { st: gwbSt,  score: gwbScore, name: 'GW Bridge' };
+        let lbl, sub, cls;
+        if (bRed) {
+          lbl = '✗ Stay Docked';      sub = 'Conditions are too rough on both routes'; cls = 'hero-red';
+        } else if (best.st === 'green' && best.score >= 85) {
+          lbl = '✦ Ideal Conditions'; sub = bGrn ? 'Both routes look great' : `${best.name} is your best option`; cls = 'hero-green';
+        } else if (best.st === 'green') {
+          lbl = '✓ Good to Go';       sub = bGrn ? 'Both routes are in good shape' : `${best.name} route recommended`; cls = 'hero-green';
+        } else {
+          lbl = '⚠ Use Caution';      sub = `${best.name} route is your best option`; cls = 'hero-yellow';
+        }
+        heroEl.innerHTML = `<div class="hero-label ${cls}">${lbl}</div>
+          <div class="hero-sub">${sub}${h !== nowH ? ` <span style="color:var(--teal);font-weight:600">· ${fmtHour(h)}</span>` : ''}</div>`;
+      }
+    };
+
     function hourlyGrid(routeKey) {
       return hours
         .filter(h => h.hour >= 6 && h.hour <= 20)
@@ -1113,12 +1236,15 @@ async function loadForecast() {
         ${jetSki === 'extreme' ? `<span>🛥️ Jet skis: <strong style="color:var(--red)">Extreme</strong></span>` : ''}
       </div>
       ${alertBannerHtml()}
+      ${combinedTimeline()}
       <div class="hero-verdict">
-        <div class="hero-label ${heroClass}">${heroLabel}</div>
-        <div class="hero-sub">${heroSub}</div>
+        <div id="hero-verdict-inner">
+          <div class="hero-label ${heroClass}">${heroLabel}</div>
+          <div class="hero-sub">${heroSub}</div>
+        </div>
       </div>
       <div class="content">
-        <div class="routes">
+        <div class="routes" id="route-gauges">
           ${routeGauge(libSt, libDisplayScore, 'StatueOfLibery.png', 'Statue of Liberty', 'Statue of Liberty', libBack, allClearText)}
           ${routeGauge(gwbSt, gwbDisplayScore, 'GWBridge.PNG', 'GW Bridge', 'GW Bridge', gwbBack, allClearText)}
         </div>
@@ -1132,22 +1258,18 @@ async function loadForecast() {
           <div class="rec-box ${rec.cls}">${rec.html}</div>
         </div>
 
-        <div class="hourly-card">
-          <div class="card-title">🗽 Statue of Liberty — Hourly</div>
-          <div class="hourly-scroll">${hourlyGrid('liberty')}</div>
-        </div>
-
-        <div class="hourly-card">
-          <div class="card-title">🌉 George Washington Bridge — Hourly</div>
-          <div class="hourly-scroll">${hourlyGrid('gwb')}</div>
-        </div>
-
         ${tomorrowMorningCard()}
 
         ${tripPlannerCard()}
 
         <p class="footer">Updated ${updated} (<span id="last-updated">just now</span>) · Auto-refreshes every 15 min · Wind: Open-Meteo · Tides: NOAA (The Battery)</p>
       </div>`;
+
+    // Scroll timeline to NOW column
+    setTimeout(() => {
+      const nowCol = document.querySelector('.t-col.t-now');
+      if (nowCol) nowCol.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }, 150);
 
   } catch (err) {
     console.error(err);
