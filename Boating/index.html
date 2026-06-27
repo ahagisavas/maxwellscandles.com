@@ -1054,7 +1054,7 @@ async function loadForecast() {
 
     function combinedTimeline() {
       const cols = hours
-        .filter(h => h.hour >= 6 && h.hour <= 20)
+        .filter(h => h.hour >= 7 && h.hour <= 21)
         .map(h => {
           const libSt  = statuses.liberty[h.hour] || 'yellow';
           const gwbSt  = statuses.gwb[h.hour]     || 'yellow';
