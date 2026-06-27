@@ -471,7 +471,8 @@ function fmtTideCountdown(tide, nowH, nowMin) {
   if (diff <= 0 || diff > 720) return '';
   const h = Math.floor(diff / 60), m = diff % 60;
   const parts = h > 0 ? [h + 'h', m > 0 ? m + 'm' : ''].filter(Boolean) : [m + 'm'];
-  return `${tide.type === 'H' ? 'high' : 'low'} tide in ${parts.join(' ')}`;
+  const heightStr = tide.v != null ? ` · ${tide.v.toFixed(1)} ft` : '';
+  return `${tide.type === 'H' ? 'high' : 'low'} tide in ${parts.join(' ')}${heightStr}`;
 }
 
 // Trip planner — called from onclick, uses global forecastData
@@ -583,7 +584,7 @@ async function loadForecast() {
     const tomorrowDateStr = tomorrow.toISOString().slice(0,10).replace(/-/g,'');
 
     // Weather (2 days + visibility + gusts)
-    const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation_probability,weather_code,visibility,apparent_temperature&wind_speed_unit=mph&timezone=America/New_York&forecast_days=2`);
+    const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation_probability,weather_code,visibility,apparent_temperature,surface_pressure&wind_speed_unit=mph&timezone=America/New_York&forecast_days=2`);
     if (!wRes.ok) throw new Error(`Weather API error: ${wRes.status}`);
     const weather = await wRes.json();
 
@@ -617,22 +618,40 @@ async function loadForecast() {
       console.warn('NWS alerts fetch failed:', alertErr);
     }
 
+    // NOAA Hudson River currents — station ACT4186 (Weehawken, ~0.5mi from Shipyard Marina)
+    let currentPredictions = [];
+    try {
+      const cRes = await fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${dateStr}&end_date=${dateStr}&station=ACT4186&product=currents_predictions&time_zone=lst_ldt&interval=h&units=english&application=bcs_boating&format=json`);
+      const cJson = await cRes.json();
+      if (cJson.predictions && cJson.predictions.length) {
+        currentPredictions = cJson.predictions.map(p => ({
+          hour:  parseInt(p.t.split(' ')[1].split(':')[0]),
+          speed: Math.abs(parseFloat(p.Velocity_Major || p.v || 0)),
+          type:  parseFloat(p.Velocity_Major || p.v || 0) >= 0 ? 'flood' : 'ebb'
+        }));
+      }
+    } catch (curErr) {
+      console.warn('Current fetch failed:', curErr);
+    }
+
     // Parse hourly data
-    const gustData = weather.hourly.wind_gusts_10m     || [];
-    const codeData = weather.hourly.weather_code        || [];
-    const visData  = weather.hourly.visibility          || [];
-    const tempData = weather.hourly.apparent_temperature || [];
+    const gustData     = weather.hourly.wind_gusts_10m      || [];
+    const codeData     = weather.hourly.weather_code         || [];
+    const visData      = weather.hourly.visibility           || [];
+    const tempData     = weather.hourly.apparent_temperature || [];
+    const pressureData = weather.hourly.surface_pressure     || [];
 
     const allHours = weather.hourly.time.map((t, i) => ({
-      date:   t.split('T')[0],
-      hour:   parseInt(t.split('T')[1]),
-      wind:   weather.hourly.wind_speed_10m[i],
-      gust:   gustData[i] || 0,
-      dir:    weather.hourly.wind_direction_10m[i],
-      precip: weather.hourly.precipitation_probability[i],
-      code:   codeData[i] || 0,
-      vis:    visData[i] != null ? visData[i] : 10000,
-      temp:   tempData[i] != null ? tempData[i] * 9/5 + 32 : 70
+      date:     t.split('T')[0],
+      hour:     parseInt(t.split('T')[1]),
+      wind:     weather.hourly.wind_speed_10m[i],
+      gust:     gustData[i] || 0,
+      dir:      weather.hourly.wind_direction_10m[i],
+      precip:   weather.hourly.precipitation_probability[i],
+      code:     codeData[i] || 0,
+      vis:      visData[i]      != null ? visData[i]      : 10000,
+      temp:     tempData[i]     != null ? tempData[i] * 9/5 + 32 : 70,
+      pressure: pressureData[i] != null ? pressureData[i] : 1013
     }));
 
     const hours         = allHours.slice(0, 24);
@@ -649,6 +668,44 @@ async function loadForecast() {
     const manhattanWind = cur.dir >= 60 && cur.dir <= 120;
     const jetSki = jetSkiIndex(nowH, new Date().getMonth() + 1, isWeekend, isHoliday, cur.temp, cur.code, cur.wind);
     const tideNow = tidePhaseAt(todayTides, nowH);
+
+    // Wind trend: compare now to +2 hours
+    const windIn2h    = (hours[Math.min(nowH + 2, 23)] || cur).wind;
+    const windDelta   = windIn2h - cur.wind;
+    const windTrendArrow = windDelta > 2.5 ? '↑' : windDelta < -2.5 ? '↓' : '→';
+    const windTrendColor = windDelta > 2.5 ? 'var(--yellow)' : windDelta < -2.5 ? 'var(--green)' : 'var(--gray1)';
+
+    // Pressure trend: compare now to 3 hours ago (falling = deteriorating)
+    const pressurePrev  = (hours[Math.max(nowH - 3, 0)] || cur).pressure;
+    const pressureDiff  = cur.pressure - pressurePrev;
+    const pressureTrendLabel = pressureDiff < -1.5 ? '↓ Falling' : pressureDiff > 1.5 ? '↑ Rising' : '→ Steady';
+    const pressureTrendColor = pressureDiff < -1.5 ? 'var(--yellow)' : pressureDiff > 1.5 ? 'var(--green)' : 'var(--gray1)';
+
+    // Hudson current — from NOAA if available, otherwise estimate from tide timing
+    let currentInfo = null;
+    if (currentPredictions.length) {
+      const cp = currentPredictions.find(c => c.hour === nowH) || currentPredictions[0];
+      currentInfo = cp;
+    } else if (todayTides.length >= 2) {
+      // Sinusoidal estimate between tide events
+      const nowTotal = nowH * 60 + nowMin;
+      let before = null, after = null;
+      for (const t of todayTides) {
+        const tMins = t.hour * 60 + (t.minute || 0);
+        if (tMins <= nowTotal) before = t; else if (!after) after = t;
+      }
+      if (before && after) {
+        const span    = (after.hour * 60 + (after.minute || 0)) - (before.hour * 60 + (before.minute || 0));
+        const elapsed = nowTotal - (before.hour * 60 + (before.minute || 0));
+        const sinPhase = Math.sin((elapsed / span) * Math.PI);
+        const range    = Math.abs(after.v - before.v);
+        currentInfo = {
+          speed: Math.round(sinPhase * range * 0.28 * 10) / 10,
+          type:  before.type === 'L' ? 'flood' : 'ebb',
+          estimated: true
+        };
+      }
+    }
 
     const allClearText = nowH >= 18 ? 'Good through the evening ✓' : nowH >= 12 ? 'Good all afternoon ✓' : 'Good all day ✓';
 
@@ -743,6 +800,10 @@ async function loadForecast() {
         ? `🌫️ Reduced visibility — about ${visMiles.toFixed(1)} miles. Watch carefully for ferries and other boats.`
         : '',
       cur.precip > 40 ? `${cur.precip}% chance of rain — visibility may be reduced.` : '',
+      pressureDiff < -3 ? `📉 Pressure dropping fast — conditions are likely to deteriorate over the next few hours even if it looks fine right now.` : pressureDiff < -1.5 ? `📉 Pressure is slowly falling — keep an eye on how conditions develop.` : '',
+      currentInfo && currentInfo.speed >= 0.8
+        ? `🌀 Current is running at ${currentInfo.speed.toFixed(1)} knots ${currentInfo.type === 'flood' ? 'flooding north toward the GW Bridge' : 'ebbing south toward the Statue of Liberty'}${currentInfo.estimated ? ' (estimated from tide data)' : ''}. ${currentInfo.speed >= 1.5 ? 'That\'s a strong current — expect significant chop if wind is blowing against it.' : 'A moderate current — noticeable but manageable.'}`
+        : '',
       jetSki === 'extreme'
         ? `🛥️ Expect extremely heavy jet ski traffic right now — ${isHoliday ? 'major holiday weekend, ' : isWeekend ? 'weekend, ' : ''}warm and sunny with calm water. The Hudson near the marina will be packed. Stay alert.`
         : jetSki === 'high'
@@ -924,15 +985,20 @@ async function loadForecast() {
 
     const rec      = recHtml();
     const updated  = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    const gustBar  = cur.gust > cur.wind * 1.3 ? ` (gusts ${cur.gust.toFixed(0)})` : '';
-    const tideBar  = tideCountdown ? ` · ${tideCountdown}` : '';
-    const visBar   = visMiles < 5 ? `<span>👁️ <strong>${visMiles < 1 ? 'Dense fog' : 'Reduced visibility'}: ${visMiles.toFixed(1)} mi</strong></span>` : '';
+    const gustBar    = cur.gust > cur.wind * 1.3 ? ` (gusts ${cur.gust.toFixed(0)})` : '';
+    const tideBar    = tideCountdown ? ` · ${tideCountdown}` : '';
+    const visBar     = visMiles < 5 ? `<span>👁️ <strong>${visMiles < 1 ? 'Dense fog' : 'Reduced visibility'}: ${visMiles.toFixed(1)} mi</strong></span>` : '';
+    const currentBar = currentInfo && currentInfo.speed >= 0.1
+      ? `<span>🌀 Current: <strong>${currentInfo.speed.toFixed(1)} kts ${currentInfo.type === 'flood' ? '↑ Flooding' : '↓ Ebbing'}${currentInfo.estimated ? ' (est.)' : ''}</strong></span>`
+      : '';
 
     document.getElementById('app').innerHTML = `
       <div class="cond-bar">
-        <span>💨 <strong>${cur.wind.toFixed(0)} mph${gustBar} ${windLabel(cur.dir)}</strong></span>
+        <span>💨 <strong>${cur.wind.toFixed(0)} mph${gustBar} ${windLabel(cur.dir)} <span style="color:${windTrendColor}">${windTrendArrow}</span></strong></span>
         <span><strong>${weatherIcon(cur.code)}</strong></span>
+        <span>🌡️ Pressure: <strong style="color:${pressureTrendColor}">${pressureTrendLabel}</strong></span>
         <span>🌊 Tide: <strong>${tideNow === 'flood' ? '↑ Rising' : tideNow === 'ebb' ? '↓ Falling' : '⟳ Still'}${tideBar}</strong></span>
+        ${currentBar}
         ${sunset ? `<span>🌅 Sunset: <strong>${sunset}</strong></span>` : ''}
         <span>🌧️ Rain: <strong>${cur.precip}%</strong></span>
         ${visBar}
