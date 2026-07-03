@@ -1319,7 +1319,7 @@ async function loadForecast() {
       <div class="cond-bar">
         <span>💨 <strong>${cur.wind.toFixed(0)} mph${gustBar} ${windLabel(cur.dir)} <span style="color:${windTrendColor}">${windTrendArrow}</span></strong></span>
         <span><strong>${weatherIcon(cur.code)}${cur.code <= 48 && cur.precip > 20 ? ` · ${cur.precip}% rain chance` : ''}</strong></span>
-        <span>⚗️ Barometric Pressure: <strong style="color:${pressureTrendColor}">${pressureTrendLabel}</strong><br><span style="font-size:0.48rem;color:var(--gray2);font-weight:400">↑ Rising = clearing · → Steady = stable · ↓ Falling = deteriorating</span></span>
+        <span>⚗️ Barometric Pressure (Weight of the Air): <strong style="color:${pressureTrendColor}">${pressureTrendLabel}</strong><br><span style="font-size:0.47rem;color:var(--gray2);font-weight:400;line-height:1.7">↓ Falling → weather is deteriorating, storm/wind likely coming &nbsp;·&nbsp; → Steady → stable conditions &nbsp;·&nbsp; ↑ Rising → weather is clearing up, calmer conditions ahead</span></span>
         <span>🌊 Tide: <strong>${tideNow === 'flood' ? '↑ Rising' : tideNow === 'ebb' ? '↓ Falling' : '⟳ Still'}${tideBar}</strong></span>
         ${currentBar}
         ${sunset ? `<span>🌅 Sunset: <strong>${sunset}</strong></span>` : ''}
