@@ -517,7 +517,7 @@ function initAIS() {
           const name = (d.MetaData?.ShipName || '').trim();
           const isLarge   = vt >= 60 && vt <= 89;
           const isUnknown = vt == null || vt === 0;
-          if (p.Sog > 5 && name && (isLarge || isUnknown)) {
+          if (p.Sog > 1 && name && (isLarge || isUnknown)) { // TEMP: low threshold for testing
             liveCruiseShip = { name, detectedAt: Date.now() };
             console.log(`[AIS] Large vessel: ${name} (${p.Sog} kts)`);
             const el = document.getElementById('cruise-alert-bar');
@@ -1319,7 +1319,7 @@ async function loadForecast() {
       <div class="cond-bar">
         <span>💨 <strong>${cur.wind.toFixed(0)} mph${gustBar} ${windLabel(cur.dir)} <span style="color:${windTrendColor}">${windTrendArrow}</span></strong></span>
         <span><strong>${weatherIcon(cur.code)}${cur.code <= 48 && cur.precip > 20 ? ` · ${cur.precip}% rain chance` : ''}</strong></span>
-        <span>⚗️ Barometric Pressure (Weight of the Air): <strong style="color:${pressureTrendColor}">${pressureTrendLabel}</strong><br><span style="font-size:0.47rem;color:var(--gray2);font-weight:400;line-height:1.7">↓ Falling → weather is deteriorating, storm/wind likely coming &nbsp;·&nbsp; → Steady → stable conditions &nbsp;·&nbsp; ↑ Rising → weather is clearing up, calmer conditions ahead</span></span>
+        <span>🧭 Barometric Pressure (Weight of the Air): <strong style="color:${pressureTrendColor}">${pressureTrendLabel}</strong><br><span style="font-size:0.47rem;color:var(--gray2);font-weight:400;line-height:1.7">↓ Falling → weather is deteriorating, storm/wind likely coming &nbsp;·&nbsp; → Steady → stable conditions &nbsp;·&nbsp; ↑ Rising → weather is clearing up, calmer conditions ahead</span></span>
         <span>🌊 Tide: <strong>${tideNow === 'flood' ? '↑ Rising' : tideNow === 'ebb' ? '↓ Falling' : '⟳ Still'}${tideBar}</strong></span>
         ${currentBar}
         ${sunset ? `<span>🌅 Sunset: <strong>${sunset}</strong></span>` : ''}
