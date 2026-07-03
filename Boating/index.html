@@ -499,13 +499,14 @@ function initAIS() {
       console.log('[AIS] Connected');
       ws.send(JSON.stringify({
         APIKey: AIS_API_KEY,
-        BoundingBoxes: [[[40.55, -74.05], [40.78, -73.97]]],
+        BoundingBoxes: [[[40.45, -74.15], [40.88, -73.88]]],
         FilterMessageTypes: ['PositionReport', 'ShipStaticAndVoyageRelatedData']
       }));
     };
     ws.onmessage = (evt) => {
       try {
         const d = JSON.parse(evt.data);
+        console.log('[AIS] msg:', d.MessageType, d.MetaData?.ShipName || '');
         if (d.MessageType === 'ShipStaticAndVoyageRelatedData') {
           const s = d.Message.ShipStaticAndVoyageRelatedData;
           if (s.Mmsi) _mmsiVesselType[s.Mmsi] = s.TypeOfShipAndCargoType;
