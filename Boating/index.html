@@ -502,9 +502,10 @@ function initAIS() {
         BoundingBoxes: [[[40.45, -74.15], [40.88, -73.88]]]
       }));
     };
-    ws.onmessage = (evt) => {
+    ws.onmessage = async (evt) => {
       try {
-        const d = JSON.parse(evt.data);
+        const text = evt.data instanceof Blob ? await evt.data.text() : evt.data;
+        const d = JSON.parse(text);
         console.log('[AIS] msg:', d.MessageType, d.MetaData?.ShipName || '');
         if (d.MessageType === 'ShipStaticAndVoyageRelatedData') {
           const s = d.Message.ShipStaticAndVoyageRelatedData;
