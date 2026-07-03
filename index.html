@@ -9,7 +9,7 @@
     <meta property="og:url" content="https://maxwellscandles.com/">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://maxwellscandles.com/MaxwellsCandles_ALL3.png">
-    <meta property="og:image:alt" content="Maxwell's Candles â€” all 24 scents with Maxwell">
+    <meta property="og:image:alt" content="Maxwell's Candles — all 24 scents with Maxwell">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="https://maxwellscandles.com/MaxwellsCandles_ALL3.png">
     <link rel="apple-touch-icon" href="https://maxwellscandles.com/MaxwellsCandles_ALL3.png">
@@ -151,7 +151,7 @@
                 rgba(10,4,0,0.55) 100%
             );
         }
-        /* Flame glow overlays â€” positioned at candle areas in the image */
+        /* Flame glow overlays — positioned at candle areas in the image */
         .flame-glow {
             position: absolute; border-radius: 50%;
             pointer-events: none; mix-blend-mode: screen;
@@ -350,16 +350,16 @@
             z-index: 2;
         }
         .just-dropped-badge {
-            position: absolute; top: 10px; left: 10px;
+            position: absolute; top: 12px; left: -20px; width: 90px;
             background: #ff1a1a; color: #fff;
             font-size: 0.58rem; font-weight: 700;
             letter-spacing: 0.14em; text-transform: uppercase;
-            padding: 4px 10px; border-radius: 999px;
+            text-align: center; padding: 4px 0; transform: rotate(-45deg); white-space: nowrap;
             z-index: 2;
         }
         .limited-badge {
             position: absolute; top: 10px; left: 10px;
-            background: #d35400; color: #fff;
+            background: var(--tag-coastal); color: #fff;
             font-size: 0.58rem; font-weight: 700;
             letter-spacing: 0.14em; text-transform: uppercase;
             padding: 4px 10px; border-radius: 999px;
@@ -509,7 +509,7 @@
             font-size: 0.78rem; color: var(--bark);
             padding: 4px 0; display: flex; align-items: center; gap: 8px;
         }
-        .scent-list-item::before { content: 'â€¢'; color: var(--ember); font-size: 0.8rem; flex-shrink: 0; }
+        .scent-list-item::before { content: '•'; color: var(--ember); font-size: 0.8rem; flex-shrink: 0; }
         /* form */
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
         .form-group { }
@@ -856,7 +856,7 @@
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-deep);">Rich &amp; Deep</span>
                     <h3 class="product-name">Coffee</h3>
-                    <p class="product-desc">Rich aroma of roasted coffee beans. Deep, bold, and grounding â€” for serious coffee lovers.</p>
+                    <p class="product-desc">Rich aroma of roasted coffee beans. Deep, bold, and grounding — for serious coffee lovers.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
@@ -1115,7 +1115,7 @@
         <div>
             <div class="pillar-icon"><img src="CoconutApricotWax.PNG" alt="Coconut Apricot Wax" style="height:1.5rem;width:auto;vertical-align:middle;"></div>
             <div class="pillar-title">Coconut Apricot Wax</div>
-            <div class="pillar-body">Premium blend â€” cleaner burn, superior scent throw, and a beautiful creamy finish.</div>
+            <div class="pillar-body">Premium blend — cleaner burn, superior scent throw, and a beautiful creamy finish.</div>
         </div>
         <div>
             <div class="pillar-icon"><img src="StrongThrow3.PNG" alt="Strong Throw" style="height:1.5rem;width:auto;vertical-align:middle;"></div>
@@ -1326,7 +1326,7 @@
     orderForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = orderForm.querySelector('.btn-submit');
-        btn.textContent = 'Sendingâ€¦';
+        btn.textContent = 'Sending…';
         btn.disabled = true;
 
         const data = new FormData(orderForm);
