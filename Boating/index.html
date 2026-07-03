@@ -510,8 +510,9 @@ function initAIS() {
         if (d.MessageType === 'PositionReport') {
           const p  = d.Message.PositionReport;
           const vt = _mmsiVesselType[p.UserId];
-          if (vt >= 60 && vt <= 69 && p.Sog > 5 && p.Cog >= 150 && p.Cog <= 210) {
-            liveCruiseShip = { name: (d.MetaData?.ShipName || 'Cruise ship').trim(), detectedAt: Date.now() };
+          // Any large vessel (passenger 60-69, cargo 70-79, tanker 80-89) moving at >3 kts
+          if (vt >= 60 && vt <= 89 && p.Sog > 3) {
+            liveCruiseShip = { name: (d.MetaData?.ShipName || 'Large vessel').trim(), detectedAt: Date.now() };
           }
         }
       } catch(e) {}
