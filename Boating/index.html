@@ -312,7 +312,7 @@
       margin-bottom: 0.2rem;
       text-align: center;
     }
-    .gauge-icon-img { width: 54px; height: 54px; object-fit: cover; border-radius: 50%; margin-bottom: 0.4rem; box-shadow: 0 0 10px rgba(0,180,216,0.3); }
+    .gauge-icon-img { width: 72px; height: 72px; object-fit: cover; border-radius: 50%; margin-bottom: 0.4rem; box-shadow: 0 0 10px rgba(0,180,216,0.3); }
     .gauge-badge {
       display: inline-block;
       padding: 0.3rem 1rem;
@@ -1260,8 +1260,8 @@ async function loadForecast() {
       </div>
       <div class="content">
         <div class="routes" id="route-gauges">
+          ${routeGauge(gwbSt, gwbDisplayScoreFinal, 'GWBridge.PNG', 'George Washington Bridge', 'George Washington Bridge', gwbBack, allClearText)}
           ${routeGauge(libSt, libDisplayScoreFinal, 'StatueOfLibery.png', 'Statue of Liberty', 'Statue of Liberty', libBack, allClearText)}
-          ${routeGauge(gwbSt, gwbDisplayScoreFinal, 'GWBridge.PNG', 'GW Bridge', 'GW Bridge', gwbBack, allClearText)}
         </div>
 
         ${routeCompareCard()}
