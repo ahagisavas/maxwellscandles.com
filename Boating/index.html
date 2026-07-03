@@ -456,6 +456,71 @@ function libertyTrafficMult(windDir, hour) {
   return ferryMult * libertyCruisesMult * manhattanTurbulence;
 }
 
+// ── CRUISE SHIP TRACKING ──────────────────────────────────────────────────────
+// Manhattan Cruise Terminal (Piers 88/90/92, W 50th–52nd St) — ships travel south
+// past Hoboken; wake arrives ~35 min after departure. Update at nycruise.com.
+const CRUISE_PATTERNS = [
+  { dayOfWeek: 0, ship: 'Norwegian Breakaway', departureHour: 17 },
+  { dayOfWeek: 6, ship: 'Carnival Pride',       departureHour: 16 },
+];
+
+// Register free at aisstream.io and paste your key here for live AIS tracking
+const AIS_API_KEY = '';
+
+let liveCruiseShip = null;
+const _mmsiVesselType = {};
+
+function cruiseWakeMult(hour) {
+  if (liveCruiseShip && (Date.now() - liveCruiseShip.detectedAt) < 7200000) return 1.50;
+  const p = CRUISE_PATTERNS.find(c => c.dayOfWeek === new Date().getDay());
+  if (!p) return 1.0;
+  if (hour === p.departureHour + 1) return 1.50;
+  if (hour === p.departureHour + 2) return 1.30;
+  if (hour === p.departureHour)     return 1.10;
+  return 1.0;
+}
+
+function cruiseAlertText(nowH) {
+  if (liveCruiseShip && (Date.now() - liveCruiseShip.detectedAt) < 7200000) {
+    const m = Math.round((Date.now() - liveCruiseShip.detectedAt) / 60000);
+    return `🚢 ${liveCruiseShip.name} on Hudson (${m}m ago) — large wakes likely`;
+  }
+  const p = CRUISE_PATTERNS.find(c => c.dayOfWeek === new Date().getDay());
+  if (p && nowH >= p.departureHour - 1 && nowH <= p.departureHour + 2)
+    return `🚢 ${p.ship} departs Manhattan ~${fmtHour(p.departureHour)} — expect large wakes`;
+  return null;
+}
+
+function initAIS() {
+  if (!AIS_API_KEY) return;
+  try {
+    const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
+    ws.onopen = () => ws.send(JSON.stringify({
+      APIKey: AIS_API_KEY,
+      BoundingBoxes: [[[40.55, -74.05], [40.78, -73.97]]],
+      FilterMessageTypes: ['PositionReport', 'ShipStaticAndVoyageRelatedData']
+    }));
+    ws.onmessage = (evt) => {
+      try {
+        const d = JSON.parse(evt.data);
+        if (d.MessageType === 'ShipStaticAndVoyageRelatedData') {
+          const s = d.Message.ShipStaticAndVoyageRelatedData;
+          if (s.Mmsi) _mmsiVesselType[s.Mmsi] = s.TypeOfShipAndCargoType;
+        }
+        if (d.MessageType === 'PositionReport') {
+          const p  = d.Message.PositionReport;
+          const vt = _mmsiVesselType[p.UserId];
+          if (vt >= 60 && vt <= 69 && p.Sog > 5 && p.Cog >= 150 && p.Cog <= 210) {
+            liveCruiseShip = { name: (d.MetaData?.ShipName || 'Cruise ship').trim(), detectedAt: Date.now() };
+          }
+        }
+      } catch(e) {}
+    };
+    ws.onerror = () => console.warn('AIS unavailable');
+    ws.onclose = () => setTimeout(initAIS, 300000);
+  } catch(e) { console.warn('AIS init failed:', e); }
+}
+
 function getScore(windSpeed, windDir, tidePhase, routeKey, hour) {
   const riverAlign  = angleDiff(windDir % 180, 0);
   const fetchFactor = 1 + 0.45 * (1 - riverAlign / 90);
@@ -475,6 +540,7 @@ function getScore(windSpeed, windDir, tidePhase, routeKey, hour) {
     else if (hour >= 9) score *= 1.10;
     score *= 1.18;
     score *= libertyTrafficMult(windDir, hour);
+    score *= cruiseWakeMult(hour);
   }
   return score;
 }
@@ -1249,6 +1315,7 @@ async function loadForecast() {
         ${sunset ? `<span>🌅 Sunset: <strong>${sunset}</strong></span>` : ''}
         ${visBar}
         ${jetSki === 'extreme' ? `<span>🛥️ Jet skis: <strong style="color:var(--red)">Extreme</strong></span>` : ''}
+        ${cruiseAlertText(nowH) ? `<span style="color:var(--yellow)">${cruiseAlertText(nowH)}</span>` : ''}
       </div>
       ${alertBannerHtml()}
       ${combinedTimeline()}
@@ -1299,6 +1366,7 @@ async function loadForecast() {
 
 loadForecast();
 setInterval(loadForecast, 15 * 60 * 1000);
+initAIS();
 </script>
 </body>
 </html>
