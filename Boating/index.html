@@ -518,7 +518,7 @@ function initAIS() {
           console.log(`[AIS] ${d.MessageType} | ${name} | sog:${p.Sog} | type:${vt ?? 'unknown'}`);
           const isLarge   = vt >= 60 && vt <= 89;
           const isUnknown = vt == null || vt === 0;
-          if (p.Sog > 5 && (isLarge || isUnknown)) {
+          if (p.Sog > 1 && (isLarge || isUnknown)) {
             liveCruiseShip = { name, detectedAt: Date.now() };
             const el = document.getElementById('cruise-alert-bar');
             if (el) { el.textContent = `🚢 ${name} on Hudson — large wakes likely`; el.style.display = ''; }
