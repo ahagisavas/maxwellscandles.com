@@ -516,6 +516,8 @@ function initAIS() {
           const isUnknown = vt == null || vt === 0;
           if (p.Sog > 5 && name && (isLarge || isUnknown)) {
             liveCruiseShip = { name, detectedAt: Date.now() };
+            const el = document.getElementById('cruise-alert-bar');
+            if (el) { el.textContent = `🚢 ${name} on Hudson — large wakes likely`; el.style.display = ''; }
           }
         }
       } catch(e) {}
@@ -1320,6 +1322,7 @@ async function loadForecast() {
         ${visBar}
         ${jetSki === 'extreme' ? `<span>🛥️ Jet skis: <strong style="color:var(--red)">Extreme</strong></span>` : ''}
         ${cruiseAlertText(nowH) ? `<span style="color:var(--yellow)">${cruiseAlertText(nowH)}</span>` : ''}
+        <span id="cruise-alert-bar" style="color:var(--yellow);display:none"></span>
       </div>
       ${alertBannerHtml()}
       ${combinedTimeline()}
