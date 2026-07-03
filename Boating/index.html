@@ -517,7 +517,7 @@ function initAIS() {
           console.log(`[AIS] vessel: "${name}" sog:${p.Sog} type:${vt}`);
           const isLarge   = vt >= 60 && vt <= 89;
           const isUnknown = vt == null || vt === 0;
-          if (p.Sog > 4 && name && (isLarge || isUnknown)) {
+          if (p.Sog >= 0 && name && (isLarge || isUnknown)) {
             liveCruiseShip = { name, detectedAt: Date.now() };
             console.log('[AIS] FLAGGED:', name);
           }
