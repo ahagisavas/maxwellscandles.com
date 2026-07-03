@@ -499,8 +499,7 @@ function initAIS() {
       console.log('[AIS] Connected');
       ws.send(JSON.stringify({
         APIKey: AIS_API_KEY,
-        BoundingBoxes: [[[40.45, -74.15], [40.88, -73.88]]],
-        FilterMessageTypes: ['PositionReport', 'ShipStaticAndVoyageRelatedData']
+        BoundingBoxes: [[[40.45, -74.15], [40.88, -73.88]]]
       }));
     };
     ws.onmessage = (evt) => {
