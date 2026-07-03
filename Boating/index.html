@@ -495,11 +495,14 @@ function initAIS() {
   if (!AIS_API_KEY) return;
   try {
     const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
-    ws.onopen = () => ws.send(JSON.stringify({
-      APIKey: AIS_API_KEY,
-      BoundingBoxes: [[[40.55, -74.05], [40.78, -73.97]]],
-      FilterMessageTypes: ['PositionReport', 'ShipStaticAndVoyageRelatedData']
-    }));
+    ws.onopen = () => {
+      console.log('[AIS] Connected');
+      ws.send(JSON.stringify({
+        APIKey: AIS_API_KEY,
+        BoundingBoxes: [[[40.55, -74.05], [40.78, -73.97]]],
+        FilterMessageTypes: ['PositionReport', 'ShipStaticAndVoyageRelatedData']
+      }));
+    };
     ws.onmessage = (evt) => {
       try {
         const d = JSON.parse(evt.data);
@@ -511,16 +514,17 @@ function initAIS() {
           const p    = d.Message.PositionReport;
           const vt   = _mmsiVesselType[p.UserId];
           const name = (d.MetaData?.ShipName || '').trim();
-          // Accept if: moving >4 kts AND (large vessel type known, OR type unknown but has a name)
+          console.log(`[AIS] vessel: "${name}" sog:${p.Sog} type:${vt}`);
           const isLarge   = vt >= 60 && vt <= 89;
           const isUnknown = vt == null || vt === 0;
           if (p.Sog > 4 && name && (isLarge || isUnknown)) {
             liveCruiseShip = { name, detectedAt: Date.now() };
+            console.log('[AIS] FLAGGED:', name);
           }
         }
-      } catch(e) {}
+      } catch(e) { console.warn('[AIS] parse error', e); }
     };
-    ws.onerror = () => console.warn('AIS unavailable');
+    ws.onerror = (e) => console.warn('[AIS] error', e);
     ws.onclose = () => setTimeout(initAIS, 300000);
   } catch(e) { console.warn('AIS init failed:', e); }
 }
