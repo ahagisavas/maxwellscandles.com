@@ -517,7 +517,7 @@ function initAIS() {
           const name = (d.MetaData?.ShipName || '').trim();
           const isLarge   = vt >= 60 && vt <= 89;
           const isUnknown = vt == null || vt === 0;
-          if (p.Sog > 1 && name && (isLarge || isUnknown)) { // TEMP: low threshold for testing
+          if (p.Sog >= 0 && name && (isLarge || isUnknown)) { // TEMP: catch all speeds for testing
             liveCruiseShip = { name, detectedAt: Date.now() };
             console.log(`[AIS] Large vessel: ${name} (${p.Sog} kts)`);
             const el = document.getElementById('cruise-alert-bar');
