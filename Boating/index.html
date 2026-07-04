@@ -499,7 +499,7 @@ function initAIS() {
       console.log('[AIS] Connected');
       ws.send(JSON.stringify({
         APIKey: AIS_API_KEY,
-        BoundingBoxes: [[[40.55, -74.05], [40.78, -73.97]]]
+        BoundingBoxes: [[[40.68, -74.05], [40.87, -73.97]]]
       }));
     };
     ws.onmessage = async (evt) => {
