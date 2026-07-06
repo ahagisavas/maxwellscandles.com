@@ -626,6 +626,7 @@
         /* â”€â”€ SCROLL REVEAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .fade-up { opacity: 0; transform: translateY(22px); transition: opacity 0.6s var(--ease), transform 0.6s var(--ease); }
         .fade-up.visible { opacity: 1; transform: translateY(0); }
+        .our-story-mobile-img { display: none; width: 100%; }
 
         /* â”€â”€ RESPONSIVE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         @media (max-width: 1100px) {
@@ -657,7 +658,10 @@
             .story-pillars { grid-template-columns: 1fr; }
             .candle-group { gap: 12px; }
             .story-inner { padding: 0 20px; }
-            .our-story-bg { background-size: contain !important; background-position: center top !important; }
+            .our-story-bg { display: none !important; }
+            .our-story-overlay { display: none !important; }
+            .our-story-mobile-img { display: block; }
+            #our-story { padding-top: 0; }
         }
     </style>
 </head>
@@ -1149,8 +1153,9 @@
 
 <!-- OUR STORY -->
 <section id="our-story" style="position:relative; padding: 100px 24px; overflow:hidden; background:#1a0800;">
+    <img src="HISTORY2.png" class="our-story-mobile-img" alt="">
     <div class="our-story-bg" style="position:absolute; inset:0; background:url('HISTORY2.png') center center / cover no-repeat; opacity:0.55;"></div>
-    <div style="position:absolute; inset:0; background: linear-gradient(to bottom, rgba(10,4,0,0.55) 0%, rgba(10,4,0,0.35) 50%, rgba(10,4,0,0.65) 100%);"></div>
+    <div class="our-story-overlay" style="position:absolute; inset:0; background: linear-gradient(to bottom, rgba(10,4,0,0.55) 0%, rgba(10,4,0,0.35) 50%, rgba(10,4,0,0.65) 100%);"></div>
     <div style="position:relative; max-width:740px; margin:0 auto; text-align:center;">
         <p style="font-family:'Poppins',sans-serif; font-size:0.7rem; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--honey); margin-bottom:16px;">Our Story</p>
         <h2 style="font-family:'Playfair Display',serif; font-size:clamp(2rem,4vw,3rem); font-weight:700; color:#fff; line-height:1.15; margin-bottom:40px;">It started with <span style="background:linear-gradient(180deg,#fff176 0%,#ffab00 30%,#ff6d00 65%,#c62828 100%);-webkit-background-clip:text;background-clip:text;color:transparent;font-style:italic;">fire</span></h2>
