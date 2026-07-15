@@ -677,7 +677,7 @@
         <img src="MC_PLAY.PNG" id="pause-icon" width="66" height="66" style="display:none; border-radius:50%; object-fit:cover; opacity:0.6;">
     </button>
 </div>
-<audio id="bg-audio" loop src="Maxwell_ThugLife.MP4"></audio>
+<audio id="bg-audio" src="Maxwell_CavemanFire.MP4"></audio>
 
 <style>
 #music-player {
@@ -701,8 +701,17 @@
 </style>
 
 <script>
+var playlist = ['Maxwell_CavemanFire.MP4', 'Maxwell_ThugLife.MP4'];
+var currentTrack = 0;
+
+var audio = document.getElementById('bg-audio');
+audio.addEventListener('ended', function() {
+    currentTrack = (currentTrack + 1) % playlist.length;
+    audio.src = playlist[currentTrack];
+    audio.play();
+});
+
 function toggleMusic() {
-    var audio = document.getElementById('bg-audio');
     var player = document.getElementById('music-player');
     var playIcon = document.getElementById('play-icon');
     var pauseIcon = document.getElementById('pause-icon');
