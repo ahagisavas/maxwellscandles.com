@@ -673,8 +673,7 @@
 <!-- MUSIC PLAYER -->
 <div id="music-player">
     <button id="music-btn" onclick="toggleMusic()" aria-label="Play music">
-        <img src="MC_PLAY.PNG" id="play-icon" width="66" height="66" style="display:block; border-radius:50%; object-fit:cover;">
-        <img src="MC_PLAY.PNG" id="pause-icon" width="66" height="66" style="display:none; border-radius:50%; object-fit:cover; opacity:0.6;">
+        <img src="Record.PNG" id="record-img" width="66" height="66" style="border-radius:50%; object-fit:cover;">
     </button>
 </div>
 <audio id="bg-audio" src="Puppy_In_Armor.MP4"></audio>
@@ -694,10 +693,12 @@
     cursor: pointer;
     padding: 0;
     display: flex; align-items: center; justify-content: center;
-    transition: transform 0.15s, opacity 0.2s;
     filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
 }
-#music-btn:hover { transform: scale(1.1); }
+#music-btn:hover { opacity: 0.85; }
+@keyframes spin-record { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+#record-img { transition: opacity 0.2s; }
+#record-img.spinning { animation: spin-record 2s linear infinite; }
 </style>
 
 <script>
@@ -712,19 +713,13 @@ audio.addEventListener('ended', function() {
 });
 
 function toggleMusic() {
-    var player = document.getElementById('music-player');
-    var playIcon = document.getElementById('play-icon');
-    var pauseIcon = document.getElementById('pause-icon');
+    var record = document.getElementById('record-img');
     if (audio.paused) {
         audio.play();
-        playIcon.style.display = 'none';
-        pauseIcon.style.display = 'block';
-        player.classList.add('playing');
+        record.classList.add('spinning');
     } else {
         audio.pause();
-        playIcon.style.display = 'block';
-        pauseIcon.style.display = 'none';
-        player.classList.remove('playing');
+        record.classList.remove('spinning');
     }
 }
 </script>
