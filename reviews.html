@@ -190,11 +190,15 @@
             color: var(--ember);
         }
         .paw-rating {
-            display: flex; gap: 4px;
+            display: flex; gap: 5px; align-items: center;
             line-height: 1;
         }
-        .paw-rating span { font-size: 1.15rem; }
-        .paw-rating .paw-empty { opacity: 0.2; }
+        .paw-icon {
+            width: 20px; height: 20px;
+            fill: #5c3828;
+            flex-shrink: 0;
+        }
+        .paw-rating .paw-empty { opacity: 0.18; }
         .review-text {
             font-size: 0.84rem; color: var(--gray);
             line-height: 1.75; flex: 1;
@@ -261,6 +265,9 @@
         .form-full textarea { min-height: 110px; resize: vertical; }
 
         /* PAW PICKER */
+        .paw-picker label .paw-icon { width: 28px; height: 28px; fill: #5c3828; }
+        .paw-picker label { opacity: 0.2; transition: opacity 0.15s, transform 0.15s; }
+        .paw-picker label.active { opacity: 1; transform: scale(1.15); }
         .paw-picker-label {
             display: block; font-size: 0.65rem; font-weight: 600;
             letter-spacing: 0.14em; text-transform: uppercase;
@@ -370,6 +377,17 @@
 </head>
 <body>
 
+<!-- SINGLE PAW SVG SYMBOL -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="paw" viewBox="0 0 100 100">
+        <ellipse cx="50" cy="72" rx="25" ry="20"/>
+        <ellipse cx="18" cy="42" rx="12" ry="15"/>
+        <ellipse cx="38" cy="28" rx="12" ry="15"/>
+        <ellipse cx="62" cy="28" rx="12" ry="15"/>
+        <ellipse cx="82" cy="42" rx="12" ry="15"/>
+    </symbol>
+</svg>
+
 <!-- NAV -->
 <nav class="nav">
     <a href="index.html" class="nav-brand"><img src="Logo/NEW_MC_LOGO.PNG" alt="Maxwell's Candles"></a>
@@ -422,7 +440,7 @@
                     </div>
                 </div>
                 <div class="paw-rating">
-                    <span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span>
+                    <svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg>
                 </div>
                 <p class="review-text">These streets stay hot so I gots to stay dangerous. But sometimes after a drive-by I come back to the crib a little shook. That's when I light Bergamot Element. Bright citrus, crackling wooden wick. That's how a real one gets his mind right.</p>
                 <div class="review-date">July 2025</div>
@@ -440,7 +458,7 @@
                     </div>
                 </div>
                 <div class="paw-rating">
-                    <span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span>
+                    <svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg>
                 </div>
                 <p class="review-text">This candle completely transformed my living room. The scent throw is insane — I lit it once and my whole apartment smelled like the beach for two days.</p>
                 <div class="review-date">June 2025</div>
@@ -456,7 +474,7 @@
                     </div>
                 </div>
                 <div class="paw-rating">
-                    <span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span>
+                    <svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg>
                 </div>
                 <p class="review-text">Bought this as a joke gift and now I own three of them. The name alone makes it worth it, but the scent is legitimately incredible. Smoky, warm, and masculine.</p>
                 <div class="review-date">May 2025</div>
@@ -472,7 +490,7 @@
                     </div>
                 </div>
                 <div class="paw-rating">
-                    <span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span>
+                    <svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg><svg class="paw-icon"><use href="#paw"/></svg>
                 </div>
                 <p class="review-text">I've been searching for a dupe of a popular luxury candle for years. Maxwell's Capri Blue is better. I said what I said.</p>
                 <div class="review-date">April 2025</div>
@@ -543,15 +561,15 @@
             <label class="paw-picker-label">Your Rating</label>
             <div class="paw-picker" id="pawPicker">
                 <input type="radio" name="rating" id="paw1" value="1 paw">
-                <label for="paw1" title="1 paw">🐾</label>
+                <label for="paw1" title="1 paw"><svg class="paw-icon"><use href="#paw"/></svg></label>
                 <input type="radio" name="rating" id="paw2" value="2 paws">
-                <label for="paw2" title="2 paws">🐾</label>
+                <label for="paw2" title="2 paws"><svg class="paw-icon"><use href="#paw"/></svg></label>
                 <input type="radio" name="rating" id="paw3" value="3 paws">
-                <label for="paw3" title="3 paws">🐾</label>
+                <label for="paw3" title="3 paws"><svg class="paw-icon"><use href="#paw"/></svg></label>
                 <input type="radio" name="rating" id="paw4" value="4 paws">
-                <label for="paw4" title="4 paws">🐾</label>
+                <label for="paw4" title="4 paws"><svg class="paw-icon"><use href="#paw"/></svg></label>
                 <input type="radio" name="rating" id="paw5" value="5 paws" checked>
-                <label for="paw5" title="5 paws">🐾</label>
+                <label for="paw5" title="5 paws"><svg class="paw-icon"><use href="#paw"/></svg></label>
             </div>
 
             <div class="form-full">
