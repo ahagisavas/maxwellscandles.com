@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reviews | Maxwell's Candles</title>
+    <meta property="og:title" content="Reviews | Maxwell's Candles">
+    <meta property="og:description" content="See what people are saying about Maxwell's Candles — hand-crafted coconut apricot wax candles with wood wicks.">
+    <meta property="og:url" content="https://maxwellscandles.com/reviews">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://maxwellscandles.com/Logo/NEW_MC_LOGO.PNG">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ember:    #c94b1a;
+            --ember-d:  #9e3610;
+            --honey:    #e8a030;
+            --plum:     #6b2d5e;
+            --cream:    #fdf5eb;
+            --ivory:    #fff9f2;
+            --charcoal: #1e0e05;
+            --bark:     #5c3828;
+            --gray:     #8a6a58;
+            --lgray:    #c8ae9e;
+            --nav-h:    90px;
+            --ease:     cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; font-size: 16px; }
+        body {
+            font-family: 'Poppins', -apple-system, sans-serif;
+            background: var(--cream);
+            color: var(--charcoal);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* NAV */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--nav-h); z-index: 900;
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            background: var(--charcoal);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.35);
+        }
+        .nav-brand img {
+            height: 75px; width: auto;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+            transition: opacity 0.2s;
+            margin-top: 8px;
+        }
+        .nav-brand img:hover { opacity: 0.85; }
+        .nav-links {
+            display: flex; align-items: center; gap: 32px;
+            position: absolute; left: 50%; transform: translateX(-50%);
+        }
+        .nav-links a {
+            font-size: 0.75rem; font-weight: 500;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            color: rgba(255,255,255,0.85); transition: color 0.2s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--honey); }
+        .nav-cta {
+            font-size: 0.72rem; font-weight: 600;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            background: var(--ember); color: #fff;
+            padding: 10px 26px; border-radius: 2px;
+            border: none; cursor: pointer;
+            transition: background 0.2s;
+            display: inline-block;
+        }
+        .nav-cta:hover { background: var(--ember-d); }
+        .hamburger {
+            display: none; flex-direction: column;
+            gap: 5px; cursor: pointer; padding: 6px;
+        }
+        .hamburger span {
+            display: block; width: 22px; height: 1.5px;
+            background: var(--honey); transition: all 0.3s;
+        }
+        .mobile-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            z-index: 999; opacity: 0; pointer-events: none;
+            transition: opacity 0.35s;
+        }
+        .mobile-overlay.open { opacity: 1; pointer-events: all; }
+        .mobile-menu {
+            position: fixed; top: 0; right: 0;
+            width: 280px; height: 100vh;
+            background: var(--charcoal); z-index: 1000;
+            padding: 80px 32px 40px;
+            transform: translateX(100%);
+            transition: transform 0.35s var(--ease);
+            box-shadow: -4px 0 30px rgba(0,0,0,0.5);
+        }
+        .mobile-menu.open { transform: translateX(0); }
+        .mobile-menu a {
+            display: block; padding: 14px 0;
+            font-size: 1rem; font-weight: 500;
+            color: rgba(255,249,242,0.85);
+            border-bottom: 1px solid rgba(232,160,48,0.2);
+        }
+        .mobile-close {
+            position: absolute; top: 24px; right: 24px;
+            background: none; border: none; color: var(--honey);
+            font-size: 1.6rem; cursor: pointer; line-height: 1;
+        }
+
+        /* HERO BANNER */
+        .reviews-hero {
+            margin-top: var(--nav-h);
+            background: linear-gradient(145deg, #2c0e00 0%, #5c2400 45%, #1e0a00 100%);
+            padding: 64px 40px 56px;
+            text-align: center;
+            border-bottom: 3px solid var(--ember);
+        }
+        .reviews-hero .eyebrow {
+            font-size: 0.66rem; font-weight: 600;
+            letter-spacing: 0.28em; text-transform: uppercase;
+            color: var(--honey); margin-bottom: 14px;
+        }
+        .reviews-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 700; color: #fff;
+            line-height: 1.15; margin-bottom: 14px;
+        }
+        .reviews-hero p {
+            font-size: 0.9rem; color: rgba(255,249,242,0.6);
+            max-width: 480px; margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        /* LAYOUT */
+        .inner { max-width: 1260px; margin: 0 auto; padding: 0 40px; }
+
+        /* REVIEWS GRID */
+        .reviews-section { padding: 80px 0; background: var(--cream); }
+        .reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+            margin-top: 52px;
+        }
+        .review-card {
+            background: var(--ivory);
+            border: 1px solid rgba(92,56,40,0.1);
+            border-radius: 6px;
+            padding: 28px 24px 24px;
+            display: flex; flex-direction: column; gap: 14px;
+            transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+        }
+        .review-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(92,56,40,0.12);
+        }
+        .review-header {
+            display: flex; align-items: center; gap: 14px;
+        }
+        .reviewer-photo {
+            width: 58px; height: 58px;
+            border-radius: 50%;
+            object-fit: cover; object-position: center;
+            border: 2px solid var(--honey);
+            flex-shrink: 0;
+            background: var(--charcoal);
+        }
+        .reviewer-photo-placeholder {
+            width: 58px; height: 58px;
+            border-radius: 50%;
+            background: var(--charcoal);
+            border: 2px solid var(--honey);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.4rem;
+        }
+        .reviewer-info { flex: 1; }
+        .reviewer-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem; font-weight: 700;
+            color: var(--charcoal); margin-bottom: 2px;
+        }
+        .reviewer-scent {
+            font-size: 0.68rem; font-weight: 500;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--ember);
+        }
+        .paw-rating {
+            font-size: 1.15rem;
+            letter-spacing: 2px;
+            line-height: 1;
+        }
+        .paw-rating .paw-empty { opacity: 0.2; }
+        .review-text {
+            font-size: 0.84rem; color: var(--gray);
+            line-height: 1.75; flex: 1;
+            font-style: italic;
+        }
+        .review-text::before { content: '\201C'; }
+        .review-text::after  { content: '\201D'; }
+        .review-date {
+            font-size: 0.65rem; color: var(--lgray);
+            letter-spacing: 0.08em;
+        }
+
+        /* SECTION HEADERS */
+        .section-eyebrow {
+            font-size: 0.66rem; font-weight: 600;
+            letter-spacing: 0.28em; text-transform: uppercase;
+            color: var(--ember); margin-bottom: 10px;
+        }
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 700; color: var(--charcoal);
+            line-height: 1.15; margin-bottom: 14px;
+        }
+        .section-sub {
+            font-size: 0.9rem; font-weight: 300;
+            color: var(--gray); line-height: 1.75;
+        }
+
+        /* DIVIDER */
+        .divider {
+            border: none;
+            border-top: 1px solid rgba(92,56,40,0.12);
+            margin: 0;
+        }
+
+        /* SUBMIT FORM */
+        .submit-section {
+            padding: 80px 0;
+            background: var(--ivory);
+            border-top: 3px solid var(--ember);
+        }
+        .submit-inner {
+            max-width: 640px; margin: 0 auto; padding: 0 40px;
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .form-group label, .form-full label {
+            display: block; font-size: 0.65rem; font-weight: 600;
+            letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--bark); margin-bottom: 6px;
+        }
+        .form-full { margin-bottom: 14px; }
+        .form-group input,
+        .form-group select,
+        .form-full textarea {
+            width: 100%; background: #fff;
+            border: 1px solid rgba(92,56,40,0.2); border-radius: 2px;
+            padding: 12px 14px; font-family: 'Poppins', sans-serif;
+            font-size: 0.84rem; color: var(--charcoal); outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input::placeholder, .form-full textarea::placeholder { color: var(--lgray); }
+        .form-group input:focus, .form-group select:focus, .form-full textarea:focus { border-color: var(--ember); }
+        .form-full textarea { min-height: 110px; resize: vertical; }
+
+        /* PAW PICKER */
+        .paw-picker-label {
+            display: block; font-size: 0.65rem; font-weight: 600;
+            letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--bark); margin-bottom: 10px;
+        }
+        .paw-picker {
+            display: flex; gap: 6px; margin-bottom: 18px;
+        }
+        .paw-picker input[type="radio"] { display: none; }
+        .paw-picker label {
+            font-size: 1.8rem; cursor: pointer;
+            opacity: 0.25; transition: opacity 0.15s, transform 0.15s;
+            user-select: none;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        .paw-picker:hover label { opacity: 0.25; }
+        .paw-picker label:hover,
+        .paw-picker label:hover ~ label { opacity: 0.25; }
+        .paw-picker input[type="radio"]:checked ~ label { opacity: 0.25; }
+
+        /* JS-driven active state */
+        .paw-picker label.active { opacity: 1; transform: scale(1.15); }
+
+        .btn-submit {
+            width: 100%; font-size: 0.86rem; font-weight: 600;
+            padding: 16px; border-radius: 2px;
+            background: var(--ember); color: #fff;
+            border: none; cursor: pointer;
+            transition: background 0.2s;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            margin-top: 8px;
+        }
+        .btn-submit:hover { background: var(--ember-d); }
+        .form-note {
+            font-size: 0.7rem; color: var(--lgray);
+            text-align: center; margin-top: 10px; line-height: 1.5;
+        }
+        .form-success {
+            display: none; text-align: center; padding: 48px 32px;
+            background: rgba(201,75,26,0.05);
+            border: 1px solid rgba(201,75,26,0.2); border-radius: 4px;
+        }
+        .form-success h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem; color: var(--ember); margin-bottom: 10px;
+        }
+        .form-success p { font-size: 0.85rem; color: var(--gray); }
+
+        /* FOOTER */
+        .footer {
+            background: var(--charcoal);
+            padding: 56px 0 28px;
+            border-top: 3px solid var(--ember);
+        }
+        .footer-top {
+            max-width: 1100px; margin: 0 auto;
+            padding: 0 40px 40px;
+            display: grid; grid-template-columns: 2fr 1fr 1fr;
+            gap: 48px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+        .footer-brand-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem; font-weight: 700;
+            color: var(--honey); margin-bottom: 12px;
+        }
+        .footer-brand p { font-size: 0.78rem; color: rgba(255,249,242,0.38); line-height: 1.7; }
+        .footer-col h5 {
+            font-size: 0.65rem; font-weight: 600;
+            letter-spacing: 0.2em; text-transform: uppercase;
+            color: var(--ember); margin-bottom: 16px;
+        }
+        .footer-col a, .footer-col span {
+            display: block; font-size: 0.78rem;
+            color: rgba(255,249,242,0.38); padding: 4px 0;
+            transition: color 0.2s;
+        }
+        .footer-col a:hover { color: var(--honey); }
+        .footer-bottom {
+            max-width: 1100px; margin: 0 auto;
+            padding: 22px 40px 0;
+            display: flex; justify-content: space-between;
+            align-items: center; font-size: 0.7rem;
+            color: rgba(255,249,242,0.18); flex-wrap: wrap; gap: 10px;
+        }
+        .footer-bottom a { color: rgba(255,249,242,0.18); transition: color 0.2s; }
+        .footer-bottom a:hover { color: rgba(232,160,48,0.6); }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .nav-links { display: none; }
+            .hamburger { display: flex; }
+            .reviews-grid { grid-template-columns: repeat(2, 1fr); }
+            .footer-top { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 600px) {
+            .nav { padding: 0 20px; }
+            .inner { padding: 0 20px; }
+            .reviews-hero { padding: 48px 20px 40px; }
+            .reviews-grid { grid-template-columns: 1fr; gap: 16px; }
+            .form-row { grid-template-columns: 1fr; }
+            .submit-inner { padding: 0 20px; }
+            .footer-top { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+    <a href="index.html" class="nav-brand"><img src="Logo/NEW_MC_LOGO.PNG" alt="Maxwell's Candles"></a>
+    <ul class="nav-links">
+        <li><a href="index.html#collection">Our Candles</a></li>
+        <li><a href="index.html#our-story">Our Story</a></li>
+        <li><a href="reviews.html" class="active">Reviews</a></li>
+        <li><a href="index.html#order">Order</a></li>
+    </ul>
+    <a href="index.html#order" class="nav-cta">Order Now</a>
+    <div class="hamburger" id="hamburger">
+        <span></span><span></span><span></span>
+    </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-close" id="mobileClose">&times;</button>
+    <a href="index.html#collection">Our Candles</a>
+    <a href="index.html#our-story">Our Story</a>
+    <a href="reviews.html">Reviews</a>
+    <a href="index.html#order">Order Now</a>
+</div>
+
+<!-- HERO -->
+<div class="reviews-hero">
+    <p class="eyebrow">&#9670; Customer Reviews &#9670;</p>
+    <h1>What People Are Saying</h1>
+    <p>Real reviews from real people who actually burn these candles. Probably.</p>
+</div>
+
+<!-- REVIEWS -->
+<section class="reviews-section">
+    <div class="inner">
+        <div>
+            <p class="section-eyebrow">Verified Buyers</p>
+            <h2 class="section-title">The Verdict</h2>
+            <p class="section-sub">Add reviews below by replacing the placeholder content. Add a photo by saving the image to the repo folder and updating the <code>src</code>.</p>
+        </div>
+
+        <div class="reviews-grid">
+
+            <!-- REVIEW 1 — replace content as needed -->
+            <div class="review-card">
+                <div class="review-header">
+                    <!-- To add a photo: replace the div below with:
+                         <img src="Reviews/photo_name.jpg" class="reviewer-photo" alt="Reviewer name"> -->
+                    <div class="reviewer-photo-placeholder">🐾</div>
+                    <div class="reviewer-info">
+                        <div class="reviewer-name">Sarah M.</div>
+                        <div class="reviewer-scent">Ocean Mist &amp; Sea Salt</div>
+                    </div>
+                </div>
+                <div class="paw-rating">
+                    🐾🐾🐾🐾🐾
+                </div>
+                <p class="review-text">This candle completely transformed my living room. The scent throw is insane — I lit it once and my whole apartment smelled like the beach for two days.</p>
+                <div class="review-date">June 2025</div>
+            </div>
+
+            <!-- REVIEW 2 -->
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="reviewer-photo-placeholder">🐾</div>
+                    <div class="reviewer-info">
+                        <div class="reviewer-name">Marcus T.</div>
+                        <div class="reviewer-scent">Thug Life</div>
+                    </div>
+                </div>
+                <div class="paw-rating">
+                    🐾🐾🐾🐾🐾
+                </div>
+                <p class="review-text">Bought this as a joke gift and now I own three of them. The name alone makes it worth it, but the scent is legitimately incredible. Smoky, warm, and masculine.</p>
+                <div class="review-date">May 2025</div>
+            </div>
+
+            <!-- REVIEW 3 -->
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="reviewer-photo-placeholder">🐾</div>
+                    <div class="reviewer-info">
+                        <div class="reviewer-name">Jennifer R.</div>
+                        <div class="reviewer-scent">Capri Blue</div>
+                    </div>
+                </div>
+                <div class="paw-rating">
+                    🐾🐾🐾🐾🐾
+                </div>
+                <p class="review-text">I've been searching for a dupe of a popular luxury candle for years. Maxwell's Capri Blue is better. I said what I said.</p>
+                <div class="review-date">April 2025</div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<hr class="divider">
+
+<!-- SUBMIT FORM -->
+<section class="submit-section">
+    <div class="submit-inner">
+        <p class="section-eyebrow">Leave a Review</p>
+        <h2 class="section-title">Share Your Experience</h2>
+        <p class="section-sub" style="margin-bottom: 36px;">Loved your candle? Let the world know. Or don't. But please do.</p>
+
+        <form id="reviewForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="r-name">Your Name</label>
+                    <input type="text" id="r-name" name="name" placeholder="Jane Smith" required>
+                </div>
+                <div class="form-group">
+                    <label for="r-scent">Scent Purchased</label>
+                    <select id="r-scent" name="scent">
+                        <option value="" disabled selected>Select a scent</option>
+                        <option>Apple Cinnamon</option>
+                        <option>Banana Nut Bread</option>
+                        <option>Beachwood</option>
+                        <option>Bergamot Berry</option>
+                        <option>Bergamot Element</option>
+                        <option>Brunson Burner</option>
+                        <option>Campfire Marshmallow</option>
+                        <option>Capri Blue</option>
+                        <option>Cashmere Pumpkin</option>
+                        <option>Cinnamon Spiced Vanilla</option>
+                        <option>Cinnamon Stick</option>
+                        <option>Citronella</option>
+                        <option>Coconut &amp; Santal</option>
+                        <option>Coffee Beans</option>
+                        <option>The Cool Down</option>
+                        <option>Dragon's Blood</option>
+                        <option>The Final Rose</option>
+                        <option>Foraged Red Currant</option>
+                        <option>Fresh Cut Grass</option>
+                        <option>Golden Hour</option>
+                        <option>Grapefruit &amp; Mangosteen</option>
+                        <option>Hot Apple Pie</option>
+                        <option>Library</option>
+                        <option>Matcha &amp; Bergamot</option>
+                        <option>Maxwell House</option>
+                        <option>Ocean Mist &amp; Sea Salt</option>
+                        <option>Pomegranate Noir</option>
+                        <option>Sandalwood</option>
+                        <option>Spa Day</option>
+                        <option>Speakeasy</option>
+                        <option>Spiced Honey &amp; Tonka</option>
+                        <option>Sweet Strawberry</option>
+                        <option>Thug Life</option>
+                        <option>White Oak &amp; Vanilla</option>
+                        <option>Work From Home</option>
+                    </select>
+                </div>
+            </div>
+
+            <label class="paw-picker-label">Your Rating</label>
+            <div class="paw-picker" id="pawPicker">
+                <input type="radio" name="rating" id="paw1" value="1 paw">
+                <label for="paw1" title="1 paw">🐾</label>
+                <input type="radio" name="rating" id="paw2" value="2 paws">
+                <label for="paw2" title="2 paws">🐾</label>
+                <input type="radio" name="rating" id="paw3" value="3 paws">
+                <label for="paw3" title="3 paws">🐾</label>
+                <input type="radio" name="rating" id="paw4" value="4 paws">
+                <label for="paw4" title="4 paws">🐾</label>
+                <input type="radio" name="rating" id="paw5" value="5 paws" checked>
+                <label for="paw5" title="5 paws">🐾</label>
+            </div>
+
+            <div class="form-full">
+                <label for="r-review">Your Review</label>
+                <textarea id="r-review" name="review" placeholder="Tell us what you thought about your candle..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit">Submit My Review</button>
+            <p class="form-note">Reviews are read before being published. We appreciate the kind words — and the honest ones too.</p>
+        </form>
+
+        <div class="form-success" id="reviewSuccess">
+            <h3>Thank You!</h3>
+            <p>Your review has been received. We'll read it and add it to the page soon.</p>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-top">
+        <div class="footer-brand">
+            <img src="Logo/MC_Logo.PNG" alt="Maxwell's Candles" style="height:90px;width:auto;margin-bottom:12px;opacity:0.9;">
+            <p>Hand-crafted coconut apricot wax candles with wooden wicks. Melted with the intensity of a thousand suns, poured with a warrior's focus.</p>
+        </div>
+        <div class="footer-col">
+            <h5>Shop</h5>
+            <a href="index.html#collection">All Scents</a>
+        </div>
+        <div class="footer-col">
+            <h5>Contact</h5>
+            <a href="index.html#order">Place an Order</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>&copy; 2026 Maxwell's Candles. All rights reserved.</span>
+        <a href="https://theblackcarsociety.com">theblackcarsociety.com</a>
+    </div>
+</footer>
+
+<script>
+    // Mobile menu
+    const hamburger     = document.getElementById('hamburger');
+    const mobileMenu    = document.getElementById('mobileMenu');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const mobileClose   = document.getElementById('mobileClose');
+    function openMenu()  { mobileMenu.classList.add('open');    mobileOverlay.classList.add('open');    document.body.style.overflow = 'hidden'; }
+    function closeMenu() { mobileMenu.classList.remove('open'); mobileOverlay.classList.remove('open'); document.body.style.overflow = ''; }
+    hamburger.addEventListener('click', openMenu);
+    mobileClose.addEventListener('click', closeMenu);
+    mobileOverlay.addEventListener('click', closeMenu);
+    mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+
+    // Paw rating picker
+    const pawLabels = document.querySelectorAll('#pawPicker label');
+    function updatePaws(index) {
+        pawLabels.forEach((lbl, i) => {
+            lbl.classList.toggle('active', i <= index);
+        });
+    }
+    // Default: all 5 active
+    updatePaws(4);
+    pawLabels.forEach((lbl, i) => {
+        lbl.addEventListener('click', () => updatePaws(i));
+        lbl.addEventListener('mouseenter', () => updatePaws(i));
+    });
+    document.getElementById('pawPicker').addEventListener('mouseleave', () => {
+        const checked = document.querySelector('#pawPicker input[type="radio"]:checked');
+        if (checked) {
+            const idx = [...document.querySelectorAll('#pawPicker input')].indexOf(checked);
+            updatePaws(idx);
+        }
+    });
+
+    // Form submit
+    const reviewForm = document.getElementById('reviewForm');
+    reviewForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = reviewForm.querySelector('.btn-submit');
+        btn.textContent = 'Sending…';
+        btn.disabled = true;
+
+        const data = new FormData(reviewForm);
+        try {
+            const res = await fetch('https://formspree.io/f/xeewbabr', {
+                method: 'POST',
+                body: data,
+                headers: { 'Accept': 'application/json' }
+            });
+            if (res.ok) {
+                reviewForm.style.display = 'none';
+                document.getElementById('reviewSuccess').style.display = 'block';
+            } else {
+                btn.textContent = 'Submit My Review';
+                btn.disabled = false;
+                alert('Something went wrong. Please try again.');
+            }
+        } catch {
+            btn.textContent = 'Submit My Review';
+            btn.disabled = false;
+            alert('Something went wrong. Please try again.');
+        }
+    });
+</script>
+
+</body>
+</html>
