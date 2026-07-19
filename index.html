@@ -141,6 +141,7 @@
         .hero-img {
             width: 100%; height: 100%;
             object-fit: contain; object-position: center center;
+            transition: opacity 1.5s ease;
         }
         .hero-overlay {
             position: absolute; inset: 0;
@@ -1499,6 +1500,28 @@ function toggleMusic() {
             alert('Something went wrong. Please try again or email us directly at ahagisavas@gmail.com');
         }
     });
+</script>
+
+<script>
+    (function() {
+        var vid = document.querySelector('.hero-img');
+        if (!vid) return;
+        var fadeTime = 1.5;
+        vid.addEventListener('timeupdate', function() {
+            var remaining = vid.duration - vid.currentTime;
+            if (remaining <= fadeTime) {
+                vid.style.opacity = remaining / fadeTime;
+            } else {
+                vid.style.opacity = 1;
+            }
+        });
+        vid.addEventListener('seeking', function() {
+            if (vid.currentTime < fadeTime) {
+                vid.style.opacity = 0;
+                setTimeout(function() { vid.style.opacity = 1; }, 50);
+            }
+        });
+    })();
 </script>
 
 </body>
