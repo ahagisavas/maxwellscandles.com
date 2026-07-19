@@ -424,6 +424,7 @@
     <div class="inner">
         <div style="text-align:center;">
             <h2 class="section-title">The Verdict</h2>
+            <p id="avg-rating" style="font-size:1.1rem;color:#5c3828;margin-top:0.25rem;"></p>
         </div>
 
         <div class="reviews-grid">
@@ -798,6 +799,28 @@
             alert('Something went wrong. Please try again.');
         }
     });
+</script>
+
+<script>
+    (function() {
+        var cards = document.querySelectorAll('.review-card');
+        var total = 0, count = 0;
+        cards.forEach(function(card) {
+            var filled = card.querySelectorAll('.paw-rating .paw-icon:not(.paw-empty)').length;
+            total += filled;
+            count++;
+        });
+        if (count > 0) {
+            var avg = (total / count).toFixed(1);
+            var paws = '';
+            for (var i = 0; i < 5; i++) {
+                paws += i < Math.round(total / count)
+                    ? '<svg style="width:18px;height:18px;fill:#5c3828;vertical-align:middle"><use href="#paw"/></svg>'
+                    : '<svg style="width:18px;height:18px;fill:#5c3828;opacity:0.18;vertical-align:middle"><use href="#paw"/></svg>';
+            }
+            document.getElementById('avg-rating').innerHTML = paws + ' &nbsp;<strong>' + avg + '</strong> / 5';
+        }
+    })();
 </script>
 
 </body>
