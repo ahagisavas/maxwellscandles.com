@@ -287,10 +287,9 @@
         .paw-picker:hover label { opacity: 0.25; }
         .paw-picker label:hover,
         .paw-picker label:hover ~ label { opacity: 0.25; }
-        .paw-picker input[type="radio"]:checked ~ label { opacity: 0.25; }
 
-        /* JS-driven active state */
-        .paw-picker label.active { opacity: 1; transform: scale(1.15); }
+        /* JS-driven active state — !important ensures it beats all sibling selectors */
+        .paw-picker label.active { opacity: 1 !important; transform: scale(1.15); }
 
         .btn-submit {
             width: 100%; font-size: 0.86rem; font-weight: 600;
