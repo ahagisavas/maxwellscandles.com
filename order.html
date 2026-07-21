@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place an Order | Maxwell's Candles</title>
+    <meta property="og:title" content="Place an Order | Maxwell's Candles">
+    <meta property="og:description" content="Order hand-crafted coconut apricot wax candles with wooden wicks. Choose your scents and we'll be in touch.">
+    <meta property="og:url" content="https://maxwellscandles.com/order">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://maxwellscandles.com/Logo/MC_LOGO_Square.PNG">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://maxwellscandles.com/Logo/MC_LOGO_Square.PNG">
+    <link rel="apple-touch-icon" href="https://maxwellscandles.com/Logo/MC_LOGO_Square.PNG">
+    <link rel="icon" type="image/png" href="https://maxwellscandles.com/Logo/MC_LOGO_ROUND2.PNG">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ember:    #c94b1a;
+            --ember-d:  #9e3610;
+            --honey:    #e8a030;
+            --cream:    #fdf5eb;
+            --ivory:    #fff9f2;
+            --charcoal: #1e0e05;
+            --bark:     #5c3828;
+            --gray:     #8a6a58;
+            --lgray:    #c8ae9e;
+            --nav-h:    90px;
+            --ease:     cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; font-size: 16px; }
+        body {
+            font-family: 'Poppins', -apple-system, sans-serif;
+            background: var(--ivory);
+            color: var(--charcoal);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; }
+
+        /* NAV */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--nav-h); z-index: 900;
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            background: var(--charcoal);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.35);
+        }
+        .nav-brand img {
+            height: 75px; width: auto;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+            transition: opacity 0.2s;
+            margin-top: 8px;
+        }
+        .nav-brand img:hover { opacity: 0.85; }
+        .nav-links {
+            display: flex; align-items: center; gap: 32px;
+            position: absolute; left: 50%; transform: translateX(-50%);
+        }
+        .nav-links a {
+            font-size: 0.75rem; font-weight: 500;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            color: rgba(255,255,255,0.85); transition: color 0.2s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--honey); }
+        .nav-cta {
+            font-size: 0.72rem; font-weight: 600;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            background: linear-gradient(to top, #7a1a00, #c0390a, #e8600a, #f5a623, #ffe066); color: #fff;
+            padding: 10px 26px; border-radius: 30px;
+            border: none; cursor: pointer;
+            transition: filter 0.2s;
+            display: inline-block; text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+        .nav-cta:hover { filter: brightness(1.15); }
+        .hamburger {
+            display: none; flex-direction: column;
+            gap: 5px; cursor: pointer; padding: 6px;
+        }
+        .hamburger span {
+            display: block; width: 22px; height: 1.5px;
+            background: var(--honey); transition: all 0.3s;
+        }
+        .mobile-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            z-index: 999; opacity: 0; pointer-events: none;
+            transition: opacity 0.35s;
+        }
+        .mobile-overlay.open { opacity: 1; pointer-events: all; }
+        .mobile-menu {
+            position: fixed; top: 0; right: -280px; width: 280px; height: 100%;
+            background: var(--charcoal); z-index: 1000;
+            display: flex; flex-direction: column;
+            padding: 80px 32px 40px;
+            gap: 28px; transition: right 0.35s var(--ease);
+        }
+        .mobile-menu.open { right: 0; }
+        .mobile-menu a {
+            font-size: 0.85rem; font-weight: 500;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            color: rgba(255,255,255,0.85);
+        }
+        .mobile-close {
+            position: absolute; top: 24px; right: 24px;
+            background: none; border: none; color: var(--honey);
+            font-size: 1.6rem; cursor: pointer;
+        }
+
+        /* MAIN */
+        .page-wrap {
+            padding-top: calc(var(--nav-h) + 48px);
+            padding-bottom: 80px;
+            max-width: 720px;
+            margin: 0 auto;
+            padding-left: 24px;
+            padding-right: 24px;
+        }
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 6vw, 3rem);
+            font-weight: 700;
+            background: linear-gradient(to top, #111111, #888888);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .page-sub {
+            text-align: center;
+            font-size: 0.88rem;
+            color: var(--gray);
+            margin-bottom: 40px;
+            font-style: italic;
+        }
+
+        /* FORM */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .form-group { }
+        .form-full  { margin-bottom: 14px; }
+        .form-group label, .form-full label, .scents-label {
+            display: block; font-size: 0.65rem; font-weight: 600;
+            letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--bark); margin-bottom: 6px;
+        }
+        .scents-label {
+            font-size: 1rem; font-weight: 700; font-style: normal;
+            text-transform: none; letter-spacing: 0;
+        }
+        .form-group input,
+        .form-group select,
+        .form-full textarea {
+            width: 100%; background: #fff;
+            border: 1px solid rgba(92,56,40,0.2); border-radius: 2px;
+            padding: 12px 14px; font-family: 'Poppins', sans-serif;
+            font-size: 0.84rem; color: var(--charcoal); outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input::placeholder, .form-full textarea::placeholder { color: var(--lgray); }
+        .form-group input:focus, .form-group select:focus, .form-full textarea:focus { border-color: var(--ember); }
+        .form-group select option { background: #fff; }
+        .form-full textarea { min-height: 96px; resize: vertical; }
+        .scents-block { margin-bottom: 14px; }
+        .scents-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .scent-chk {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.77rem; color: var(--bark);
+            cursor: pointer; padding: 6px 8px; border-radius: 2px;
+            border: 1px solid transparent;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .scent-chk:hover {
+            border-color: rgba(201,75,26,0.2);
+            background: rgba(201,75,26,0.04);
+        }
+        .scent-chk input[type="checkbox"] {
+            accent-color: var(--ember); width: 14px; height: 14px; cursor: pointer; flex-shrink: 0;
+        }
+        .form-submit { margin-top: 22px; }
+        .btn-submit {
+            width: 100%; font-size: 0.86rem; font-weight: 600;
+            padding: 16px; border-radius: 30px;
+            background: linear-gradient(to bottom, #7a1a00, #c0390a, #e8600a, #f5a623, #ffe066); color: #fff;
+            border: none; cursor: pointer;
+            transition: filter 0.2s;
+            text-transform: uppercase; letter-spacing: 0.1em;
+        }
+        .btn-submit:hover { filter: brightness(1.15); }
+        .form-note {
+            font-size: 0.7rem; color: var(--lgray);
+            text-align: center; margin-top: 10px; line-height: 1.5;
+        }
+        .form-success {
+            display: none; text-align: center; padding: 48px 32px;
+            background: rgba(201,75,26,0.05);
+            border: 1px solid rgba(201,75,26,0.2); border-radius: 4px;
+        }
+        .form-success h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem; color: var(--ember); margin-bottom: 10px;
+        }
+        .form-success p { font-size: 0.85rem; color: var(--gray); }
+
+        /* FOOTER */
+        .footer {
+            background: var(--charcoal);
+            padding: 24px 0 28px;
+            border-top: 3px solid var(--ember);
+        }
+        .footer-top {
+            max-width: 1100px; margin: 0 auto;
+            padding: 0 40px 40px;
+            display: block;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+        .footer-brand p { font-size: 0.78rem; color: rgba(255,249,242,0.38); line-height: 1.7; }
+        .footer-bottom {
+            max-width: 1100px; margin: 0 auto;
+            padding: 22px 40px 0;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.7rem;
+            color: rgba(255,249,242,0.18); flex-wrap: wrap; gap: 10px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 700px) {
+            .nav { padding: 0 20px; }
+            .nav-links { display: none; }
+            .hamburger { display: flex; }
+            .form-row { grid-template-columns: 1fr; }
+            .scents-grid { grid-template-columns: 1fr 1fr; }
+            .page-wrap { padding-left: 20px; padding-right: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav class="nav" id="mainNav">
+    <a href="index.html" class="nav-brand"><img src="Logo/MC_LOGO_ROUND2.PNG" alt="Maxwell's Candles"></a>
+    <ul class="nav-links">
+        <li><a href="index.html#collection">Our Candles</a></li>
+        <li><a href="index.html#our-story">Our Story</a></li>
+        <li><a href="reviews.html">Reviews</a></li>
+        <li><a href="order.html" class="active">Order</a></li>
+    </ul>
+    <a href="order.html" class="nav-cta active">Order Now</a>
+    <div class="hamburger" id="hamburger">
+        <span></span><span></span><span></span>
+    </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-close" id="mobileClose">&times;</button>
+    <a href="index.html">Home</a>
+    <a href="index.html#collection">Our Candles</a>
+    <a href="index.html#our-story">Our Story</a>
+    <a href="reviews.html">Reviews</a>
+    <a href="order.html">Order Now</a>
+</div>
+
+<!-- ORDER FORM -->
+<div class="page-wrap">
+    <h1 class="page-title">Ready to Order?</h1>
+    <p class="page-sub">Fill out the form, hit submit, and hope that I receive it.</p>
+
+    <form id="orderForm">
+        <input type="hidden" name="_cc" value="6462871927@tmomail.net">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="f-name">Your Name</label>
+                <input type="text" id="f-name" name="name" placeholder="Jane Smith" required>
+            </div>
+            <div class="form-group">
+                <label for="f-email">Email Address</label>
+                <input type="email" id="f-email" name="email" placeholder="you@example.com" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="f-phone">Phone (optional)</label>
+                <input type="tel" id="f-phone" name="phone" placeholder="(555) 000-0000">
+            </div>
+            <div class="form-group">
+                <label for="f-qty">Quantity</label>
+                <select id="f-qty" name="quantity">
+                    <option>1 candle</option>
+                    <option>2 candles</option>
+                    <option>3 candles</option>
+                    <option>4 candles</option>
+                    <option>5+ candles (bulk)</option>
+                </select>
+            </div>
+        </div>
+        <div class="scents-block form-full">
+            <span class="scents-label">Scents I'm Interested In:</span>
+            <div class="scents-grid">
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Apple Cinnamon"> Apple Cinnamon</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Banana Nut Bread"> Banana Nut Bread</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Beachwood"> Beachwood</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Bergamot Berry"> Bergamot Berry</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Bergamot Element"> Bergamot Element</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Brunson Burner"> Brunson Burner</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Campfire Marshmallow"> Campfire Marshmallow</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Capri Blue"> Capri Blue</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Cashmere Pumpkin"> Cashmere Pumpkin</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Cinnamon Spiced Vanilla"> Cinnamon Spiced Vanilla</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Cinnamon Stick"> Cinnamon Stick</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Citronella"> Citronella</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Coconut & Santal"> Coconut &amp; Santal</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Coffee Beans"> Coffee Beans</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="The Cool Down"> The Cool Down</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Dragon's Blood"> Dragon's Blood</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="The Final Rose"> The Final Rose</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Foraged Red Currant"> Foraged Red Currant</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Fresh Cut Grass"> Fresh Cut Grass</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Golden Hour"> Golden Hour</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Grapefruit & Mangosteen"> Grapefruit &amp; Mangosteen</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Hot Apple Pie"> Hot Apple Pie</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Library"> Library</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Matcha & Bergamot"> Matcha &amp; Bergamot</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Maxwell House"> Maxwell House</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Ocean Mist & Sea Salt"> Ocean Mist &amp; Sea Salt</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Peach on Earth"> Peach on Earth</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Pomegranate Noir"> Pomegranate Noir</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Sandalwood"> Sandalwood</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Spa Day"> Spa Day</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Speakeasy"> Speakeasy</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Spiced Honey & Tonka"> Spiced Honey &amp; Tonka</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Sweet Strawberry"> Sweet Strawberry</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Thug Life"> Thug Life</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="White Oak & Vanilla"> White Oak &amp; Vanilla</label>
+                <label class="scent-chk"><input type="checkbox" name="scents" value="Work From Home"> Work From Home</label>
+            </div>
+        </div>
+        <div class="form-full">
+            <label for="f-address">Delivery Address <span style="font-weight:400; color:var(--lgray); font-size:0.78rem;">(Optional)</span></label>
+            <div class="form-group" style="margin-bottom:10px;">
+                <input type="text" id="f-address" name="address_street" placeholder="Street Address">
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:14px; margin-bottom:0;">
+                <div class="form-group">
+                    <input type="text" name="address_city" placeholder="City">
+                </div>
+                <div class="form-group">
+                    <select name="address_state">
+                        <option value="" disabled selected>State</option>
+                        <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DC</option><option>DE</option><option>FL</option><option>GA</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="address_zip" placeholder="Zip Code">
+                </div>
+            </div>
+        </div>
+        <div class="form-full">
+            <label for="f-msg">Message / Special Requests</label>
+            <textarea id="f-msg" name="message" placeholder="Any special instructions? Let us know here."></textarea>
+        </div>
+        <div class="form-submit">
+            <button type="submit" class="btn-submit">Submit My Order Request</button>
+            <p class="form-note">We'll respond within 24 hours, or before that or possibly never.</p>
+        </div>
+    </form>
+    <div class="form-success" id="formSuccess">
+        <h3>Thank You!</h3>
+        <p>Your order request has been received. We'll be in touch within 24 hours.</p>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-top">
+        <div class="footer-brand" style="text-align:center;">
+            <img src="Logo/MC_Logo.PNG" alt="Maxwell's Candles" style="height:180px;width:auto;margin-bottom:12px;opacity:0.9;">
+            <p>Hand-crafted coconut apricot wax candles with wooden wicks. Melted with the intensity of a thousand suns, poured with a warrior's focus, and destined to outperform every other candle you've ever burned.</p>
+            <a href="order.html" style="display:inline-block;margin-top:20px;padding:14px 32px;background:linear-gradient(to top, #7a1a00, #c0390a, #e8600a, #f5a623, #ffe066);color:#fff;font-size:0.85rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;border-radius:30px;text-decoration:none;transition:filter 0.2s;text-shadow:0 1px 4px rgba(0,0,0,0.5);" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter='brightness(1)'">Place an Order</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>&copy; 2026 Maxwell's Candles. All rights reserved.</span>
+    </div>
+</footer>
+
+<script>
+    // MOBILE MENU
+    const hamburger     = document.getElementById('hamburger');
+    const mobileMenu    = document.getElementById('mobileMenu');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const mobileClose   = document.getElementById('mobileClose');
+
+    function openMenu()  { mobileMenu.classList.add('open');    mobileOverlay.classList.add('open');    document.body.style.overflow = 'hidden'; }
+    function closeMenu() { mobileMenu.classList.remove('open'); mobileOverlay.classList.remove('open'); document.body.style.overflow = ''; }
+
+    hamburger.addEventListener('click', openMenu);
+    mobileClose.addEventListener('click', closeMenu);
+    mobileOverlay.addEventListener('click', closeMenu);
+    mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+
+    // ORDER FORM → Formspree
+    const orderForm = document.getElementById('orderForm');
+    orderForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = orderForm.querySelector('.btn-submit');
+        btn.textContent = 'Sending…';
+        btn.disabled = true;
+
+        const data = new FormData(orderForm);
+        try {
+            const res = await fetch('https://formspree.io/f/xeewbabr', {
+                method: 'POST',
+                body: data,
+                headers: { 'Accept': 'application/json' }
+            });
+            if (res.ok) {
+                orderForm.style.display = 'none';
+                document.getElementById('formSuccess').style.display = 'block';
+            } else {
+                btn.textContent = 'Submit My Order Request';
+                btn.disabled = false;
+                alert('Something went wrong. Please try again or email us directly.');
+            }
+        } catch {
+            btn.textContent = 'Submit My Order Request';
+            btn.disabled = false;
+            alert('Something went wrong. Please try again or email us directly.');
+        }
+    });
+</script>
+</body>
+</html>
