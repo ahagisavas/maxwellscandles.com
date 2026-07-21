@@ -86,13 +86,13 @@
         .nav-cta {
             font-size: 0.72rem; font-weight: 600;
             letter-spacing: 0.1em; text-transform: uppercase;
-            background: var(--ember); color: #fff;
-            padding: 10px 26px; border-radius: 2px;
+            background: linear-gradient(to top, #7a1a00, #c0390a, #e8600a, #f5a623, #ffe066); color: #fff;
+            padding: 10px 26px; border-radius: 30px;
             border: none; cursor: pointer;
-            transition: background 0.2s;
-            display: inline-block;
+            transition: filter 0.2s;
+            display: inline-block; text-shadow: 0 1px 4px rgba(0,0,0,0.5);
         }
-        .nav-cta:hover { background: var(--ember-d); }
+        .nav-cta:hover { filter: brightness(1.15); }
         .hamburger {
             display: none; flex-direction: column;
             gap: 5px; cursor: pointer; padding: 6px;
@@ -564,13 +564,13 @@
         .form-submit { margin-top: 22px; }
         .btn-submit {
             width: 100%; font-size: 0.86rem; font-weight: 600;
-            padding: 16px; border-radius: 2px;
-            background: var(--ember); color: #fff;
+            padding: 16px; border-radius: 30px;
+            background: linear-gradient(to bottom, #7a1a00, #c0390a, #e8600a, #f5a623, #ffe066); color: #fff;
             border: none; cursor: pointer;
             transition: background 0.2s;
             text-transform: uppercase; letter-spacing: 0.1em;
         }
-        .btn-submit:hover { background: var(--ember-d); }
+        .btn-submit:hover { filter: brightness(1.15); }
         .form-note {
             font-size: 0.7rem; color: var(--lgray);
             text-align: center; margin-top: 10px; line-height: 1.5;
@@ -589,13 +589,13 @@
         /* â”€â”€ FOOTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .footer {
             background: var(--charcoal);
-            padding: 56px 0 28px;
+            padding: 24px 0 28px;
             border-top: 3px solid var(--ember);
         }
         .footer-top {
             max-width: 1100px; margin: 0 auto;
             padding: 0 40px 40px;
-            display: grid; grid-template-columns: 2fr 1fr 1fr;
+            display: block;
             gap: 48px;
             border-bottom: 1px solid rgba(255,255,255,0.07);
         }
@@ -1266,7 +1266,7 @@ function toggleMusic() {
 
 
 <!-- OUR STORY -->
-<section id="our-story" style="position:relative; padding: 100px 24px; overflow:hidden; background:#1a0800;">
+<section id="our-story" style="position:relative; padding: 100px 24px 48px; overflow:hidden; background:#1a0800;">
     <img src="HISTORY3.PNG" class="our-story-mobile-img" alt="">
     <div class="our-story-bg" style="position:absolute; inset:0; background:url('HISTORY.png') center center / cover no-repeat; opacity:0.55;"></div>
     <div class="our-story-overlay" style="position:absolute; inset:0; background: linear-gradient(to bottom, rgba(10,4,0,0.55) 0%, rgba(10,4,0,0.35) 50%, rgba(10,4,0,0.65) 100%);"></div>
@@ -1307,12 +1307,11 @@ function toggleMusic() {
 </section>
 
 <!-- ORDER FORM -->
-<section class="order-section section-pad" id="order">
+<section class="order-section section-pad" id="order" style="padding-top: 36px;">
     <div class="inner">
         <div class="text-center fade-up">
-            <p class="section-eyebrow">Contact to Order</p>
-            <h2 class="section-title">Ready to Order?</h2>
-            <p class="section-sub">Fill out the form, hit submit, and pray that I receive it.</p>
+            <h2 class="section-title" style="background:linear-gradient(to top, #111111, #888888);-webkit-background-clip:text;background-clip:text;color:transparent;">Ready to Order?</h2>
+            <p class="section-sub"><em>Fill out the form, hit submit, and hope that I receive it.</em></p>
         </div>
         <div class="order-wrapper">
             <div class="fade-up">
@@ -1365,6 +1364,7 @@ function toggleMusic() {
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Dragon's Blood"> Dragon's Blood</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="The Final Rose"> The Final Rose</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Foraged Red Currant"> Foraged Red Currant</label>
+                            <label class="scent-chk"><input type="checkbox" name="scents" value="Fresh Cut Grass"> Fresh Cut Grass</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Golden Hour"> Golden Hour</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Grapefruit & Mangosteen"> Grapefruit &amp; Mangosteen</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Hot Apple Pie"> Hot Apple Pie</label>
@@ -1372,15 +1372,16 @@ function toggleMusic() {
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Matcha & Bergamot"> Matcha &amp; Bergamot</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Maxwell House"> Maxwell House</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Ocean Mist & Sea Salt"> Ocean Mist &amp; Sea Salt</label>
+                            <label class="scent-chk"><input type="checkbox" name="scents" value="Peach on Earth"> Peach on Earth</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Pomegranate Noir"> Pomegranate Noir</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Sandalwood"> Sandalwood</label>
+                            <label class="scent-chk"><input type="checkbox" name="scents" value="Spa Day"> Spa Day</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Speakeasy"> Speakeasy</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Spiced Honey & Tonka"> Spiced Honey &amp; Tonka</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Sweet Strawberry"> Sweet Strawberry</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Thug Life"> Thug Life</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="White Oak & Vanilla"> White Oak &amp; Vanilla</label>
                             <label class="scent-chk"><input type="checkbox" name="scents" value="Work From Home"> Work From Home</label>
-                            <label class="scent-chk"><input type="checkbox" name="scents" value="Peach on Earth"> Peach on Earth</label>
                         </div>
                     </div>
                     <div class="form-full">
@@ -1424,25 +1425,14 @@ function toggleMusic() {
 <!-- FOOTER -->
 <footer class="footer">
     <div class="footer-top">
-        <div class="footer-brand">
-            <img src="Logo/MC_Logo.PNG" alt="Maxwell's Candles" style="height:90px;width:auto;margin-bottom:12px;opacity:0.9;">
+        <div class="footer-brand" style="text-align:center;">
+            <img src="Logo/MC_Logo.PNG" alt="Maxwell's Candles" style="height:180px;width:auto;margin-bottom:12px;opacity:0.9;">
             <p>Hand-crafted coconut apricot wax candles with wooden wicks. Melted with the intensity of a thousand suns, poured with a warrior's focus, and destined to outperform every other candle you've ever burned.</p>
-        </div>
-        <div class="footer-col">
-            <h5>Shop</h5>
-            <a href="#collection">All Scents</a>
-            <a href="#collection">Warm &amp; Spicy</a>
-            <a href="#collection">Fresh &amp; Clean</a>
-            <a href="#collection">Rich &amp; Deep</a>
-        </div>
-        <div class="footer-col">
-            <h5>Contact</h5>
-            <a href="#order">Place an Order</a>
+            <a href="#order" style="display:inline-block;margin-top:20px;padding:14px 32px;background:linear-gradient(to top, #7a1a00, #c0390a, #e8600a, #f5a623, #ffe066);color:#fff;font-size:0.85rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;border-radius:30px;text-decoration:none;transition:filter 0.2s;text-shadow:0 1px 4px rgba(0,0,0,0.5);" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter='brightness(1)'">Place an Order</a>
         </div>
     </div>
     <div class="footer-bottom">
         <span>&copy; 2026 Maxwell's Candles. All rights reserved.</span>
-        <a href="https://theblackcarsociety.com">theblackcarsociety.com</a>
     </div>
 </footer>
 
