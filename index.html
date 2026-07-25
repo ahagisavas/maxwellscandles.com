@@ -1358,8 +1358,7 @@ function toggleMusic() {
     document.querySelectorAll('.product-card .product-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const scent = btn.closest('.product-card').dataset.scent;
-            const checkbox = document.querySelector(`.scent-chk input[value="${scent}"]`);
-            if (checkbox) checkbox.checked = true;
+            window.location.href = 'order.html?scent=' + encodeURIComponent(scent);
         });
     });
 

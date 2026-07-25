@@ -436,5 +436,13 @@
         }
     });
 </script>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const preScent = params.get('scent');
+    if (preScent) {
+        const checkbox = document.querySelector(`.scent-chk input[value="${preScent}"]`);
+        if (checkbox) checkbox.checked = true;
+    }
+</script>
 </body>
 </html>
