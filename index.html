@@ -708,7 +708,7 @@
 
 <script>
 var playlist = ['Maxwell_ThugLife.MP4', 'Puppy_In_Armor.MP4', 'Maxwell_CavemanFire.MP4', 'Wood_Wick_Heavy.MP4', 'King_of_the_Wick.MP4', 'Beast_In_Jar.MP4'];
-var currentTrack = 0;
+var currentTrack = -1;
 
 var audio = document.getElementById('bg-audio');
 audio.addEventListener('ended', function() {
@@ -720,6 +720,10 @@ audio.addEventListener('ended', function() {
 function toggleMusic() {
     var record = document.getElementById('record-img');
     if (audio.paused) {
+        if (currentTrack === -1) {
+            currentTrack = Math.floor(Math.random() * playlist.length);
+            audio.src = playlist[currentTrack];
+        }
         audio.play();
         record.classList.add('spinning');
     } else {
