@@ -926,7 +926,7 @@ const UI = (function () {
     const mapTable = el('mappingTable');
     let html = '<tr><th>Pasted Column</th><th>Maps To</th></tr>';
     parsedTable.headers.forEach((h,i)=>{
-      html += `<tr><td>${esc(h)}</td><td><select data-col="${i}" class="map-select">`;
+      html += `<tr><td>Col ${i+1}: ${esc(h)}</td><td><select data-col="${i}" class="map-select">`;
       Object.keys(Importer.FIELD_LABELS).forEach(field=>{
         const sel = parsedTable.mapping[i]===field ? 'selected' : '';
         html += `<option value="${field}" ${sel}>${esc(Importer.FIELD_LABELS[field])}</option>`;
