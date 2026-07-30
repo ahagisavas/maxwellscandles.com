@@ -351,6 +351,17 @@
             padding: 4px 10px; border-radius: 999px;
             z-index: 2;
         }
+        .too-soon-badge {
+            position: absolute; top: 14px; left: -44px;
+            width: 140px;
+            background: #9e4a22; color: #fff;
+            font-size: 0.55rem; font-weight: 700;
+            letter-spacing: 0.16em; text-transform: uppercase;
+            text-align: center; padding: 3px 0;
+            transform: rotate(-45deg);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+            z-index: 2;
+        }
         .coming-soon-badge {
             position: absolute; top: 22px; left: -38px;
             width: 140px;
@@ -909,7 +920,7 @@ function toggleMusic() {
             <div class="product-card fade-up" data-scent="Cashmere Pumpkin">
                 <div class="product-img">
                     <img loading="lazy" src="Scents/Cashmere Pumpkin.PNG" alt="Maxwell with Cashmere Pumpkin">
-                    <span class="coming-soon-badge">Too Soon</span>
+                    <span class="too-soon-badge">Too Soon</span>
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
