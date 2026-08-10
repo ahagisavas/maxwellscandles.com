@@ -1804,9 +1804,18 @@ const UI = (function () {
   // searched right now, so the numbers don't shift around as you narrow the table.
   function computeAdpDeltas(availableList) {
     const priced = sortPlayers(availableList.filter(p=>p.computed.valueSource!=='adp-only'), true);
+    // ADP is an absolute position across the whole draft (e.g. "32" out of ~180 picks). Rank among
+    // only what's currently available is a different, shrinking scale -- by pick 35, "8th among
+    // what's left" and "32nd overall" aren't comparable at all, and the gap between the two scales
+    // widens every pick. Converting to an equivalent overall-pick-number first (players already
+    // drafted + rank among what's left) puts both sides of the comparison on the same footing.
+    const alreadyDrafted = State.getPicks().length;
     const map = {};
     priced.forEach((p,i)=>{
-      if (typeof p.source.adp === 'number' && !isNaN(p.source.adp)) map[p.id] = p.source.adp - (i+1);
+      if (typeof p.source.adp === 'number' && !isNaN(p.source.adp)) {
+        const myOverallRank = alreadyDrafted + (i+1);
+        map[p.id] = p.source.adp - myOverallRank;
+      }
     });
     return map;
   }
