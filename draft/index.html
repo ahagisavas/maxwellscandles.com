@@ -104,6 +104,7 @@
   .src-adp-only { background: rgba(255,255,255,0.08); color: var(--text-faint); }
 
   .badge-env, .badge-adp { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-right: 4px; white-space: nowrap; cursor: help; }
+  .tier-scope { color: var(--accent); cursor: help; margin-left: 2px; }
   .env-up { background: rgba(52,199,89,0.15); color: var(--good); }
   .env-down { background: rgba(255,77,79,0.15); color: var(--bad); }
   .adp-value { background: rgba(79,158,255,0.15); color: var(--accent); }
@@ -311,9 +312,9 @@ function defaultSettings() {
   return {
     numTeams: 12,
     userSlot: 11,
-    totalRounds: 13,
+    totalRounds: 15,
     roster: {
-      slots: { QB: 1, RB: 2, WR: 2, TE: 1, FLEX: 1, K: 1, DEF: 1, BN: 3, IR: 1 },
+      slots: { QB: 1, RB: 2, WR: 3, TE: 1, FLEX: 1, K: 1, DEF: 1, BN: 4, IR: 1 },
       flexEligible: ['RB', 'WR', 'TE']
     },
     scoring: {
@@ -1125,10 +1126,18 @@ const VBD = (function () {
 
   // Generic gap-based clustering on any numeric accessor. Mutates '_tier' on each item, returns sorted array.
   function computeTiers(list, valueFn, gapThreshold) {
-    gapThreshold = gapThreshold || 0.5;
+    gapThreshold = gapThreshold || 0.2;
     const sorted = [...list].sort((a,b)=>valueFn(b)-valueFn(a));
     if (sorted.length === 0) return sorted;
-    const sd = stdDev(sorted.map(valueFn)) || 1;
+    // Basing the gap threshold on the whole list's spread badly overweights the long tail of
+    // bunched-up bench/replacement-level players every position has far more of than
+    // difference-making ones -- that inflated stdev made the threshold too coarse to ever trigger
+    // a break among the players who actually matter, collapsing dozens of them into one "tier".
+    // Base it on the top slice of the list instead, where the real separation actually lives.
+    // Rank-based (not a value>0 cutoff) so this works the same whether valueFn is VBD (can be
+    // negative) or -ADP (always negative).
+    const topSliceSize = Math.max(1, Math.min(sorted.length, Math.ceil(sorted.length*0.3)));
+    const sd = stdDev(sorted.slice(0, topSliceSize).map(valueFn)) || 1;
     const minGap = sd*gapThreshold;
     let tier = 1;
     sorted[0]._tier = 1;
@@ -1381,18 +1390,40 @@ const Recommend = (function () {
   // Shared staged scoring (need classification -> multiplier -> K/DEF late gate -> value*mult),
   // parameterized over which candidate pool to rank. `recommend` ranks the whole available pool;
   // `recommendByUrgency` ranks a pool pre-filtered down to players at risk of being gone soon.
+  // K/DEF aren't eligible to be picked at all until the last few rounds -- not just discouraged,
+  // genuinely off the table -- since taking one early is never correct regardless of "value": a
+  // kicker projected a few points better than the next kicker is still a wasted early pick when
+  // any bench skill-position player carries more upside. Once the window opens, they compete
+  // normally on need + value like anything else -- no artificial boost just for being late either.
+  const LATE_ROUND_WINDOW = 2; // "the final 2 rounds"
+  function isKDefEligible(currentRound, settings) {
+    return currentRound > (settings.totalRounds - LATE_ROUND_WINDOW);
+  }
+
   function scoreCandidates(candidates, userRoster, settings, currentRound, valueFn) {
     valueFn = valueFn || (p => p.computed.vbd);
     const rosterConfig = settings.roster;
-    const lateWindow = 3;
-    return candidates
-      .filter(p => p.computed.valueSource !== 'adp-only' && p.computed.vbd != null)
+    const kDefOk = isKDefEligible(currentRound, settings);
+    const pool = candidates.filter(p => {
+      if (p.computed.valueSource === 'adp-only' || p.computed.vbd == null) return false;
+      if ((p.position==='K'||p.position==='DEF') && !kDefOk) return false;
+      return true;
+    });
+    // Multiplying a possibly-negative value (VBD can be negative below replacement; -ADP is
+    // ALWAYS negative) by a fractional need-weight only suppresses it when the value itself is
+    // positive -- otherwise a smaller multiplier makes a negative number LESS negative, i.e.
+    // numerically BETTER, inverting the intended effect. Shift onto a safe positive scale before
+    // weighting; only for this internal calculation -- the displayed `value` stays the real,
+    // unshifted number.
+    const allValues = pool.map(valueFn).filter(v => v!=null && !isNaN(v));
+    const minValue = allValues.length ? Math.min(...allValues) : 0;
+    const shift = minValue < 0 ? (-minValue + 1) : 0;
+    return pool
       .map(p => {
         const need = classifyNeed(p.position, userRoster, rosterConfig);
-        let mult = NEED_MULT[need];
-        if ((p.position==='K'||p.position==='DEF') && currentRound < (settings.totalRounds-lateWindow)) mult = Math.min(mult, 0.25);
+        const mult = NEED_MULT[need];
         const value = valueFn(p);
-        return { player: p, need, multiplier: mult, value, score: value*mult };
+        return { player: p, need, multiplier: mult, value, score: (value+shift)*mult };
       })
       .sort((a,b)=>b.score-a.score);
   }
@@ -1464,30 +1495,59 @@ const Recommend = (function () {
   // at all -- degrades gracefully rather than refusing to run. Returns the full ranked+weighted
   // candidate list; picking is a weighted-random draw over the top few so repeated mocks vary
   // instead of being perfectly deterministic, same as real draft-room behavior.
-  function opponentCandidates(availablePlayers, oppRoster, settings, currentRound) {
-    const withAdp = availablePlayers.filter(p => typeof p.source.adp === 'number' && !isNaN(p.source.adp));
+  function rosterCounts(roster) {
+    const counts = {};
+    roster.forEach(p=>{ counts[p.position] = (counts[p.position]||0)+1; });
+    return counts;
+  }
+
+  function byValueDesc(players, settings) {
+    const withAdp = players.filter(p => typeof p.source.adp === 'number' && !isNaN(p.source.adp));
     const usingAdp = withAdp.length > 0;
-    const pool = usingAdp ? withAdp : availablePlayers.filter(p => p.computed.vbd != null);
+    const pool = usingAdp ? withAdp : players.filter(p => p.computed.vbd != null);
     const valueFn = usingAdp ? (p => -p.source.adp) : (p => p.computed.vbd);
-    const lateWindow = 3;
-    const scored = pool.map(p => {
-      const need = classifyNeed(p.position, oppRoster, settings.roster);
-      let mult = NEED_MULT[need];
-      if ((p.position==='K'||p.position==='DEF') && currentRound < (settings.totalRounds-lateWindow)) mult = Math.min(mult, 0.25);
-      return { player: p, need, score: valueFn(p)*mult };
-    }).sort((a,b)=>b.score-a.score);
+    return { sorted: [...pool].sort((a,b)=>valueFn(b)-valueFn(a)), usingAdp };
+  }
+
+  function opponentCandidates(availablePlayers, oppRoster, settings, currentRound) {
+    const counts = rosterCounts(oppRoster);
+    // Bot simulation only, not a restriction on the user's own picks: in a league with no QB
+    // flex, a real drafter essentially never carries a 2nd QB, so once a bot has one, QB drops
+    // out of its consideration entirely rather than competing as low-priority bench value.
+    const qbCapped = !settings.roster.flexEligible.includes('QB');
+    const pool0 = (qbCapped && counts.QB >= 1) ? availablePlayers.filter(p=>p.position!=='QB') : availablePlayers;
+    const { sorted, usingAdp } = byValueDesc(pool0, settings);
+    const scored = scoreCandidates(sorted, oppRoster, settings, currentRound, usingAdp ? (p=>-p.source.adp) : (p=>p.computed.vbd));
     return { scored, usingAdp };
   }
 
   const MOCK_PICK_WEIGHTS = [0.55, 0.25, 0.13, 0.07];
-  function pickForOpponent(availablePlayers, oppRoster, settings, currentRound) {
-    const { scored, usingAdp } = opponentCandidates(availablePlayers, oppRoster, settings, currentRound);
-    if (!scored.length) return { player: null, usingAdp };
-    const n = Math.min(MOCK_PICK_WEIGHTS.length, scored.length);
+  function weightedPick(list) {
+    if (!list.length) return undefined;
+    const n = Math.min(MOCK_PICK_WEIGHTS.length, list.length);
     const total = MOCK_PICK_WEIGHTS.slice(0,n).reduce((a,b)=>a+b,0);
     let r = Math.random()*total;
-    for (let i=0;i<n;i++) { r -= MOCK_PICK_WEIGHTS[i]; if (r<=0) return { player: scored[i].player, usingAdp }; }
-    return { player: scored[0].player, usingAdp };
+    for (let i=0;i<n;i++) { r -= MOCK_PICK_WEIGHTS[i]; if (r<=0) return list[i]; }
+    return list[0];
+  }
+
+  function pickForOpponent(availablePlayers, oppRoster, settings, currentRound) {
+    // Simplifying assumption for the simulation, not a value competition: every bot fills its K
+    // and DEF exactly once each, only inside the final-2-round window -- matches how real
+    // drafters overwhelmingly behave (nobody skips a defense entirely, and nobody's reaching for
+    // one in round 6 either), so it's modeled as a firm rule rather than left to chance.
+    if (isKDefEligible(currentRound, settings)) {
+      const counts = rosterCounts(oppRoster);
+      const forcedPos = !counts.K ? 'K' : (!counts.DEF ? 'DEF' : null);
+      if (forcedPos) {
+        const { sorted, usingAdp } = byValueDesc(availablePlayers.filter(p=>p.position===forcedPos), settings);
+        const player = weightedPick(sorted);
+        if (player) return { player, usingAdp };
+      }
+    }
+    const { scored, usingAdp } = opponentCandidates(availablePlayers, oppRoster, settings, currentRound);
+    const chosen = weightedPick(scored);
+    return { player: chosen ? chosen.player : null, usingAdp };
   }
 
   return { classifyNeed, recommend, recommendByUrgency, explanation, explanationUrgent, scarcityWarnings, runWarnings, pickForOpponent, NEED_MULT };
@@ -1743,7 +1803,7 @@ const UI = (function () {
   // negative means the opposite (reach). Computed over the whole pool, not whatever's filtered/
   // searched right now, so the numbers don't shift around as you narrow the table.
   function computeAdpDeltas(availableList) {
-    const priced = sortPlayers(availableList.filter(p=>p.computed.valueSource!=='adp-only'));
+    const priced = sortPlayers(availableList.filter(p=>p.computed.valueSource!=='adp-only'), true);
     const map = {};
     priced.forEach((p,i)=>{
       if (typeof p.source.adp === 'number' && !isNaN(p.source.adp)) map[p.id] = p.source.adp - (i+1);
@@ -1871,11 +1931,32 @@ const UI = (function () {
     return p.position===posFilter;
   }
 
-  function sortPlayers(list) {
+  // Per-position tiers (1,2,3...) aren't comparable to each other across different positions --
+  // "Tier 1 TE" reflects a real 2-player elite cliff, "Tier 4 RB" reflects the 5th-best RB in a
+  // smoothly-deep position, and the raw tier numbers say nothing about which is worth more. When
+  // multiple positions are mixed together (the default ALL view, or FLEX), sort by the
+  // cross-position overallTier instead, which was built by gap-clustering VBD across every
+  // position at once and so is actually comparable. When a single position is selected, its own
+  // tier is the right (and more finely-grained) one to sort and display by.
+  function tierForSort(p, mixedView) {
+    if (mixedView) return p.computed.overallTier ?? p.computed.tier;
+    return p.computed.tier;
+  }
+
+  // mixedView controls which tier scale breaks ties: cross-position (comparable across positions)
+  // or per-position (finer-grained, but only meaningful within one position). Defaults to whatever
+  // the currently-selected position tab implies, for the on-screen table's own sort order -- but
+  // callers computing something that must stay stable regardless of which tab happens to be open
+  // (e.g. a player's overall rank, used for the ADP value/reach badge) should pass it explicitly
+  // rather than relying on that default, so the number on screen never silently shifts based on
+  // an unrelated filter click.
+  function sortPlayers(list, mixedView) {
+    if (mixedView === undefined) mixedView = (posFilter === 'ALL' || posFilter === 'FLEX');
     return [...list].sort((a,b)=>{
       const av = effectiveValue(a), bv = effectiveValue(b);
       if (av!=null && bv!=null) {
-        if (a.computed.tier !== b.computed.tier) return (a.computed.tier||99) - (b.computed.tier||99);
+        const at = tierForSort(a, mixedView), bt = tierForSort(b, mixedView);
+        if (at !== bt) return (at||99) - (bt||99);
         return bv-av;
       }
       if (av!=null && bv==null) return -1;
@@ -1917,18 +1998,20 @@ const UI = (function () {
 
     const tbody = el('poolTbody');
     let html = '';
+    const mixedView = (posFilter === 'ALL' || posFilter === 'FLEX');
     let lastTier = null;
     list.slice(0,300).forEach(p=>{
       const isDrafted = drafted.has(p.id);
-      const tierBreak = (p.computed.tier!=null && lastTier!=null && p.computed.tier!==lastTier) ? ' tier-break' : '';
-      lastTier = p.computed.tier;
+      const shownTier = tierForSort(p);
+      const tierBreak = (shownTier!=null && lastTier!=null && shownTier!==lastTier) ? ' tier-break' : '';
+      lastTier = shownTier;
       const effVbd = effectiveValue(p);
       html += `<tr data-id="${esc(p.id)}" class="${isDrafted?'drafted':''}${tierBreak}">
         <td>${p.computed.positionRank||''}</td>
         <td>${esc(p.name)}</td>
         <td><span class="pos-badge pos-${esc(p.position)}">${esc(p.position)}</span></td>
         <td>${esc(p.team)}</td>
-        <td>${p.computed.tier!=null?p.computed.tier:'—'}</td>
+        <td>${shownTier!=null?shownTier:'—'}${mixedView?'<span class="tier-scope" title="Cross-position tier (this view mixes positions). Filter to one position to see its own tier scale.">*</span>':''}</td>
         <td>${effVbd!=null?fmt1(effVbd):'—'}</td>
         <td>${p.computed.points!=null?fmt1(p.computed.points):'—'}</td>
         <td>${srcBadge(p)}</td>
