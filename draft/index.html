@@ -1810,8 +1810,21 @@ const UI = (function () {
     // widens every pick. Converting to an equivalent overall-pick-number first (players already
     // drafted + rank among what's left) puts both sides of the comparison on the same footing.
     const alreadyDrafted = State.getPicks().length;
+    // "Worth flagging" means *this exact player* is someone the tool would actually tell you to
+    // consider right now -- not merely "ranks well somewhere in the next couple rounds," which let
+    // reasonable-but-clearly-not-the-pick players (e.g. the RB5 while the RB1 is still sitting
+    // right there, several tiers clear) carry a "value" badge nobody would act on. So the gate is
+    // literally membership in the Recommendation panel's own list -- the headline pick plus its
+    // alternates -- built the same need-adjusted way that panel already is, rather than any
+    // generic rank/pick-count window.
+    const settings = State.getSettings();
+    const userRoster = State.rosterForSlot(settings.userSlot);
+    const info = Snake.pickInfo(alreadyDrafted + 1, settings.numTeams);
+    const recs = Recommend.recommend(availableList, userRoster, settings, info.round, effectiveValue);
+    const recommendedIds = new Set(recs.slice(0,6).map(r=>r.player.id));
     const map = {};
     priced.forEach((p,i)=>{
+      if (!recommendedIds.has(p.id)) return;
       if (typeof p.source.adp === 'number' && !isNaN(p.source.adp)) {
         const myOverallRank = alreadyDrafted + (i+1);
         map[p.id] = p.source.adp - myOverallRank;

@@ -700,7 +700,7 @@
         <img src="Record_A.PNG" id="record-img" width="83" height="83" style="border-radius:50%; object-fit:cover;">
     </button>
 </div>
-<audio id="bg-audio" src="Maxwell_ThugLife.MP4" preload="none"></audio>
+<audio id="bg-audio" preload="none"></audio>
 
 <style>
 #music-player {
@@ -726,13 +726,21 @@
 </style>
 
 <script>
+var opener = 'DripSong.mp3';
 var playlist = ['Maxwell_ThugLife.MP4', 'Puppy_In_Armor.MP4', 'Maxwell_CavemanFire.MP4', 'Wood_Wick_Heavy.MP4', 'King_of_the_Wick.MP4', 'Beast_In_Jar.MP4'];
-var currentTrack = -1;
+var currentTrack = -1; // -1 = not started, 0 = playing opener, 1+ = index into playlist
 
 var audio = document.getElementById('bg-audio');
 audio.addEventListener('ended', function() {
-    currentTrack = (currentTrack + 1) % playlist.length;
-    audio.src = playlist[currentTrack];
+    if (currentTrack === 0) {
+        // Opener just finished — pick a random track from the playlist
+        currentTrack = 1 + Math.floor(Math.random() * playlist.length);
+    } else {
+        // Continue in order, wrap back to track 1 (never replay opener)
+        currentTrack++;
+        if (currentTrack > playlist.length) currentTrack = 1;
+    }
+    audio.src = currentTrack === 0 ? opener : playlist[currentTrack - 1];
     audio.play();
 });
 
@@ -740,8 +748,9 @@ function toggleMusic() {
     var record = document.getElementById('record-img');
     if (audio.paused) {
         if (currentTrack === -1) {
-            currentTrack = Math.floor(Math.random() * playlist.length);
-            audio.src = playlist[currentTrack];
+            // First press — always start with DripSong
+            currentTrack = 0;
+            audio.src = opener;
         }
         audio.play();
         record.classList.add('spinning');
