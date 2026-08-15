@@ -727,20 +727,38 @@
 
 <script>
 var opener = 'DripSong.mp3';
+var secondTrack = 'LavenderAndBeet.mp4';
 var playlist = ['Maxwell_ThugLife.MP4', 'Puppy_In_Armor.MP4', 'Maxwell_CavemanFire.MP4', 'Wood_Wick_Heavy.MP4', 'King_of_the_Wick.MP4', 'Beast_In_Jar.MP4', 'CrossWick.mp4'];
-var currentTrack = -1; // -1 = not started, 0 = playing opener, 1+ = index into playlist
+var currentTrack = -1; // -1=not started, 0=opener, 1=second, 2+=shuffled playlist
+var shuffled = [];
+
+function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+}
 
 var audio = document.getElementById('bg-audio');
 audio.addEventListener('ended', function() {
     if (currentTrack === 0) {
-        // Opener just finished — pick a random track from the playlist
-        currentTrack = 1 + Math.floor(Math.random() * playlist.length);
+        // Opener done → play second track
+        currentTrack = 1;
+        audio.src = secondTrack;
+    } else if (currentTrack === 1) {
+        // Second track done → shuffle the rest and start
+        shuffled = shuffle(playlist);
+        currentTrack = 2;
+        audio.src = shuffled[0];
     } else {
-        // Continue in order, wrap back to track 1 (never replay opener)
-        currentTrack++;
-        if (currentTrack > playlist.length) currentTrack = 1;
+        // Continue through shuffled list, re-shuffle when exhausted
+        var idx = currentTrack - 2 + 1;
+        if (idx >= shuffled.length) { shuffled = shuffle(playlist); idx = 0; }
+        currentTrack = idx + 2;
+        audio.src = shuffled[idx];
     }
-    audio.src = currentTrack === 0 ? opener : playlist[currentTrack - 1];
     audio.play();
 });
 
@@ -748,7 +766,6 @@ function toggleMusic() {
     var record = document.getElementById('record-img');
     if (audio.paused) {
         if (currentTrack === -1) {
-            // First press — always start with DripSong
             currentTrack = 0;
             audio.src = opener;
         }
