@@ -1421,6 +1421,11 @@ const State = (function () {
       // actually priced, not a guaranteed-complete season line.
       p.computed.propsTotalYards = (marketStats.rushYds||0) + (marketStats.recYds||0) + (marketStats.passYds||0);
       p.computed.propsTotalTd = (marketStats.rushTd||0) + (marketStats.recTd||0) + (marketStats.passTd||0);
+      // Raw, unweighted, uncapped gap -- display-only (the "market" badge shows this, not
+      // propsAdjustDelta below). Ranking/VBD/scoreCandidates never read this field, only
+      // propsAdjustDelta, so showing the true full-size disagreement here doesn't change what gets
+      // recommended or how anything sorts, only how big a number the badge reports.
+      p.computed.propsRawGap = marketPoints - ownPoints;
       const weighted = PROPS_WEIGHT * (marketPoints - ownPoints);
       p.computed.propsAdjustDelta = Math.max(-PROPS_MAX_DELTA, Math.min(PROPS_MAX_DELTA, weighted));
     });
@@ -4720,7 +4725,12 @@ const UI = (function () {
     }
     if (p.computed.propsAdjustDelta != null && Math.abs(p.computed.propsAdjustDelta) >= 3) {
       const up = p.computed.propsAdjustDelta > 0;
-      html += `<span class="badge-props ${up?'env-up':'env-down'}" title="BettingPros market lines imply ${fmt1(p.computed.propsImpliedPoints)} pts on the covered stats -- ${up?'higher':'lower'} than our own projection there">${up?'▲':'▼'}market ${fmt1(Math.abs(p.computed.propsAdjustDelta))}</span>`;
+      // Displays the raw, unweighted, uncapped gap (propsRawGap) -- NOT propsAdjustDelta, which is
+      // still what actually drives the "Factor BettingPros" nudge/ranking, untouched by this. The
+      // >=3 threshold for even showing a badge stays keyed off the weighted delta on purpose, so the
+      // noise cutoff means the same thing it always did; only the number displayed once past that
+      // bar got bigger and uncapped.
+      html += `<span class="badge-props ${up?'env-up':'env-down'}" title="BettingPros market lines imply ${fmt1(p.computed.propsImpliedPoints)} pts on the covered stats -- ${up?'higher':'lower'} than our own projection there">${up?'▲':'▼'}market ${fmt1(Math.abs(p.computed.propsRawGap))}</span>`;
     }
     if (p.position === 'DEF') {
       const sched = TEAM_WEEK1_2_OPPONENTS[normalizeTeam(p.team)];
