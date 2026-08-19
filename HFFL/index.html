@@ -211,10 +211,10 @@
       <div class="pos-filters" id="posFilters"></div>
       <div class="toolbar-row">
         <label><input type="checkbox" id="chkShowDrafted"> Show drafted players</label>
-        <label><input type="checkbox" id="chkEnvAdjust"> Factor team scoring environment into rankings</label>
+        <label><input type="checkbox" id="chkEnvAdjust"> Factor team scoring</label>
         <label><input type="checkbox" id="chkFpAdjust"> Factor FantasyPros</label>
         <label><input type="checkbox" id="chkDsAdjust"> Factor Draft Sharks</label>
-        <label><input type="checkbox" id="chkPropsAdjust"> Factor BettingPros market lines into rankings</label>
+        <label><input type="checkbox" id="chkPropsAdjust"> Factor BettingPros market lines</label>
         <label><input type="checkbox" id="chkFpOnly" title="Ignores VBD entirely -- ranks purely by FantasyPros ECR. Mutually exclusive with every other ranking toggle."> Rank by FantasyPros ONLY</label>
         <label><input type="checkbox" id="chkDsOnly" title="Ignores VBD entirely -- ranks purely by Draft Sharks RK. Mutually exclusive with every other ranking toggle."> Rank by Draft Sharks ONLY</label>
         <label><input type="checkbox" id="chkPropsOnly" title="Ignores VBD entirely -- ranks purely by BettingPros market-implied points. Mutually exclusive with every other ranking toggle."> Rank by BettingPros market ONLY</label>
@@ -246,7 +246,7 @@
         <div id="recMain"></div>
         <div class="rec-row-label">By ADP urgency</div>
         <div id="recUrgent"></div>
-        <div class="rec-row-label" title="Same need-weighted ranking as the pick above, just showing places 2-7 instead of only the top one -- for when you'd rather not take that exact player.">Other considerations</div>
+        <div class="rec-row-label" title="Same need-weighted ranking as the pick above, places 2-12, held to a floor of at least 3 RB / 3 WR / 2 TE / 2 QB / 1 DEF -- for when you'd rather not take that exact player.">Other considerations</div>
         <div id="recAlts" class="rec-box"></div>
         <div id="warnings"></div>
       </div>
@@ -1572,70 +1572,80 @@ const Recommend = (function () {
     return scoreCandidates(availablePlayers, userRoster, settings, currentRound, valueFn);
   }
 
-  // "Other Considerations" is meant to widen your options, not just hand you 6 flavors of the same
-  // position -- which can genuinely happen when one position is stacked at the top (e.g. mid-RB-run,
-  // the next several best-value players are all RBs). When that happens, keep the top 3 (still the
-  // strongest picks) and swap slots 4-6 for the best-value player at a not-yet-shown position instead
-  // -- same ranking, just requiring a different position per slot. A position is skipped entirely for
-  // this (not filled with a weaker same-need backup) once you've already drafted at least as many as
-  // its own dedicated starting slots -- e.g. once your 1 starting QB or TE is drafted, a 2nd has near
-  // -zero standalone value here even though TE is FLEX-eligible, so don't force one in just to fill a
-  // slot. `others` must be exactly the 6 candidates already chosen (recs[1..6]); `pool` is everywhere
-  // else in the same ranking to pull replacements from (recs[7..]).
+  // "Other Considerations" guarantees real positional depth, not just "whatever's next by value" --
+  // at all times it holds to a floor of at least 3 RB / 3 WR / 2 TE / 2 QB / 1 DEF (11 slots exactly),
+  // so a stacked run at the top of the board (e.g. mid-draft, the next dozen best-value players are
+  // all RBs) doesn't crowd out a look at what else is live. QB/TE/DEF floors drop to 0 the instant
+  // that position's own dedicated roster slot is filled -- a 2nd QB/TE/DEF isn't worth reserving
+  // space for once you've started one there. RB/WR floors never drop (2 RB/3 WR + FLEX + bench value
+  // keeps both genuinely relevant all draft). Whatever slots a dropped or unfillable floor frees up
+  // go to the next-best player at ANY position. `others` is recs[1..11] (candidates below the #1
+  // pick, already in score order) and `pool` is recs[12..] (everything else in the same ranking) --
+  // combined back into one list here since floor-filling needs the whole ranking, not just the first
+  // 11.
+  //
+  // DEF is a special case: isKDefEligible() (see scoreCandidates) keeps DEF out of `others`/`pool`
+  // entirely until the final couple rounds, since taking one earlier is almost always a mistake for
+  // the headline recommendation -- but the DEF floor here is meant to hold "at all times" per its own
+  // spec, so it reaches into `availablePlayers` directly instead of being limited to what
+  // scoreCandidates already gated in. Its score is back-derived via the same shift algebra
+  // scoreCandidates uses (shift = score/multiplier - value), exact since every candidate in one
+  // ranking shares a single shift -- keeps its % comparable to the rest of the list instead of a
+  // rough guess.
+  const OTHER_CONSIDERATIONS_SLOTS = 11;
+  const POSITION_FLOORS = { RB: 3, WR: 3, TE: 2, QB: 2, DEF: 1 };
+  const FLOOR_DROPS_WHEN_MET = new Set(['QB', 'TE', 'DEF']);
+
   function diversifyOthers(others, pool, rosterConfig, userRoster, availablePlayers) {
-    if (others.length < 6) return others;
-    const dominant = others[0].player.position;
-    if (!others.every(r => r.player.position === dominant)) return others;
+    const ranked = others.concat(pool);
 
     const rosterCounts = {};
     userRoster.forEach(p => { rosterCounts[p.position] = (rosterCounts[p.position]||0)+1; });
     const haveCount = pos => rosterCounts[pos]||0;
     const alreadyMet = pos => (rosterConfig.slots[pos]||0) > 0 && haveCount(pos) >= rosterConfig.slots[pos];
 
-    const finalSlots = others.slice(0,3);
-    const usedPositions = new Set([dominant]);
     const chosenIds = new Set();
+    const finalSlots = [];
 
-    // Once your dedicated QB or TE slot is filled, a truly elite (top-5) defense becomes a live
-    // alternative worth surfacing here even this early -- normally DEF isn't offered at all until
-    // the final couple rounds (see isKDefEligible/kDefOk in scoreCandidates), but "already have my
-    // starter at a position that just freed up a slot" is exactly the situation where grabbing a
-    // top-tier defense ahead of the pack, rather than yet another RB/WR nobody's fighting you for,
-    // can be the sharper play. Deliberately narrow -- only the elite tier qualifies, and only within
-    // this same diversify-away-from-a-stacked-position scenario, not a general early-DEF green light.
-    // Recomputes the same (value+shift)*multiplier formula scoreCandidates used to build `others` --
-    // shift itself isn't returned by that function, so it's back-derived from any existing scored
-    // candidate (algebraically exact, since every candidate in the same ranking shares one shift) —
-    // that keeps this DEF's % comparable to the rest of the list instead of a rough guess.
-    if ((haveCount('QB') > 0 || haveCount('TE') > 0) && dominant !== 'DEF') {
-      const bestDef = availablePlayers
-        .filter(p => p.position === 'DEF' && p.computed.vbd != null && p.computed.positionRank != null && p.computed.positionRank <= 5)
-        .sort((a,b) => a.computed.positionRank - b.computed.positionRank)[0];
-      if (bestDef) {
-        const ref = others[0];
-        const shift = ref.score/ref.multiplier - ref.value;
-        const need = classifyNeed('DEF', userRoster, rosterConfig);
-        const multiplier = NEED_MULT[need];
-        const value = bestDef.computed.vbd;
-        finalSlots.push({ player: bestDef, need, multiplier, value, score: (value+shift)*multiplier });
-        usedPositions.add('DEF');
-        chosenIds.add(bestDef.id);
+    Object.keys(POSITION_FLOORS).forEach(pos => {
+      const floor = (FLOOR_DROPS_WHEN_MET.has(pos) && alreadyMet(pos)) ? 0 : POSITION_FLOORS[pos];
+      if (!floor) return;
+      let filled = 0;
+      for (const r of ranked) {
+        if (filled >= floor) break;
+        if (r.player.position !== pos || chosenIds.has(r.player.id)) continue;
+        finalSlots.push(r);
+        chosenIds.add(r.player.id);
+        filled++;
       }
+      if (pos === 'DEF' && filled < floor && ranked.length) {
+        const ref = ranked[0];
+        const shift = ref.score / ref.multiplier - ref.value;
+        const bestDef = availablePlayers
+          .filter(p => p.position === 'DEF' && p.computed.vbd != null && !chosenIds.has(p.id))
+          .sort((a,b) => (a.computed.positionRank||999) - (b.computed.positionRank||999))[0];
+        if (bestDef) {
+          const need = classifyNeed('DEF', userRoster, rosterConfig);
+          const multiplier = NEED_MULT[need];
+          const value = bestDef.computed.vbd;
+          finalSlots.push({ player: bestDef, need, multiplier, value, score: (value+shift)*multiplier });
+          chosenIds.add(bestDef.id);
+        }
+      }
+    });
+
+    // Whatever slots the floors above didn't claim -- a dropped floor, or a position that simply
+    // didn't have enough live candidates to fill its own -- go to the next-best player overall.
+    for (const r of ranked) {
+      if (finalSlots.length >= OTHER_CONSIDERATIONS_SLOTS) break;
+      if (chosenIds.has(r.player.id)) continue;
+      finalSlots.push(r);
+      chosenIds.add(r.player.id);
     }
 
-    // Fill whatever slots remain: prefer a not-yet-represented position for real variety, but if
-    // every other live position is already used or excluded (common early -- before K/DEF open up,
-    // only QB/RB/WR/TE exist as candidates at all, and this whole path already means 2 of those 4
-    // are spoken for), fall back to the next-best player at a position ALREADY used here rather than
-    // reverting to more of the dominant position -- that would defeat the entire point of this list.
-    const eligible = pool.filter(r => r.player.position !== dominant && !alreadyMet(r.player.position) && !chosenIds.has(r.player.id));
-    for (let i = finalSlots.length; i < 6; i++) {
-      let replacement = eligible.find(r => !usedPositions.has(r.player.position) && !chosenIds.has(r.player.id));
-      if (!replacement) replacement = eligible.find(r => !chosenIds.has(r.player.id));
-      if (replacement) { finalSlots.push(replacement); usedPositions.add(replacement.player.position); chosenIds.add(replacement.player.id); }
-      else finalSlots.push(others[i]); // truly nothing else eligible -- keep the original same-position pick
-    }
-    return finalSlots;
+    // Floors are a content guarantee, not a display grouping -- re-sort strongest-to-weakest so the
+    // panel still reads as one ranking, same convention as everywhere else.
+    return finalSlots.sort((a,b) => b.score - a.score).slice(0, OTHER_CONSIDERATIONS_SLOTS);
   }
 
   // Best-value pick among players who realistically won't survive to your NEXT turn, per ADP.
@@ -3080,7 +3090,7 @@ const UI = (function () {
     // Mirrors renderRecommendation() exactly, diversification included, so a player swapped out of
     // "Other Considerations" for being one-too-many of an over-represented position doesn't still
     // carry a stray "value" badge elsewhere as if it were actually shown there.
-    const others = Recommend.diversifyOthers(recs.slice(1,7), recs.slice(7), settings.roster, userRoster, availableList);
+    const others = Recommend.diversifyOthers(recs.slice(1,12), recs.slice(12), settings.roster, userRoster, availableList);
     const recommendedIds = new Set((recs.length ? [recs[0]] : []).concat(others).map(r=>r.player.id));
     const map = {};
     priced.forEach((p,i)=>{
@@ -3324,13 +3334,14 @@ const UI = (function () {
       }
     }
 
-    // Places 2-7 of the exact same need-weighted ranking that already produced the top pick above --
+    // Places 2-12 of the exact same need-weighted ranking that already produced the top pick above --
     // not a separate/looser list, so "Other Considerations" never disagrees with "Recommended Pick"
-    // about what's actually best, only about how many rungs down the ladder each option sits. The %
-    // is that ranking's own `score` (need-weight already applied) as a fraction of the top pick's --
-    // always a safe, positive ratio (scoreCandidates guarantees score > 0 for every candidate via its
-    // internal shift), so 95% genuinely means "nearly as good," not just "nearly as much raw VBD."
-    const others = Recommend.diversifyOthers(recs.slice(1,7), recs.slice(7), settings.roster, userRoster, available);
+    // about what's actually best, only about how many rungs down the ladder each option sits (subject
+    // to diversifyOthers' positional floors -- see its own doc comment). The % is that ranking's own
+    // `score` (need-weight already applied) as a fraction of the top pick's -- always a safe, positive
+    // ratio (scoreCandidates guarantees score > 0 for every candidate via its internal shift), so 95%
+    // genuinely means "nearly as good," not just "nearly as much raw VBD."
+    const others = Recommend.diversifyOthers(recs.slice(1,12), recs.slice(12), settings.roster, userRoster, available);
     if (!recs.length) {
       el('recAlts').innerHTML = '<div class="rec-why">No priced players available yet.</div>';
     } else if (!others.length) {
