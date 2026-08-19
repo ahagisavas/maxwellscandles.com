@@ -292,7 +292,7 @@
         <div id="recMain"></div>
         <div class="rec-row-label">By ADP urgency</div>
         <div id="recUrgent"></div>
-        <div class="rec-row-label" title="Same need-weighted ranking as the pick above, just showing places 2-4 instead of only the top one -- for when you'd rather not take that exact player.">Other considerations</div>
+        <div class="rec-row-label" title="Same need-weighted ranking as the pick above, just showing places 2-7 instead of only the top one -- for when you'd rather not take that exact player.">Other considerations</div>
         <div id="recAlts" class="rec-box"></div>
         <div id="warnings"></div>
       </div>
@@ -2997,7 +2997,7 @@ const UI = (function () {
     const userRoster = State.rosterForSlot(settings.userSlot);
     const info = Snake.pickInfo(alreadyDrafted + 1, settings.numTeams);
     const recs = Recommend.recommend(availableList, userRoster, settings, info.round, effectiveValue);
-    const recommendedIds = new Set(recs.slice(0,4).map(r=>r.player.id)); // top pick + its 3 Other Considerations
+    const recommendedIds = new Set(recs.slice(0,7).map(r=>r.player.id)); // top pick + its 6 Other Considerations
     const map = {};
     priced.forEach((p,i)=>{
       if (!recommendedIds.has(p.id)) return;
@@ -3310,13 +3310,13 @@ const UI = (function () {
       }
     }
 
-    // Places 2-4 of the exact same need-weighted ranking that already produced the top pick above --
+    // Places 2-7 of the exact same need-weighted ranking that already produced the top pick above --
     // not a separate/looser list, so "Other Considerations" never disagrees with "Recommended Pick"
     // about what's actually best, only about how many rungs down the ladder each option sits. The %
     // is that ranking's own `score` (need-weight already applied) as a fraction of the top pick's --
     // always a safe, positive ratio (scoreCandidates guarantees score > 0 for every candidate via its
     // internal shift), so 95% genuinely means "nearly as good," not just "nearly as much raw VBD."
-    const others = recs.slice(1,4);
+    const others = recs.slice(1,7);
     if (!recs.length) {
       el('recAlts').innerHTML = '<div class="rec-why">No priced players available yet.</div>';
     } else if (!others.length) {
