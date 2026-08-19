@@ -193,6 +193,7 @@
   <div class="topbar-actions">
     <span id="saveIndicator">not saved yet</span>
     <span id="sleeperStatusText" class="dim hidden"></span>
+    <button id="btnSleeperCheckNow" class="small hidden" title="Poll Sleeper right now instead of waiting for the next automatic check -- doesn't reload the page or touch anything else.">Check Now</button>
     <button id="btnSleeperSync" class="small">Connect Sleeper</button>
     <button id="btnMockDraft" class="small">Mock Draft: OFF</button>
     <button id="btnResetPicks" class="small">Reset Picks</button>
@@ -2529,7 +2530,13 @@ const TEAM_WEEK1_2_OPPONENTS = {
 // API — there's no secret to protect and this runs entirely client-side, no backend needed.
 const SleeperSync = (function () {
   const API_BASE = 'https://api.sleeper.app/v1';
-  const POLL_MS = 4000;
+  // Sleeper's own guidance is to stay under 1000 calls/min -- a single user polling one draft
+  // during a live event is nowhere near that even at this interval (40 calls/min), so this is
+  // tuned for feel (how long a real pick sits undetected) rather than for safety margin. Lowered
+  // from 4000ms 2026-08-19 after the user found 4s felt laggy watching picks land live. The manual
+  // "Check Now" button (UI module) calls SleeperSync.pollOnce() directly for an instant, on-demand
+  // check that doesn't wait for this timer at all.
+  const POLL_MS = 1500;
 
   let draftId = null;
   let pollTimer = null;
@@ -2824,6 +2831,7 @@ const UI = (function () {
     const active = SleeperSync.isActive();
     btn.textContent = active ? 'Disconnect Sleeper' : 'Connect Sleeper';
     btn.classList.toggle('primary', active);
+    el('btnSleeperCheckNow').classList.toggle('hidden', !active);
   }
 
   // ---- Connect modal: step 1 (paste URL/ID) -> step 2 (confirm which slot is you) ----
@@ -3507,6 +3515,16 @@ const UI = (function () {
       } else {
         openSleeperModal();
       }
+    });
+    el('btnSleeperCheckNow').addEventListener('click', async ()=>{
+      // A one-off poll outside the regular timer -- reuses the exact same pollOnce() the interval
+      // calls, so a genuinely new pick still fires its normal toast via the onPick callback already
+      // registered from Connect. Only adds its own toast when there was nothing new, so the click
+      // still feels acknowledged either way without double-toasting a real pick.
+      const before = State.getPicks().length;
+      await SleeperSync.pollOnce();
+      if (State.getPicks().length === before) toast('Checked Sleeper — no new picks yet.');
+      renderAll();
     });
     el('btnSleeperStuckDismiss').addEventListener('click', ()=> el('sleeperStuckBanner').classList.add('hidden'));
     el('btnSleeperStuckResolve').addEventListener('click', ()=>{
