@@ -1596,6 +1596,72 @@ const Recommend = (function () {
     return scoreCandidates(availablePlayers, userRoster, settings, currentRound, valueFn);
   }
 
+  // "Other Considerations" is meant to widen your options, not just hand you 6 flavors of the same
+  // position -- which can genuinely happen when one position is stacked at the top (e.g. mid-RB-run,
+  // the next several best-value players are all RBs). When that happens, keep the top 3 (still the
+  // strongest picks) and swap slots 4-6 for the best-value player at a not-yet-shown position instead
+  // -- same ranking, just requiring a different position per slot. A position is skipped entirely for
+  // this (not filled with a weaker same-need backup) once you've already drafted at least as many as
+  // its own dedicated starting slots -- e.g. once your 1 starting QB or TE is drafted, a 2nd has near
+  // -zero standalone value here even though TE is FLEX-eligible, so don't force one in just to fill a
+  // slot. `others` must be exactly the 6 candidates already chosen (recs[1..6]); `pool` is everywhere
+  // else in the same ranking to pull replacements from (recs[7..]).
+  function diversifyOthers(others, pool, rosterConfig, userRoster, availablePlayers) {
+    if (others.length < 6) return others;
+    const dominant = others[0].player.position;
+    if (!others.every(r => r.player.position === dominant)) return others;
+
+    const rosterCounts = {};
+    userRoster.forEach(p => { rosterCounts[p.position] = (rosterCounts[p.position]||0)+1; });
+    const haveCount = pos => rosterCounts[pos]||0;
+    const alreadyMet = pos => (rosterConfig.slots[pos]||0) > 0 && haveCount(pos) >= rosterConfig.slots[pos];
+
+    const finalSlots = others.slice(0,3);
+    const usedPositions = new Set([dominant]);
+    const chosenIds = new Set();
+
+    // Once your dedicated QB or TE slot is filled, a truly elite (top-5) defense becomes a live
+    // alternative worth surfacing here even this early -- normally DEF isn't offered at all until
+    // the final couple rounds (see isKDefEligible/kDefOk in scoreCandidates), but "already have my
+    // starter at a position that just freed up a slot" is exactly the situation where grabbing a
+    // top-tier defense ahead of the pack, rather than yet another RB/WR nobody's fighting you for,
+    // can be the sharper play. Deliberately narrow -- only the elite tier qualifies, and only within
+    // this same diversify-away-from-a-stacked-position scenario, not a general early-DEF green light.
+    // Recomputes the same (value+shift)*multiplier formula scoreCandidates used to build `others` --
+    // shift itself isn't returned by that function, so it's back-derived from any existing scored
+    // candidate (algebraically exact, since every candidate in the same ranking shares one shift) —
+    // that keeps this DEF's % comparable to the rest of the list instead of a rough guess.
+    if ((haveCount('QB') > 0 || haveCount('TE') > 0) && dominant !== 'DEF') {
+      const bestDef = availablePlayers
+        .filter(p => p.position === 'DEF' && p.computed.vbd != null && p.computed.positionRank != null && p.computed.positionRank <= 5)
+        .sort((a,b) => a.computed.positionRank - b.computed.positionRank)[0];
+      if (bestDef) {
+        const ref = others[0];
+        const shift = ref.score/ref.multiplier - ref.value;
+        const need = classifyNeed('DEF', userRoster, rosterConfig);
+        const multiplier = NEED_MULT[need];
+        const value = bestDef.computed.vbd;
+        finalSlots.push({ player: bestDef, need, multiplier, value, score: (value+shift)*multiplier });
+        usedPositions.add('DEF');
+        chosenIds.add(bestDef.id);
+      }
+    }
+
+    // Fill whatever slots remain: prefer a not-yet-represented position for real variety, but if
+    // every other live position is already used or excluded (common early -- before K/DEF open up,
+    // only QB/RB/WR/TE exist as candidates at all, and this whole path already means 2 of those 4
+    // are spoken for), fall back to the next-best player at a position ALREADY used here rather than
+    // reverting to more of the dominant position -- that would defeat the entire point of this list.
+    const eligible = pool.filter(r => r.player.position !== dominant && !alreadyMet(r.player.position) && !chosenIds.has(r.player.id));
+    for (let i = finalSlots.length; i < 6; i++) {
+      let replacement = eligible.find(r => !usedPositions.has(r.player.position) && !chosenIds.has(r.player.id));
+      if (!replacement) replacement = eligible.find(r => !chosenIds.has(r.player.id));
+      if (replacement) { finalSlots.push(replacement); usedPositions.add(replacement.player.position); chosenIds.add(replacement.player.id); }
+      else finalSlots.push(others[i]); // truly nothing else eligible -- keep the original same-position pick
+    }
+    return finalSlots;
+  }
+
   // Best-value pick among players who realistically won't survive to your NEXT turn, per ADP.
   // The cutoff is deliberately a round past your next pick (not exactly at it) — ADP is an average,
   // not a guarantee, so this treats "a round early" as the safer default rather than cutting it
@@ -1717,7 +1783,7 @@ const Recommend = (function () {
     return { player: chosen ? chosen.player : null, usingAdp };
   }
 
-  return { classifyNeed, recommend, recommendByUrgency, explanation, explanationUrgent, scarcityWarnings, runWarnings, pickForOpponent, NEED_MULT };
+  return { classifyNeed, recommend, recommendByUrgency, diversifyOthers, explanation, explanationUrgent, scarcityWarnings, runWarnings, pickForOpponent, NEED_MULT };
 })();
 
 /* =========================================================================
@@ -2997,7 +3063,11 @@ const UI = (function () {
     const userRoster = State.rosterForSlot(settings.userSlot);
     const info = Snake.pickInfo(alreadyDrafted + 1, settings.numTeams);
     const recs = Recommend.recommend(availableList, userRoster, settings, info.round, effectiveValue);
-    const recommendedIds = new Set(recs.slice(0,7).map(r=>r.player.id)); // top pick + its 6 Other Considerations
+    // Mirrors renderRecommendation() exactly, diversification included, so a player swapped out of
+    // "Other Considerations" for being one-too-many of an over-represented position doesn't still
+    // carry a stray "value" badge elsewhere as if it were actually shown there.
+    const others = Recommend.diversifyOthers(recs.slice(1,7), recs.slice(7), settings.roster, userRoster, availableList);
+    const recommendedIds = new Set((recs.length ? [recs[0]] : []).concat(others).map(r=>r.player.id));
     const map = {};
     priced.forEach((p,i)=>{
       if (!recommendedIds.has(p.id)) return;
@@ -3316,7 +3386,7 @@ const UI = (function () {
     // is that ranking's own `score` (need-weight already applied) as a fraction of the top pick's --
     // always a safe, positive ratio (scoreCandidates guarantees score > 0 for every candidate via its
     // internal shift), so 95% genuinely means "nearly as good," not just "nearly as much raw VBD."
-    const others = recs.slice(1,7);
+    const others = Recommend.diversifyOthers(recs.slice(1,7), recs.slice(7), settings.roster, userRoster, available);
     if (!recs.length) {
       el('recAlts').innerHTML = '<div class="rec-why">No priced players available yet.</div>';
     } else if (!others.length) {
