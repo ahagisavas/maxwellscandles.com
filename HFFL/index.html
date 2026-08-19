@@ -4707,12 +4707,16 @@ const UI = (function () {
       html += `<span class="badge-env ${up?'env-up':'env-down'}" title="Team implied total ${fmt1(p.computed.envImplied)}, ${up?'+':''}${fmt1(p.computed.envDelta)} vs league average">${up?'▲':'▼'}${fmt1(Math.abs(p.computed.envDelta))}</span>`;
     }
     if (p.computed.fpAdjustDelta != null && Math.abs(p.computed.fpAdjustDelta) >= 3) {
-      const up = p.computed.fpAdjustDelta > 0;
-      html += `<span class="badge-consensus ${up?'env-up':'env-down'}" title="FP ECR #${fmt0(p.computed.consensusFpEcr)} rates them ${up?'higher':'lower'} than our VBD">${up?'▲':'▼'}FP ${fmt1(Math.abs(p.computed.fpAdjustDelta))}</span>`;
+      // Green/up means WE rate them higher than the external source, not the other way around --
+      // "if you trust our rankings, green is good" (a potential buy-low, not a warning). Same
+      // flipped convention on DS/FFB/market below, kept consistent across all four so green means
+      // the same thing everywhere rather than varying badge to badge.
+      const up = p.computed.fpAdjustDelta < 0;
+      html += `<span class="badge-consensus ${up?'env-up':'env-down'}" title="We rate them ${up?'higher':'lower'} than FantasyPros ECR #${fmt0(p.computed.consensusFpEcr)}">${up?'▲':'▼'}FP ${fmt1(Math.abs(p.computed.fpAdjustDelta))}</span>`;
     }
     if (p.computed.dsAdjustDelta != null && Math.abs(p.computed.dsAdjustDelta) >= 3) {
-      const up = p.computed.dsAdjustDelta > 0;
-      html += `<span class="badge-consensus ${up?'env-up':'env-down'}" title="DS RK #${fmt0(p.computed.consensusDsRk)} rates them ${up?'higher':'lower'} than our VBD">${up?'▲':'▼'}DS ${fmt1(Math.abs(p.computed.dsAdjustDelta))}</span>`;
+      const up = p.computed.dsAdjustDelta < 0;
+      html += `<span class="badge-consensus ${up?'env-up':'env-down'}" title="We rate them ${up?'higher':'lower'} than Draft Sharks RK #${fmt0(p.computed.consensusDsRk)}">${up?'▲':'▼'}DS ${fmt1(Math.abs(p.computed.dsAdjustDelta))}</span>`;
     }
     if (p.computed.dsTierData && p.computed.dsTierData.flag) {
       const flag = p.computed.dsTierData.flag;
@@ -4720,17 +4724,17 @@ const UI = (function () {
       html += `<span class="badge-consensus ${style.cls}" title="Draft Sharks: ${esc(flag)} (Tier ${p.computed.dsTierData.overallTier} overall, Pos. Tier ${p.computed.dsTierData.posTier})">${style.icon}${esc(flag)}</span>`;
     }
     if (p.computed.ffAdjustDelta != null && Math.abs(p.computed.ffAdjustDelta) >= 3) {
-      const up = p.computed.ffAdjustDelta > 0;
-      html += `<span class="badge-consensus ${up?'env-up':'env-down'}" title="Fantasy Footballers ${esc(p.position)}${fmt0(p.computed.ffbRank)} rates them ${up?'higher':'lower'} than our VBD">${up?'▲':'▼'}FFB ${fmt1(Math.abs(p.computed.ffAdjustDelta))}</span>`;
+      const up = p.computed.ffAdjustDelta < 0;
+      html += `<span class="badge-consensus ${up?'env-up':'env-down'}" title="We rate them ${up?'higher':'lower'} than Fantasy Footballers ${esc(p.position)}${fmt0(p.computed.ffbRank)}">${up?'▲':'▼'}FFB ${fmt1(Math.abs(p.computed.ffAdjustDelta))}</span>`;
     }
     if (p.computed.propsAdjustDelta != null && Math.abs(p.computed.propsAdjustDelta) >= 3) {
-      const up = p.computed.propsAdjustDelta > 0;
       // Displays the raw, unweighted, uncapped gap (propsRawGap) -- NOT propsAdjustDelta, which is
       // still what actually drives the "Factor BettingPros" nudge/ranking, untouched by this. The
       // >=3 threshold for even showing a badge stays keyed off the weighted delta on purpose, so the
       // noise cutoff means the same thing it always did; only the number displayed once past that
       // bar got bigger and uncapped.
-      html += `<span class="badge-props ${up?'env-up':'env-down'}" title="BettingPros market lines imply ${fmt1(p.computed.propsImpliedPoints)} pts on the covered stats -- ${up?'higher':'lower'} than our own projection there">${up?'▲':'▼'}market ${fmt1(Math.abs(p.computed.propsRawGap))}</span>`;
+      const up = p.computed.propsAdjustDelta < 0;
+      html += `<span class="badge-props ${up?'env-up':'env-down'}" title="We project them ${up?'higher':'lower'} than BettingPros' market-implied ${fmt1(p.computed.propsImpliedPoints)} pts on the covered stats">${up?'▲':'▼'}market ${fmt1(Math.abs(p.computed.propsRawGap))}</span>`;
     }
     if (p.position === 'DEF') {
       const sched = TEAM_WEEK1_2_OPPONENTS[normalizeTeam(p.team)];
