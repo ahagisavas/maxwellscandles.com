@@ -39,14 +39,15 @@ USAGE
   Dry run (report what WOULD change without writing the file):
       python refresh_fantasypros.py --from-cache <dir> --dry-run
 
-KNOWN ISSUE (as of 2026-08-19): live --key-file / env-var mode currently gets HTTP 403
-"Missing Authentication Token" from api.fantasypros.com regardless of the key used, both via a
-direct HTTPS client and via a real browser fetch() (which additionally hit a CORS block) -- this
-looks like a FantasyPros-side API Gateway/WAF change since this key last worked, not a problem
-with this script's request shape (the URL path/params match FantasyPros' documented contract
-exactly, and the same key + shape worked when the projections_*.json cache used by --from-cache
-was captured on 2026-08-18). If --key-file/env-var mode still 403s for you, check the FantasyPros
-account's API dashboard for the key's status before assuming this script is broken.
+RESOLVED ISSUE (2026-08-19): live --key-file / env-var mode was returning HTTP 403 "Forbidden"
+from api.fantasypros.com regardless of the key used -- root cause was confirmed to be a
+propagation delay after resetting the API key at secure.fantasypros.com/api-keys/: the account
+dashboard shows the new key as active immediately, but the actual API Gateway usage-plan took
+several minutes to catch up, rejecting every request (even a freshly-reset, dashboard-confirmed-
+active key) until it did. Not a bug in this script -- the URL path/params matched FantasyPros'
+documented contract exactly throughout. If this recurs: confirm the key shows active on the
+dashboard, and if a reset was recently done, wait ~10 minutes and retry before assuming the
+script or key is broken.
 """
 import sys, os, re, json, argparse, urllib.request, urllib.error
 
