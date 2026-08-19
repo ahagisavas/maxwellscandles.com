@@ -89,10 +89,6 @@
   .pos-QB { background: var(--qb); } .pos-RB { background: var(--rb); } .pos-WR { background: var(--wr); }
   .pos-TE { background: var(--te); } .pos-K { background: var(--k); } .pos-DEF { background: var(--def); }
   .pos-UNK { background: var(--text-faint); }
-  .badge-src { font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 4px; }
-  .src-stats { background: rgba(52,199,89,0.15); color: var(--good); }
-  .src-yahoo-points { background: rgba(255,176,32,0.15); color: var(--warn); }
-  .src-adp-only { background: rgba(255,255,255,0.08); color: var(--text-faint); }
 
   .badge-env, .badge-adp, .badge-consensus, .badge-props, .badge-schedule { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-right: 4px; white-space: nowrap; cursor: help; }
   .tier-scope { color: var(--accent); cursor: help; margin-left: 2px; }
@@ -229,7 +225,7 @@
               <th data-sort="rank">#</th><th data-sort="name">Player</th><th data-sort="pos">Pos</th><th>Tm</th>
               <th data-sort="tier">Tier</th><th data-sort="vbd" id="vbdColHeader">VBD</th><th data-sort="points">Pts</th>
               <th title="Modeled probability this player is still on the board when your turn comes back around, from their Sleeper ADP -- a directional guide, not measured historical data.">Avail%</th>
-              <th>Src</th><th>Signals</th>
+              <th>Signals</th>
             </tr>
           </thead>
           <tbody id="poolTbody"></tbody>
@@ -4675,12 +4671,6 @@ const UI = (function () {
     });
   }
 
-  function srcBadge(p) {
-    if (p.computed.valueSource==='stats') return '<span class="badge-src src-stats">exact</span>';
-    if (p.computed.valueSource==='yahoo-points') return '<span class="badge-src src-yahoo-points">src pts</span>';
-    return '<span class="badge-src src-adp-only">adp only</span>';
-  }
-
   // Draft Sharks' column-A qualitative flags (see build_ds_tiers.py) get a sentiment-matched style;
   // anything not in this map (a label Draft Sharks introduces later that isn't seen yet) still
   // renders with a neutral shark icon rather than being silently dropped.
@@ -4790,7 +4780,6 @@ const UI = (function () {
         <td>${vbdDisplay}</td>
         <td>${p.computed.points!=null?fmt1(p.computed.points):'—'}</td>
         ${survCell}
-        <td>${srcBadge(p)}</td>
         <td>${signalBadges(p, adpDeltaMap)}</td>
       </tr>`;
     });
