@@ -215,9 +215,11 @@
         <label><input type="checkbox" id="chkFpAdjust"> Factor FantasyPros</label>
         <label><input type="checkbox" id="chkDsAdjust"> Factor Draft Sharks</label>
         <label><input type="checkbox" id="chkPropsAdjust"> Factor BettingPros market lines</label>
+        <label><input type="checkbox" id="chkFFAdjust"> Factor FFBallers</label>
         <label><input type="checkbox" id="chkFpOnly" title="Ignores VBD entirely -- ranks purely by FantasyPros ECR. Mutually exclusive with every other ranking toggle."> Rank by FantasyPros ONLY</label>
         <label><input type="checkbox" id="chkDsOnly" title="Ignores VBD entirely -- ranks purely by Draft Sharks RK. Mutually exclusive with every other ranking toggle."> Rank by Draft Sharks ONLY</label>
         <label><input type="checkbox" id="chkPropsOnly" title="Ignores VBD entirely -- ranks purely by BettingPros market-implied points. Mutually exclusive with every other ranking toggle."> Rank by BettingPros market ONLY</label>
+        <label><input type="checkbox" id="chkFFOnly" title="Ignores VBD entirely -- ranks purely by The Fantasy Footballers' blended rank (position-only in their data, so cross-position order borrows this tool's own VBD scale -- see the column for the true per-position rank). Mutually exclusive with every other ranking toggle."> Rank by FFBallers ONLY</label>
         <button id="btnQuickAdd" class="small">+ Quick-add player not in pool</button>
       </div>
       <div class="pool-wrap">
@@ -1303,13 +1305,30 @@ const State = (function () {
   // delta in effectiveValue() -- an earlier multiplicative version of this pattern (see
   // envAdjustedVbd) silently flips direction for anyone with negative VBD, which an additive delta
   // against a position-scaled unit avoids entirely.
+  // FFBALLERS_DATA (The Fantasy Footballers' Andy/Jason/Mike blended "Rank" column, see
+  // build_ffballers_data.py) is fundamentally different in shape from CONSENSUS_DATA: it's a
+  // WITHIN-POSITION-ONLY rank (their WR sheet is 1..132 among WRs, RB sheet is 1..91 among RBs,
+  // etc.) -- there's no cross-position number anywhere in that data, unlike FP ECR/DS RK which are
+  // already overall ranks. That's a non-issue for the additive nudge below (it already works
+  // entirely in within-position percentile space), but it means "Rank by FFBallers ONLY" can't just
+  // use the raw rank the way fpOnly/dsOnly do -- a WR ranked 5th and a QB ranked 5th aren't
+  // comparable numbers. Fixed by borrowing this tool's OWN VBD scale as the cross-position
+  // currency: line up this position's players by VBD (vbdSorted below), then hand the Footballers'
+  // Nth-ranked player at this position the VBD value that this tool's OWN Nth-ranked player at this
+  // position has (ffImpliedValue) -- same order Footballers gave, expressed on a scale that's
+  // already legitimately cross-position comparable. UI.effectiveValue() uses ffImpliedValue for
+  // sorting in that mode, but always DISPLAYS the true ffbRank (e.g. "WR5"), never the borrowed
+  // number, so nothing on screen looks like a fabricated Footballers value.
   function applyConsensus() {
     const byPos = {};
     players.forEach(p => {
       p.computed.fpAdjustDelta = null;
       p.computed.dsAdjustDelta = null;
+      p.computed.ffAdjustDelta = null;
       p.computed.consensusFpEcr = null;
       p.computed.consensusDsRk = null;
+      p.computed.ffbRank = null;
+      p.computed.ffImpliedValue = null;
       if (p.computed.valueSource === 'adp-only' || !CONSENSUS_WEIGHTS[p.position]) return;
       (byPos[p.position] = byPos[p.position] || []).push(p);
     });
@@ -1319,33 +1338,50 @@ const State = (function () {
       // Scale unit for the additive nudge: this position's own top VBD, so "fully disagreeing"
       // consensus can move a player by up to (weight * topVbd) points -- meaningful but bounded,
       // and automatically proportional to how much this position's VBD spread matters at all.
+      // Reused as-is for FFBallers too (not independently re-derived) -- same kind of signal (a
+      // human-expert positional consensus), flagged here in case it's ever worth a proper Spearman
+      // re-derivation the way CONSENSUS_WEIGHTS itself originally was.
       const topVbd = Math.max(0.01, ...group.map(p => p.computed.vbd || 0));
       const fpEntries = [], dsEntries = [];
+      let ffMaxRank = 0;
       group.forEach(p => {
         const c = CONSENSUS_DATA[normalizeName(p.name) + '|' + pos];
-        if (!c) return;
-        if (c[0] != null) fpEntries.push([p, c[0]]);
-        if (c[1] != null) dsEntries.push([p, c[1]]);
+        if (c) {
+          if (c[0] != null) fpEntries.push([p, c[0]]);
+          if (c[1] != null) dsEntries.push([p, c[1]]);
+        }
+        const ffRank = FFBALLERS_DATA[normalizeName(p.name) + '|' + pos];
+        if (ffRank != null && ffRank > ffMaxRank) ffMaxRank = ffRank;
       });
       fpEntries.sort((a,b)=>a[1]-b[1]);
       dsEntries.sort((a,b)=>a[1]-b[1]);
       const fpPosRank = new Map(fpEntries.map(([p],i)=>[p,i+1]));
       const dsPosRank = new Map(dsEntries.map(([p],i)=>[p,i+1]));
+      const vbdSorted = [...group].sort((a,b) => (b.computed.vbd??-Infinity) - (a.computed.vbd??-Infinity));
       group.forEach(p => {
         const c = CONSENSUS_DATA[normalizeName(p.name) + '|' + pos];
-        if (!c) return; // no external data at all for this player -- leave VBD untouched
-        p.computed.consensusFpEcr = c[0];
-        p.computed.consensusDsRk = c[1];
         const vbdPct = n > 1 ? 1 - (p.computed.positionRank - 1) / (n - 1) : 1;
         // + means that source rates them better than VBD does. Each source's delta only exists when
-        // that source actually covers this player -- no cross-filling from the other source.
-        if (fpPosRank.has(p)) {
-          const fpPct = 1 - (fpPosRank.get(p) - 1) / ((fpEntries.length - 1) || 1);
-          p.computed.fpAdjustDelta = CONSENSUS_WEIGHTS[pos] * (fpPct - vbdPct) * topVbd;
+        // that source actually covers this player -- no cross-filling between sources.
+        if (c) {
+          p.computed.consensusFpEcr = c[0];
+          p.computed.consensusDsRk = c[1];
+          if (fpPosRank.has(p)) {
+            const fpPct = 1 - (fpPosRank.get(p) - 1) / ((fpEntries.length - 1) || 1);
+            p.computed.fpAdjustDelta = CONSENSUS_WEIGHTS[pos] * (fpPct - vbdPct) * topVbd;
+          }
+          if (dsPosRank.has(p)) {
+            const dsPct = 1 - (dsPosRank.get(p) - 1) / ((dsEntries.length - 1) || 1);
+            p.computed.dsAdjustDelta = CONSENSUS_WEIGHTS[pos] * (dsPct - vbdPct) * topVbd;
+          }
         }
-        if (dsPosRank.has(p)) {
-          const dsPct = 1 - (dsPosRank.get(p) - 1) / ((dsEntries.length - 1) || 1);
-          p.computed.dsAdjustDelta = CONSENSUS_WEIGHTS[pos] * (dsPct - vbdPct) * topVbd;
+        const ffRank = FFBALLERS_DATA[normalizeName(p.name) + '|' + pos];
+        if (ffRank != null) {
+          p.computed.ffbRank = ffRank;
+          const ffPct = ffMaxRank > 1 ? 1 - (ffRank - 1) / (ffMaxRank - 1) : 1;
+          p.computed.ffAdjustDelta = CONSENSUS_WEIGHTS[pos] * (ffPct - vbdPct) * topVbd;
+          const slot = vbdSorted[ffRank - 1];
+          if (slot) p.computed.ffImpliedValue = slot.computed.vbd;
         }
       });
     });
@@ -2543,6 +2579,324 @@ const PROPS_DATA = {
 // year-to-year), so a two-source blend isn't meaningfully available for them anyway.
 const CONSENSUS_WEIGHTS = { QB: 0.18, RB: 0.12, WR: 0.28, TE: 0.14 };
 
+/* ===== FFBALLERS_DATA ===== */
+const FFBALLERS_DATA = {
+  "aaronjones|RB": 41,
+  "aaronrodgers|QB": 27,
+  "adamrandall|RB": 88,
+  "adonaimitchell|WR": 73,
+  "ajbarner|TE": 27,
+  "ajbrown|WR": 8,
+  "ajdillon|RB": 89,
+  "alecpierce|WR": 28,
+  "alvinkamara|RB": 54,
+  "amonrastbrown|WR": 4,
+  "andreiiosivas|WR": 98,
+  "antoniowilliams|WR": 89,
+  "ashtonjeanty|RB": 9,
+  "audricestim|RB": 91,
+  "bakermayfield|QB": 19,
+  "bensinnott|TE": 47,
+  "bhayshultuten|RB": 24,
+  "bijanrobinson|RB": 2,
+  "blakecorum|RB": 36,
+  "bonix|QB": 12,
+  "braelonallen|RB": 63,
+  "brashardsmith|RB": 83,
+  "breecehall|RB": 18,
+  "brenenthompson|WR": 112,
+  "brentonstrange|TE": 15,
+  "brianrobinson|RB": 52,
+  "brianthomas|WR": 35,
+  "brockbowers|TE": 1,
+  "brockpurdy|QB": 13,
+  "brycelance|WR": 130,
+  "bryceyoung|QB": 26,
+  "buckyirving|RB": 20,
+  "cadeotton|TE": 26,
+  "calebdouglas|WR": 83,
+  "calebwilliams|QB": 8,
+  "calvinaustin|WR": 122,
+  "calvinridley|WR": 72,
+  "camskattebo|RB": 19,
+  "camward|QB": 22,
+  "carnelltate|WR": 23,
+  "carsonbeck|QB": 35,
+  "cedrictillman|WR": 126,
+  "ceedeelamb|WR": 5,
+  "charliekolar|TE": 39,
+  "chasebrown|RB": 12,
+  "chigokonkwo|TE": 20,
+  "chimeredike|WR": 102,
+  "chrisbell|WR": 99,
+  "chrisbrazzell|WR": 125,
+  "chrisbrooks|RB": 66,
+  "chrisgodwin|WR": 39,
+  "chrisolave|WR": 14,
+  "chrisrodriguez|RB": 44,
+  "christiankirk|WR": 103,
+  "christianmccaffrey|RB": 3,
+  "christianwatson|WR": 19,
+  "chubahubbard|RB": 31,
+  "cjstroud|QB": 23,
+  "colbyparkinson|TE": 28,
+  "colekmet|TE": 31,
+  "colstonloveland|TE": 3,
+  "cooperkupp|WR": 75,
+  "courtlandsutton|WR": 38,
+  "cyrusallen|WR": 71,
+  "dakprescott|QB": 10,
+  "dallasgoedert|TE": 13,
+  "daltonkincaid|TE": 10,
+  "daltonschultz|TE": 18,
+  "dandreswift|RB": 17,
+  "danieljones|QB": 25,
+  "dariusslayton|WR": 84,
+  "darnellmooney|WR": 91,
+  "darnellwashington|TE": 46,
+  "darrenwaller|TE": 29,
+  "davanteadams|WR": 26,
+  "davidmontgomery|RB": 25,
+  "davidnjoku|TE": 30,
+  "dawsonknox|TE": 36,
+  "deebosamuel|WR": 59,
+  "demariodouglas|WR": 76,
+  "demondclaiborne|RB": 81,
+  "denzelboston|WR": 61,
+  "derrickhenry|RB": 6,
+  "deshaunwatson|QB": 36,
+  "devaughnvele|WR": 94,
+  "devinneal|RB": 78,
+  "devinsingletary|RB": 73,
+  "devonachane|RB": 8,
+  "devontasmith|WR": 21,
+  "devontezwalker|WR": 119,
+  "dezhaunstribling|WR": 56,
+  "djgiddens|RB": 68,
+  "djmoore|WR": 30,
+  "dkmetcalf|WR": 32,
+  "dontayvionwicks|WR": 63,
+  "dontethornton|WR": 116,
+  "drakelondon|WR": 10,
+  "drakemaye|QB": 6,
+  "dylansampson|RB": 53,
+  "elicayomanor|WR": 100,
+  "elijaharroyo|TE": 43,
+  "elijahsarratt|WR": 118,
+  "elistowers|TE": 37,
+  "emanuelwilson|RB": 72,
+  "emaridemercado|RB": 84,
+  "emekaegbuka|WR": 15,
+  "emmettjohnson|RB": 57,
+  "evanengram|TE": 35,
+  "fernandomendoza|QB": 33,
+  "garrettwilson|WR": 22,
+  "genosmith|QB": 29,
+  "georgeholani|RB": 71,
+  "georgekittle|TE": 7,
+  "georgepickens|WR": 7,
+  "germiebernard|WR": 74,
+  "gregdulcich|TE": 21,
+  "gunnarhelm|TE": 34,
+  "haroldfannin|TE": 6,
+  "hollywoodbrown|WR": 124,
+  "hunterhenry|TE": 14,
+  "isaacteslaa|WR": 80,
+  "isaiahdavis|RB": 70,
+  "isaiahlikely|TE": 16,
+  "isiahpacheco|RB": 47,
+  "jackbech|WR": 96,
+  "jacobybrissett|QB": 28,
+  "jacorycroskeymerritt|RB": 27,
+  "jadarianprice|RB": 26,
+  "jahandotson|WR": 107,
+  "jahmyrgibbs|RB": 1,
+  "jakeferguson|TE": 19,
+  "jaketonges|TE": 49,
+  "jakobilane|WR": 67,
+  "jakobimeyers|WR": 52,
+  "jalencoker|WR": 49,
+  "jalenhurts|QB": 3,
+  "jalenmcmillan|WR": 86,
+  "jalennailor|WR": 64,
+  "jalentolbert|WR": 90,
+  "jamarrchase|WR": 1,
+  "jamesconner|RB": 65,
+  "jamescook|RB": 4,
+  "jamesonwilliams|WR": 17,
+  "jaredgoff|QB": 14,
+  "jatavionsanders|TE": 44,
+  "jauanjennings|WR": 85,
+  "javontewilliams|RB": 15,
+  "jaxonsmithnjigba|WR": 3,
+  "jaxsondart|QB": 7,
+  "jaydendaniels|QB": 4,
+  "jaydenhiggins|WR": 66,
+  "jaydenreed|WR": 42,
+  "jaydonblue|RB": 77,
+  "jaylenwaddle|WR": 20,
+  "jaylenwarren|RB": 35,
+  "jaylenwright|RB": 75,
+  "jaylinlane|WR": 129,
+  "jaylinnoel|WR": 95,
+  "jeremiyahlove|RB": 16,
+  "jeromeford|RB": 74,
+  "jerryjeudy|WR": 70,
+  "jkdobbins|RB": 29,
+  "joeburrow|QB": 5,
+  "jonahcoleman|RB": 49,
+  "jonathantaylor|RB": 5,
+  "jonathonbrooks|RB": 38,
+  "jordanaddison|WR": 37,
+  "jordanjames|RB": 55,
+  "jordanlove|QB": 21,
+  "jordanmason|RB": 32,
+  "jordanwhittington|WR": 117,
+  "jordyntyson|WR": 53,
+  "joshallen|QB": 1,
+  "joshdowns|WR": 51,
+  "joshjacobs|RB": 13,
+  "justicehill|RB": 62,
+  "justinherbert|QB": 11,
+  "justinjefferson|WR": 9,
+  "justinjoly|TE": 52,
+  "juwanjohnson|TE": 11,
+  "kaelonblack|RB": 67,
+  "kalebjohnson|RB": 86,
+  "kalifraymond|WR": 111,
+  "kayshonboutte|WR": 82,
+  "kaytronallen|RB": 76,
+  "kcconcepcion|WR": 54,
+  "keatonmitchell|RB": 51,
+  "keenanallen|WR": 60,
+  "kendrickbourne|WR": 114,
+  "kendricklaw|WR": 132,
+  "kennethwalker|RB": 7,
+  "kennygainwell|RB": 37,
+  "kenyonsadiq|TE": 22,
+  "keoncoleman|WR": 77,
+  "khalilshakir|WR": 55,
+  "kimanividal|RB": 56,
+  "kirkcousins|QB": 32,
+  "kylemonangai|RB": 33,
+  "kylepitts|TE": 9,
+  "kylermurray|QB": 16,
+  "kylewilliams|WR": 105,
+  "kyrenwilliams|RB": 14,
+  "laddmcconkey|WR": 27,
+  "lamarjackson|QB": 2,
+  "lequintallen|RB": 79,
+  "lukemusgrave|TE": 42,
+  "lutherburden|WR": 29,
+  "mackhollins|WR": 115,
+  "makailemon|WR": 48,
+  "malachifields|WR": 93,
+  "malikbenson|WR": 106,
+  "maliknabers|WR": 11,
+  "malikwashington|WR": 58,
+  "malikwillis|QB": 20,
+  "markandrews|TE": 17,
+  "marshawnlloyd|RB": 61,
+  "marvinharrison|WR": 33,
+  "marvinmims|WR": 108,
+  "masontaylor|TE": 40,
+  "matthewgolden|WR": 50,
+  "matthewstafford|QB": 15,
+  "maxklare|TE": 48,
+  "michaelmayer|TE": 38,
+  "michaelpenix|QB": 34,
+  "michaelpittman|WR": 41,
+  "michaelwilson|WR": 40,
+  "mikeevans|WR": 24,
+  "mikegesicki|TE": 32,
+  "mikewashington|RB": 58,
+  "nateboerkircher|TE": 53,
+  "nicholassingleton|RB": 59,
+  "nicocollins|WR": 6,
+  "noahfant|TE": 51,
+  "noahgray|TE": 45,
+  "olamidezaccheaus|WR": 123,
+  "olliegordon|RB": 85,
+  "omarcooper|WR": 62,
+  "omarionhampton|RB": 11,
+  "orondegadsden|TE": 23,
+  "oscardelp|TE": 54,
+  "parkerwashington|WR": 34,
+  "patbryant|WR": 69,
+  "patfreiermuth|TE": 24,
+  "patrickmahomes|QB": 18,
+  "pukanacua|WR": 2,
+  "quentinjohnston|WR": 36,
+  "quinshonjudkins|RB": 22,
+  "rachaadwhite|RB": 42,
+  "rasheerice|WR": 13,
+  "rashidshaheed|WR": 47,
+  "rashodbateman|WR": 88,
+  "raydavis|RB": 69,
+  "rhamondrestevenson|RB": 30,
+  "ricodowdle|RB": 28,
+  "rjharvey|RB": 40,
+  "romanwilson|WR": 110,
+  "romeodoubs|WR": 46,
+  "romeodunze|WR": 25,
+  "ryanflournoy|WR": 78,
+  "samajeperine|RB": 60,
+  "samdarnold|QB": 24,
+  "samlaporta|TE": 8,
+  "saquonbarkley|RB": 10,
+  "seantucker|RB": 80,
+  "shedeursanders|QB": 31,
+  "skylerbell|WR": 127,
+  "stefondiggs|WR": 43,
+  "tahjbrooks|RB": 90,
+  "tankbigsby|RB": 50,
+  "tankdell|WR": 65,
+  "tedhurst|WR": 113,
+  "teehiggins|WR": 12,
+  "terranceferguson|TE": 33,
+  "terrymclaurin|WR": 31,
+  "tetairoamcmillan|WR": 18,
+  "tezjohnson|WR": 104,
+  "theojohnson|TE": 41,
+  "tjhockenson|TE": 25,
+  "tommytremble|TE": 50,
+  "tonypollard|RB": 34,
+  "toryhorton|WR": 87,
+  "travisetienne|RB": 21,
+  "travishunter|WR": 68,
+  "traviskelce|TE": 12,
+  "treharris|WR": 79,
+  "tretucker|WR": 57,
+  "treveyonhenderson|RB": 23,
+  "trevoretienne|RB": 82,
+  "trevorlawrence|QB": 9,
+  "treylonburks|WR": 109,
+  "treymcbride|TE": 2,
+  "troyfranklin|WR": 97,
+  "tuatagovailoa|QB": 30,
+  "tuckerkraft|TE": 5,
+  "tutuatwell|WR": 120,
+  "tyjaespears|RB": 43,
+  "tyjohnson|RB": 64,
+  "tylerallgeier|RB": 48,
+  "tylershough|QB": 17,
+  "tylerwarren|TE": 4,
+  "tyquanthornton|WR": 92,
+  "tyronetracy|RB": 39,
+  "vanjefferson|WR": 128,
+  "wandalerobinson|WR": 44,
+  "willshipley|RB": 87,
+  "woodymarks|RB": 45,
+  "xavierhutchinson|WR": 101,
+  "xavierlegette|WR": 121,
+  "xavierworthy|WR": 45,
+  "zachariahbranch|WR": 81,
+  "zachcharbonnet|RB": 46,
+  "zavionthomas|WR": 131,
+  "zayflowers|WR": 16,
+};
+/* ===== END FFBALLERS_DATA ===== */
+
 // Unlike CONSENSUS_WEIGHTS above, this isn't a rank/percentile blend -- PROPS_DATA carries real
 // stat-level lines (season rushing/receiving yards, TDs, receptions), so State.applyProps runs each
 // covered player's market lines through this league's OWN scoring formula (Scoring.computeOffensePoints)
@@ -2786,38 +3140,48 @@ const UI = (function () {
   let fpAdjustEnabled = false;
   let dsAdjustEnabled = false;
   let propsAdjustEnabled = false;
+  let ffAdjustEnabled = false;
   let fpOnlyEnabled = false;
   let dsOnlyEnabled = false;
   let propsOnlyEnabled = false;
+  let ffOnlyEnabled = false;
   let mockDraftEnabled = false;
   let pendingPickPlayerId = null;
 
   // Whichever value should currently drive sort/tier/recommendation. Two different modes:
-  // - Normal (default): raw VBD, plus whichever of the four independent bounded-nudge overlays are
-  //   toggled on -- team-scoring-environment, FantasyPros ECR, Draft Sharks RK, and BettingPros
-  //   market-implied points. These compose additively (see State.applyEnvironment/applyConsensus/
-  //   applyProps) and are all capped, so VBD stays the backbone even with all four checked.
-  // - "Just X" (fpOnlyEnabled / dsOnlyEnabled / propsOnlyEnabled, mutually exclusive with everything
-  //   else via the checkbox wiring below): ignores VBD entirely and ranks purely by that one external
-  //   source, for when you want to see what FP, DS, or the betting market alone would say, not a
-  //   VBD-anchored nudge. fpOnly/dsOnly use -rank (lower rank = higher value, same sort convention as
-  //   VBD); propsOnly uses the market-implied points directly since that's already points-equivalent,
-  //   comparable the same way `vbd`/`points` are.
-  // FantasyPros and Draft Sharks are deliberately kept separate rather than averaged into one
-  // "consensus" figure -- they're different expert panels with different methodologies, so each gets
-  // its own nudge and its own pure mode instead of being blended together.
+  // - Normal (default): raw VBD, plus whichever of the five independent bounded-nudge overlays are
+  //   toggled on -- team-scoring-environment, FantasyPros ECR, Draft Sharks RK, BettingPros
+  //   market-implied points, and The Fantasy Footballers' blended rank. These compose additively
+  //   (see State.applyEnvironment/applyConsensus/applyProps) and are all capped, so VBD stays the
+  //   backbone even with all five checked.
+  // - "Just X" (fpOnlyEnabled / dsOnlyEnabled / propsOnlyEnabled / ffOnlyEnabled, mutually exclusive
+  //   with everything else via the checkbox wiring below): ignores VBD entirely and ranks purely by
+  //   that one external source. fpOnly/dsOnly use -rank (lower rank = higher value, same sort
+  //   convention as VBD); propsOnly uses the market-implied points directly since that's already
+  //   points-equivalent, comparable the same way `vbd`/`points` are. ffOnly is the odd one out: the
+  //   Footballers' rank is position-only (no cross-position number exists in that data at all), so it
+  //   uses ffImpliedValue -- this position's rank N Footballers player wearing the VBD value this
+  //   tool's OWN rank-N player at that position has (see State.applyConsensus' comment for the full
+  //   reasoning). renderPool()/explanation() both special-case ffOnly to DISPLAY the true ffbRank
+  //   (e.g. "WR5") rather than this borrowed number -- it's a sort key, not something to show as if
+  //   it were a real Footballers value.
+  // FantasyPros, Draft Sharks, and The Fantasy Footballers are deliberately kept fully separate
+  // rather than averaged into one "consensus" figure -- different panels, different methodologies,
+  // each gets its own nudge and its own pure mode instead of being blended together.
   // Every pure mode returns null for a player with no data from that source at all -- same "don't
   // invent a number" convention as everywhere else, not a silent 0.
   function effectiveValue(p) {
     if (fpOnlyEnabled) return p.computed.consensusFpEcr == null ? null : -p.computed.consensusFpEcr;
     if (dsOnlyEnabled) return p.computed.consensusDsRk == null ? null : -p.computed.consensusDsRk;
     if (propsOnlyEnabled) return p.computed.propsImpliedPoints;
+    if (ffOnlyEnabled) return p.computed.ffImpliedValue;
     let v = p.computed.vbd;
     if (v == null) return v;
     if (envAdjustEnabled && p.computed.envAdjustedVbd != null) v += (p.computed.envAdjustedVbd - p.computed.vbd);
     if (fpAdjustEnabled && p.computed.fpAdjustDelta != null) v += p.computed.fpAdjustDelta;
     if (dsAdjustEnabled && p.computed.dsAdjustDelta != null) v += p.computed.dsAdjustDelta;
     if (propsAdjustEnabled && p.computed.propsAdjustDelta != null) v += p.computed.propsAdjustDelta;
+    if (ffAdjustEnabled && p.computed.ffAdjustDelta != null) v += p.computed.ffAdjustDelta;
     return v;
   }
 
@@ -2827,11 +3191,13 @@ const UI = (function () {
     if (fpOnlyEnabled) return 'FP ECR';
     if (dsOnlyEnabled) return 'DS Rank';
     if (propsOnlyEnabled) return 'Mkt Pts';
+    if (ffOnlyEnabled) return 'FFB Rank';
     const nudges = [];
     if (envAdjustEnabled) nudges.push('env');
     if (fpAdjustEnabled) nudges.push('FP');
     if (dsAdjustEnabled) nudges.push('DS');
     if (propsAdjustEnabled) nudges.push('props');
+    if (ffAdjustEnabled) nudges.push('FFB');
     return nudges.length ? nudges.join('+') + '-adj. VBD' : 'VBD';
   }
 
@@ -2854,7 +3220,7 @@ const UI = (function () {
   function retierForDisplay() {
     const settings = State.getSettings();
     const players = State.getPlayers();
-    if (!envAdjustEnabled && !fpAdjustEnabled && !dsAdjustEnabled && !propsAdjustEnabled && !fpOnlyEnabled && !dsOnlyEnabled && !propsOnlyEnabled) { VBD.recompute(players, settings.roster, settings.numTeams); return; }
+    if (!envAdjustEnabled && !fpAdjustEnabled && !dsAdjustEnabled && !propsAdjustEnabled && !ffAdjustEnabled && !fpOnlyEnabled && !dsOnlyEnabled && !propsOnlyEnabled && !ffOnlyEnabled) { VBD.recompute(players, settings.roster, settings.numTeams); return; }
     const priced = players.filter(p=>p.computed.valueSource!=='adp-only');
     ['QB','RB','WR','TE','K','DEF'].forEach(pos=>{
       const posPlayers = priced.filter(p=>p.position===pos);
@@ -3207,6 +3573,10 @@ const UI = (function () {
       const up = p.computed.dsAdjustDelta > 0;
       html += `<span class="badge-consensus ${up?'env-up':'env-down'}" title="DS RK #${fmt0(p.computed.consensusDsRk)} rates them ${up?'higher':'lower'} than our VBD">${up?'▲':'▼'}DS ${fmt1(Math.abs(p.computed.dsAdjustDelta))}</span>`;
     }
+    if (p.computed.ffAdjustDelta != null && Math.abs(p.computed.ffAdjustDelta) >= 3) {
+      const up = p.computed.ffAdjustDelta > 0;
+      html += `<span class="badge-consensus ${up?'env-up':'env-down'}" title="Fantasy Footballers ${esc(p.position)}${fmt0(p.computed.ffbRank)} rates them ${up?'higher':'lower'} than our VBD">${up?'▲':'▼'}FFB ${fmt1(Math.abs(p.computed.ffAdjustDelta))}</span>`;
+    }
     if (p.computed.propsAdjustDelta != null && Math.abs(p.computed.propsAdjustDelta) >= 3) {
       const up = p.computed.propsAdjustDelta > 0;
       html += `<span class="badge-props ${up?'env-up':'env-down'}" title="BettingPros market lines imply ${fmt1(p.computed.propsImpliedPoints)} pts on the covered stats -- ${up?'higher':'lower'} than our own projection there">${up?'▲':'▼'}market ${fmt1(Math.abs(p.computed.propsAdjustDelta))}</span>`;
@@ -3244,10 +3614,11 @@ const UI = (function () {
     // In a "just X" pure ranking mode, that column is no longer really VBD -- relabel it so the
     // number on screen is honestly described rather than left mislabeled "VBD".
     const vbdHeader = el('vbdColHeader');
-    vbdHeader.textContent = fpOnlyEnabled ? 'FP ECR' : dsOnlyEnabled ? 'DS Rank' : propsOnlyEnabled ? 'Mkt Pts' : 'VBD';
+    vbdHeader.textContent = fpOnlyEnabled ? 'FP ECR' : dsOnlyEnabled ? 'DS Rank' : propsOnlyEnabled ? 'Mkt Pts' : ffOnlyEnabled ? 'FFB Rank' : 'VBD';
     vbdHeader.title = fpOnlyEnabled ? 'FantasyPros ECR (lower is better) -- VBD is not a factor in this mode.'
       : dsOnlyEnabled ? 'Draft Sharks RK (lower is better) -- VBD is not a factor in this mode.'
-      : propsOnlyEnabled ? 'BettingPros market-implied points -- VBD is not a factor in this mode.' : '';
+      : propsOnlyEnabled ? 'BettingPros market-implied points -- VBD is not a factor in this mode.'
+      : ffOnlyEnabled ? "The Fantasy Footballers' position rank (lower is better, e.g. WR5 = their 5th-ranked WR) -- position-only in their data, so cross-position order is borrowed from this tool's own VBD scale; VBD itself is not a factor in this mode." : '';
 
     const tbody = el('poolTbody');
     let html = '';
@@ -3261,8 +3632,12 @@ const UI = (function () {
       const effVbd = effectiveValue(p);
       // fpOnly/dsOnly's effectiveValue is negated (-rank) purely so higher-value sorting still means
       // "better," matching every other mode -- flip it back for display so "FP ECR"/"DS Rank" reads
-      // as a normal positive rank number (e.g. "3", not "-3").
-      const vbdDisplay = effVbd==null ? '—' : fmt1((fpOnlyEnabled || dsOnlyEnabled) ? -effVbd : effVbd);
+      // as a normal positive rank number (e.g. "3", not "-3"). ffOnly is a bigger departure: its
+      // effectiveValue (ffImpliedValue) is a borrowed VBD-equivalent number used only so cross-position
+      // sorting works -- displaying THAT would look like a fabricated Footballers value, so this shows
+      // the true ffbRank instead (e.g. "WR5"), the number that's actually theirs.
+      const vbdDisplay = ffOnlyEnabled ? (p.computed.ffbRank!=null ? `${esc(p.position)}${p.computed.ffbRank}` : '—')
+        : effVbd==null ? '—' : fmt1((fpOnlyEnabled || dsOnlyEnabled) ? -effVbd : effVbd);
       const survPct = isDrafted ? null : survivalProbability(p.source.adp, nextMyPick);
       const survCell = survPct==null ? '<td>—</td>'
         : `<td class="${survPct>=0.75?'surv-safe':survPct<=0.25?'surv-risky':''}" title="Modeled estimate from ADP ${fmt0(p.source.adp)} that they're still available at pick ${nextMyPick} (your next turn) -- not fitted to real historical variance, a directional guide only.">${Math.round(survPct*100)}%</td>`;
@@ -3326,7 +3701,7 @@ const UI = (function () {
     } else {
       const top = recs[0];
       recMain.innerHTML = `<div class="rec-name">${esc(top.player.name)} <span class="pos-badge pos-${esc(top.player.position)}">${esc(top.player.position)}</span></div>
-        <div class="rec-why">${esc(Recommend.explanation(top, currentValueLabel(), (fpOnlyEnabled || dsOnlyEnabled) ? -top.value : top.value))}</div>`;
+        <div class="rec-why">${esc(Recommend.explanation(top, currentValueLabel(), (fpOnlyEnabled || dsOnlyEnabled) ? -top.value : ffOnlyEnabled ? top.player.computed.ffbRank : top.value))}</div>`;
     }
 
     const recUrgentEl = el('recUrgent');
@@ -3571,24 +3946,26 @@ const UI = (function () {
       }
     });
     el('chkShowDrafted').addEventListener('change', e=>{ showDrafted = e.target.checked; renderPool(); });
-    // The four nudge toggles (env/FP/DS/props) and the three "just X" pure-ranking toggles are
+    // The five nudge toggles (env/FP/DS/props/FFB) and the four "just X" pure-ranking toggles are
     // mutually exclusive as a group -- "nudge VBD by FP" and "ignore VBD, rank purely by FP" can't
-    // both be true at once. Turning on any pure mode clears all four nudges (and the other pure
-    // modes); turning on any nudge clears all three pure modes. Each handler un-checks the
+    // both be true at once. Turning on any pure mode clears all five nudges (and the other pure
+    // modes); turning on any nudge clears all four pure modes. Each handler un-checks the
     // conflicting boxes' actual DOM state too, not just the JS flags, so the UI never silently
     // disagrees with what's active. Driven off small tables rather than one-off per-checkbox
-    // clearing logic so a future fifth toggle in either group can't be added while forgetting to
+    // clearing logic so a future sixth toggle in either group can't be added while forgetting to
     // wire it into the other group's clear step.
     const ADJUST_TOGGLES = [
       ['chkEnvAdjust', v => envAdjustEnabled = v],
       ['chkFpAdjust', v => fpAdjustEnabled = v],
       ['chkDsAdjust', v => dsAdjustEnabled = v],
       ['chkPropsAdjust', v => propsAdjustEnabled = v],
+      ['chkFFAdjust', v => ffAdjustEnabled = v],
     ];
     const PURE_TOGGLES = [
       ['chkFpOnly', v => fpOnlyEnabled = v],
       ['chkDsOnly', v => dsOnlyEnabled = v],
       ['chkPropsOnly', v => propsOnlyEnabled = v],
+      ['chkFFOnly', v => ffOnlyEnabled = v],
     ];
     function clearPureModes() {
       PURE_TOGGLES.forEach(([id, setter]) => { setter(false); el(id).checked = false; });
