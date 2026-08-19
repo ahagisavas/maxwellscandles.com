@@ -224,6 +224,8 @@
             <tr>
               <th data-sort="rank">#</th><th data-sort="name">Player</th><th data-sort="pos">Pos</th><th>Tm</th>
               <th data-sort="tier">Tier</th><th data-sort="vbd" id="vbdColHeader">VBD</th><th data-sort="points">Pts</th>
+              <th title="BettingPros market-implied total yards (rush+rec+pass combined) on whichever of those markets are actually priced for this player -- QBs currently have only rushing props captured (no season passing-yardage/TD futures in this data), so their number here reflects rushing only, not a full passing+rushing total. Blank means no market coverage at all.">Mkt Yds</th>
+              <th title="BettingPros market-implied total TDs (rush+rec+pass combined), same coverage caveat as Mkt Yds -- QBs currently reflect rushing TDs only.">Mkt TD</th>
               <th title="Modeled probability this player is still on the board when your turn comes back around, from their Sleeper ADP -- a directional guide, not measured historical data.">Avail%</th>
               <th>Signals</th>
             </tr>
@@ -1398,6 +1400,8 @@ const State = (function () {
     players.forEach(p => {
       p.computed.propsAdjustDelta = null;
       p.computed.propsImpliedPoints = null;
+      p.computed.propsTotalYards = null;
+      p.computed.propsTotalTd = null;
       if (p.computed.valueSource === 'adp-only' || !['QB','RB','WR','TE'].includes(p.position)) return;
       const marketStats = PROPS_DATA[normalizeName(p.name) + '|' + p.position];
       if (!marketStats) return;
@@ -1410,6 +1414,13 @@ const State = (function () {
       const marketPoints = Scoring.computeOffensePoints(marketStats, settings.scoring).total;
       const ownPoints = Scoring.computeOffensePoints(ownSubset, settings.scoring).total;
       p.computed.propsImpliedPoints = marketPoints;
+      // Simple sums across whatever yardage/TD markets BettingPros actually lines for this player --
+      // a QB might have only rushing props, a receiver only receiving, a bellcow back all three. Not
+      // gated behind "must have every market" the way the points comparison isn't either; a partial
+      // total is still real signal, just labeled (see the column header) as covering only what's
+      // actually priced, not a guaranteed-complete season line.
+      p.computed.propsTotalYards = (marketStats.rushYds||0) + (marketStats.recYds||0) + (marketStats.passYds||0);
+      p.computed.propsTotalTd = (marketStats.rushTd||0) + (marketStats.recTd||0) + (marketStats.passTd||0);
       const weighted = PROPS_WEIGHT * (marketPoints - ownPoints);
       p.computed.propsAdjustDelta = Math.max(-PROPS_MAX_DELTA, Math.min(PROPS_MAX_DELTA, weighted));
     });
@@ -4779,6 +4790,8 @@ const UI = (function () {
         <td>${shownTier!=null?shownTier:'—'}${mixedView?'<span class="tier-scope" title="Cross-position tier (this view mixes positions). Filter to one position to see its own tier scale.">*</span>':''}</td>
         <td>${vbdDisplay}</td>
         <td>${p.computed.points!=null?fmt1(p.computed.points):'—'}</td>
+        <td>${p.computed.propsTotalYards!=null?fmt1(p.computed.propsTotalYards):'—'}</td>
+        <td>${p.computed.propsTotalTd!=null?fmt1(p.computed.propsTotalTd):'—'}</td>
         ${survCell}
         <td>${signalBadges(p, adpDeltaMap)}</td>
       </tr>`;
