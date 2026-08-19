@@ -62,15 +62,6 @@
   .field-row { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 8px; align-items: center; }
   .field-row label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--text-dim); }
 
-  /* Import screen */
-  .import-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
-  .import-tabs .tab.active { background: var(--accent); color: #06121f; border-color: var(--accent); }
-  #pasteArea { width: 100%; height: 160px; font-family: Consolas, monospace; font-size: 12px; }
-  #fileInput { margin-top: 8px; }
-  table.mapping, table.preview { border-collapse: collapse; width: 100%; margin-bottom: 16px; font-size: 12px; }
-  table.mapping th, table.mapping td, table.preview th, table.preview td { border: 1px solid var(--border); padding: 4px 6px; text-align: left; }
-  table.preview { display: block; overflow-x: auto; white-space: nowrap; }
-  #mappingSection h2 { margin-top: 18px; }
   .import-note { font-size: 12px; color: var(--text-dim); margin: 8px 0; line-height: 1.5; }
   .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
 
@@ -207,56 +198,15 @@
     <button id="btnToggleBoard" class="small">Draft Board</button>
     <button id="btnUndo" class="small">Undo Last Pick</button>
     <button id="btnExportState" class="small">Export Draft (.json)</button>
-    <button id="btnGoToImportTop" class="small">Import More</button>
     <button id="btnEndDraft" class="small">End Draft</button>
   </div>
 </header>
-
-<!-- ===================== IMPORT SCREEN ===================== -->
-<section id="screen-import" class="screen">
-  <h1>Fantasy Draft Assistant</h1>
-  <div class="league-chip" id="leagueChip"></div>
-  <p class="import-note">This tool is pre-configured for the league above. Paste a table copied from Yahoo (or any rankings source), or upload a CSV, then head to the live draft screen. If your imported data includes full per-stat projections, points are computed exactly under your league's scoring. If a player only has a single points total or a rank/ADP, the tool falls back gracefully (flagged in the "src" column) — still useful for ordering, just not an exact custom-scored number for that player.</p>
-  <div class="import-tabs">
-    <button type="button" class="tab active" data-tab="paste">Paste Table</button>
-    <button type="button" class="tab" data-tab="file">Upload CSV</button>
-  </div>
-  <div id="importPaste">
-    <textarea id="pasteArea" placeholder="Paste your rankings table here…"></textarea><br><br>
-    <button id="btnParsePaste" class="primary">Parse Pasted Table</button>
-  </div>
-  <div id="importFile" class="hidden">
-    <input type="file" id="fileInput" accept=".csv,.txt">
-  </div>
-
-  <div id="mappingSection" class="hidden">
-    <h2>Confirm Column Mapping</h2>
-    <p class="import-note">I guessed which column is which — fix anything that's wrong before importing.</p>
-    <table class="mapping" id="mappingTable"></table>
-    <h2>Preview</h2>
-    <table class="preview" id="previewTable"></table>
-    <label style="display:block;margin-bottom:10px;"><input type="checkbox" id="chkMergeImport"> Merge into existing pool instead of replacing (use for a second paste, e.g. kickers/DST separately)</label>
-    <button id="btnCommitImport" class="primary">Import These Players</button>
-  </div>
-
-  <details class="env-section">
-    <summary>Team Scoring Environment (optional) — implied point totals per team</summary>
-    <p class="import-note">Paste two columns: Team, Implied Total — e.g. straight from an implied-totals tool (Sharp Football Analysis, Establish The Run). This never changes any player's computed points; it only powers an optional ranking nudge (toggle on the draft screen) and a reference badge, and only applies to QB/RB/WR/TE. Re-paste anytime to refresh, since these move throughout the summer.</p>
-    <textarea id="envArea" placeholder="KC	27.5&#10;BUF	26.0&#10;..."></textarea><br><br>
-    <button id="btnParseEnv">Save Team Environment Data</button>
-    <span class="import-note" id="envStatus"></span>
-  </details>
-
-  <div class="actions">
-    <button id="btnGoToDraft" class="primary">Go to Live Draft →</button>
-    <button id="btnStartMock">Start Mock Draft (auto-pick for other teams) →</button>
-  </div>
-</section>
 
 <!-- ===================== LIVE DRAFT SCREEN ===================== -->
 <section id="screen-draft" class="screen hidden">
   <div class="draft-layout">
     <div class="pool-panel">
+      <div class="league-chip" id="leagueChip"></div>
       <input type="search" id="searchBox" placeholder="Search players… (Enter = mark top result drafted)" autocomplete="off">
       <div class="pos-filters" id="posFilters"></div>
       <div class="toolbar-row">
@@ -312,6 +262,13 @@
         <h3>Pick Log</h3>
         <div id="pickLog"></div>
       </div>
+      <details class="env-section">
+        <summary>Team Scoring Environment (optional) — implied point totals per team</summary>
+        <p class="import-note">Paste two columns: Team, Implied Total — e.g. straight from an implied-totals tool (Sharp Football Analysis, Establish The Run). This never changes any player's computed points; it only powers an optional ranking nudge (the checkbox above the pool table) and a reference badge, and only applies to QB/RB/WR/TE. Re-paste anytime to refresh, since these move throughout the summer.</p>
+        <textarea id="envArea" placeholder="KC	27.5&#10;BUF	26.0&#10;..."></textarea><br><br>
+        <button id="btnParseEnv">Save Team Environment Data</button>
+        <span class="import-note" id="envStatus"></span>
+      </details>
     </div>
   </div>
 </section>
@@ -2813,7 +2770,6 @@ const UI = (function () {
   let dsOnlyEnabled = false;
   let propsOnlyEnabled = false;
   let mockDraftEnabled = false;
-  let parsedTable = null; // { headers, rows, mapping }
   let pendingPickPlayerId = null;
 
   // Whichever value should currently drive sort/tier/recommendation. Two different modes:
@@ -3138,9 +3094,13 @@ const UI = (function () {
   }
 
   function el(id) { return document.getElementById(id); }
+  // Single-screen app now (the rankings-paste import screen was removed -- see bindDraftScreen's
+  // btnParseEnv wiring for the one piece of it, Team Scoring Environment, that survived and moved
+  // into the draft screen's rail panel). Kept as a function, rather than inlined at each call site,
+  // so the resume-banner/mock-draft/end-draft flows below don't need to change.
   function showScreen(name) {
-    ['import','draft'].forEach(s=>el('screen-'+s).classList.toggle('hidden', s!==name));
-    el('topbar').classList.toggle('hidden', name!=='draft');
+    el('screen-draft').classList.remove('hidden');
+    el('topbar').classList.remove('hidden');
   }
 
   function renderLeagueChip() {
@@ -3149,93 +3109,6 @@ const UI = (function () {
       + `${s.roster.slots.QB}QB / ${s.roster.slots.RB}RB / ${s.roster.slots.WR}WR / ${s.roster.slots.TE}TE / `
       + `${s.roster.slots.FLEX} FLEX (${s.roster.flexEligible.join('/')}) / ${s.roster.slots.K}K / ${s.roster.slots.DEF}DEF `
       + `· ${s.roster.slots.BN} BN + ${s.roster.slots.IR} IR`;
-  }
-
-  /* ---- Import screen ---- */
-  function bindImportScreen() {
-    document.querySelectorAll('.import-tabs .tab').forEach(tab=>{
-      tab.addEventListener('click', ()=>{
-        document.querySelectorAll('.import-tabs .tab').forEach(t=>t.classList.remove('active'));
-        tab.classList.add('active');
-        el('importPaste').classList.toggle('hidden', tab.dataset.tab!=='paste');
-        el('importFile').classList.toggle('hidden', tab.dataset.tab!=='file');
-      });
-    });
-    el('btnParsePaste').addEventListener('click', ()=>{
-      const text = el('pasteArea').value;
-      if (!text.trim()) { toast('Paste a table first.'); return; }
-      handleParsed(Importer.parseTable(text));
-    });
-    el('fileInput').addEventListener('change', ()=>{
-      const f = el('fileInput').files[0];
-      if (!f) return;
-      const reader = new FileReader();
-      reader.onload = e => handleParsed(Importer.parseTable(e.target.result));
-      reader.readAsText(f);
-    });
-    el('btnCommitImport').addEventListener('click', commitImport);
-    el('btnGoToDraft').addEventListener('click', ()=>{ showScreen('draft'); renderAll(); });
-    el('btnStartMock').addEventListener('click', ()=>{
-      mockDraftEnabled = true;
-      showScreen('draft');
-      runMockAdvance();
-      renderAll();
-    });
-    el('btnParseEnv').addEventListener('click', ()=>{
-      const text = el('envArea').value;
-      if (!text.trim()) { toast('Paste team implied totals first.'); return; }
-      const map = Importer.parseTeamEnvironments(text);
-      const count = Object.keys(map).length;
-      if (!count) { toast('Could not find any "Team, Implied Total" rows in that.'); return; }
-      State.setTeamEnvironments(map);
-      retierForDisplay();
-      el('envStatus').textContent = `Saved implied totals for ${count} teams.`;
-      renderAll();
-    });
-  }
-
-  function handleParsed(parsed) {
-    parsedTable = parsed;
-    parsedTable.mapping = parsed.headers.map(h=>Importer.guessField(h));
-    renderMapping();
-    el('mappingSection').classList.remove('hidden');
-  }
-
-  function renderMapping() {
-    const mapTable = el('mappingTable');
-    let html = '<tr><th>Pasted Column</th><th>Maps To</th></tr>';
-    parsedTable.headers.forEach((h,i)=>{
-      html += `<tr><td>Col ${i+1}: ${esc(h)}</td><td><select data-col="${i}" class="map-select">`;
-      Object.keys(Importer.FIELD_LABELS).forEach(field=>{
-        const sel = parsedTable.mapping[i]===field ? 'selected' : '';
-        html += `<option value="${field}" ${sel}>${esc(Importer.FIELD_LABELS[field])}</option>`;
-      });
-      html += `</select></td></tr>`;
-    });
-    mapTable.innerHTML = html;
-    mapTable.querySelectorAll('.map-select').forEach(sel=>{
-      sel.addEventListener('change', ()=>{ parsedTable.mapping[parseInt(sel.dataset.col,10)] = sel.value; renderPreview(); });
-    });
-    renderPreview();
-  }
-
-  function renderPreview() {
-    const prevTable = el('previewTable');
-    const rows = parsedTable.rows.slice(0,8);
-    let html = '<tr>' + parsedTable.headers.map((h,i)=>`<th>${esc(Importer.FIELD_LABELS[parsedTable.mapping[i]])}</th>`).join('') + '</tr>';
-    rows.forEach(r=>{ html += '<tr>' + r.map(c=>`<td>${esc(c)}</td>`).join('') + '</tr>'; });
-    prevTable.innerHTML = html;
-  }
-
-  function commitImport() {
-    if (!parsedTable) return;
-    const merge = el('chkMergeImport').checked;
-    const existingIds = merge ? new Set(State.getPlayers().map(p=>p.id)) : new Set();
-    const newPlayers = Importer.buildPlayers(parsedTable.headers, parsedTable.rows, parsedTable.mapping, existingIds);
-    State.setPlayers(newPlayers, merge);
-    toast(`Imported ${newPlayers.length} players.`);
-    showScreen('draft');
-    renderAll();
   }
 
   /* ---- Draft screen ---- */
@@ -3784,11 +3657,21 @@ const UI = (function () {
     });
     el('btnToggleBoard').addEventListener('click', ()=>{ el('boardPanel').classList.toggle('hidden'); renderBoard(); });
     el('btnExportState').addEventListener('click', ()=>{ Persistence.exportToFile(State.exportFullState(), 'draft-state.json'); toast('Draft state exported.'); });
-    el('btnGoToImportTop').addEventListener('click', ()=>showScreen('import'));
     el('btnEndDraft').addEventListener('click', ()=>{
       State.setDraftEnded(!State.isDraftEnded());
       renderAll();
       toast(State.isDraftEnded() ? 'Draft marked complete.' : 'Draft re-opened.');
+    });
+    el('btnParseEnv').addEventListener('click', ()=>{
+      const text = el('envArea').value;
+      if (!text.trim()) { toast('Paste team implied totals first.'); return; }
+      const map = Importer.parseTeamEnvironments(text);
+      const count = Object.keys(map).length;
+      if (!count) { toast('Could not find any "Team, Implied Total" rows in that.'); return; }
+      State.setTeamEnvironments(map);
+      retierForDisplay();
+      el('envStatus').textContent = `Saved implied totals for ${count} teams.`;
+      renderAll();
     });
   }
 
@@ -3815,7 +3698,6 @@ const UI = (function () {
   }
 
   function init() {
-    bindImportScreen();
     bindDraftScreen();
     bindResumeBanner();
     State.onChange(()=>{ if (!el('screen-draft').classList.contains('hidden')) renderAll(); });
@@ -3827,10 +3709,12 @@ const UI = (function () {
     if (saved && saved.players && saved.players.length) {
       el('resumeTime').textContent = saved.updatedAt ? new Date(saved.updatedAt).toLocaleString() : 'earlier session';
       el('resumeBanner').classList.remove('hidden');
-      showScreen('import');
+      // Draft screen sits behind the (fixed-position) resume banner, empty until Resume/Start New is
+      // clicked -- both handlers already call renderAll() once real player/pick data is loaded.
+      showScreen('draft');
     } else {
-      // No draft in progress -- open straight into a ready-to-draft board instead of an empty
-      // Import screen, using the projections baked in at build time (see loadDefaultPlayers).
+      // No draft in progress -- open straight into a ready-to-draft board using the projections
+      // baked in at build time (see loadDefaultPlayers).
       el('resumeBanner').classList.add('hidden');
       State.setPlayers(loadDefaultPlayers());
       showScreen('draft');
