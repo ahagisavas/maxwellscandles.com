@@ -107,6 +107,8 @@
   .tier-scope { color: var(--accent); cursor: help; margin-left: 2px; }
   .env-up { background: rgba(52,199,89,0.15); color: var(--good); }
   .env-down { background: rgba(255,77,79,0.15); color: var(--bad); }
+  .surv-safe { color: var(--good); cursor: help; }
+  .surv-risky { color: var(--bad); cursor: help; }
   .badge-schedule { background: var(--panel3); color: var(--text-dim); cursor: default; }
   .adp-value { background: rgba(79,158,255,0.15); color: var(--accent); }
   .adp-reach { background: rgba(255,176,32,0.15); color: var(--warn); }
@@ -123,7 +125,12 @@
   #recUrgent { border-color: rgba(255,176,32,0.35); }
   #recMain .rec-name, #recUrgent .rec-name { font-size: 16px; font-weight: 700; }
   #recMain .rec-why, #recUrgent .rec-why { color: var(--text-dim); font-size: 12px; margin-top: 4px; }
-  #recAlts .alt-row { display: flex; justify-content: space-between; padding: 4px 2px; font-size: 12px; border-bottom: 1px dashed var(--border); }
+  #recAlts.rec-box { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; margin-bottom: 8px; background: var(--panel2); }
+  #recAlts .alt-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 2px; font-size: 12px; border-bottom: 1px dashed var(--border); }
+  #recAlts .alt-row:last-child { border-bottom: none; }
+  #recAlts .alt-pct { font-weight: 700; font-size: 12px; }
+  .alt-pct.pct-high { color: var(--good); }
+  .alt-pct.pct-low { color: var(--bad); }
   #warnings .warn-item { background: rgba(255,176,32,0.1); border: 1px solid rgba(255,176,32,0.3); color: var(--warn); border-radius: 6px; padding: 6px 8px; font-size: 11.5px; margin-top: 6px; }
 
   #injuredPanel .inj-row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; padding: 4px 2px; font-size: 12px; border-bottom: 1px dashed var(--border); cursor: pointer; }
@@ -264,7 +271,9 @@
           <thead>
             <tr>
               <th data-sort="rank">#</th><th data-sort="name">Player</th><th data-sort="pos">Pos</th><th>Tm</th>
-              <th data-sort="tier">Tier</th><th data-sort="vbd">VBD</th><th data-sort="points">Pts</th><th>Src</th><th>Signals</th>
+              <th data-sort="tier">Tier</th><th data-sort="vbd">VBD</th><th data-sort="points">Pts</th>
+              <th title="Modeled probability this player is still on the board when your turn comes back around, from their Sleeper ADP -- a directional guide, not measured historical data.">Avail%</th>
+              <th>Src</th><th>Signals</th>
             </tr>
           </thead>
           <tbody id="poolTbody"></tbody>
@@ -283,7 +292,8 @@
         <div id="recMain"></div>
         <div class="rec-row-label">By ADP urgency</div>
         <div id="recUrgent"></div>
-        <div id="recAlts"></div>
+        <div class="rec-row-label" title="Same need-weighted ranking as the pick above, just showing places 2-4 instead of only the top one -- for when you'd rather not take that exact player.">Other considerations</div>
+        <div id="recAlts" class="rec-box"></div>
         <div id="warnings"></div>
       </div>
       <div>
@@ -2931,6 +2941,39 @@ const UI = (function () {
     toast('Connected to Sleeper draft — syncing picks live.');
   }
 
+  // Standard normal CDF via the Abramowitz & Stegun 7.1.26 erf approximation (max error ~1.5e-7) --
+  // no built-in in JS, and this is the standard closed-form way to get one without pulling in a
+  // stats library for one function.
+  function erf(x) {
+    const sign = x < 0 ? -1 : 1;
+    x = Math.abs(x);
+    const a1=0.254829592, a2=-0.284496736, a3=1.421413741, a4=-1.453152027, a5=1.061405429, p=0.3275911;
+    const t = 1/(1+p*x);
+    const y = 1 - (((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t)*Math.exp(-x*x);
+    return sign*y;
+  }
+  function normalCdf(x, mean, stddev) {
+    if (!stddev || stddev <= 0) return x >= mean ? 1 : 0;
+    return 0.5*(1+erf((x-mean)/(stddev*Math.SQRT2)));
+  }
+
+  // Modeled assumption, not fitted to real historical draft data (Sleeper doesn't expose per-player
+  // variance, only the ADP mean itself) -- real draft position spreads roughly proportional to ADP:
+  // the consensus #1 overall almost always goes in the top few picks (tight), while a fringe late
+  // player can swing 40+ picks draft to draft (wide). This 0.3-of-ADP slope, floored at 1 pick so an
+  // ADP-1 player isn't modeled as literally locked to exactly pick 1, is a common simplification --
+  // treat the resulting percentage as a directional guide, not a guarantee, same spirit as every
+  // other modeled (not measured) signal in this tool.
+  function estimateAdpStdDev(adp) { return Math.max(1, adp*0.3); }
+
+  // Probability a player with this ADP is still on the board when the given future pick number is
+  // on the clock -- i.e. nobody else took them in the picks between now and then. -0.5 is a
+  // continuity correction (ADP models a continuous spread over discrete integer pick slots).
+  function survivalProbability(adp, atPickNumber) {
+    if (typeof adp !== 'number' || isNaN(adp)) return null;
+    return 1 - normalCdf(atPickNumber - 0.5, adp, estimateAdpStdDev(adp));
+  }
+
   // Ranks the full available/priced pool by effective value and compares to each player's ADP —
   // positive delta means they're being valued here better than the market is drafting them (value),
   // negative means the opposite (reach). Computed over the whole pool, not whatever's filtered/
@@ -2954,7 +2997,7 @@ const UI = (function () {
     const userRoster = State.rosterForSlot(settings.userSlot);
     const info = Snake.pickInfo(alreadyDrafted + 1, settings.numTeams);
     const recs = Recommend.recommend(availableList, userRoster, settings, info.round, effectiveValue);
-    const recommendedIds = new Set(recs.slice(0,6).map(r=>r.player.id));
+    const recommendedIds = new Set(recs.slice(0,4).map(r=>r.player.id)); // top pick + its 3 Other Considerations
     const map = {};
     priced.forEach((p,i)=>{
       if (!recommendedIds.has(p.id)) return;
@@ -3173,6 +3216,9 @@ const UI = (function () {
     if (search) list = list.filter(p=>p.name.toLowerCase().includes(search));
     list = sortPlayers(list);
 
+    const settings = State.getSettings();
+    const nextMyPick = Snake.nextUserPick(State.currentPickNumber(), settings.userSlot, settings.numTeams);
+
     const tbody = el('poolTbody');
     let html = '';
     const mixedView = (posFilter === 'ALL' || posFilter === 'FLEX');
@@ -3183,6 +3229,9 @@ const UI = (function () {
       const tierBreak = (shownTier!=null && lastTier!=null && shownTier!==lastTier) ? ' tier-break' : '';
       lastTier = shownTier;
       const effVbd = effectiveValue(p);
+      const survPct = isDrafted ? null : survivalProbability(p.source.adp, nextMyPick);
+      const survCell = survPct==null ? '<td>—</td>'
+        : `<td class="${survPct>=0.75?'surv-safe':survPct<=0.25?'surv-risky':''}" title="Modeled estimate from ADP ${fmt0(p.source.adp)} that they're still available at pick ${nextMyPick} (your next turn) -- not fitted to real historical variance, a directional guide only.">${Math.round(survPct*100)}%</td>`;
       html += `<tr data-id="${esc(p.id)}" class="${isDrafted?'drafted':''}${tierBreak}">
         <td>${p.computed.positionRank||''}</td>
         <td>${esc(p.name)}</td>
@@ -3191,6 +3240,7 @@ const UI = (function () {
         <td>${shownTier!=null?shownTier:'—'}${mixedView?'<span class="tier-scope" title="Cross-position tier (this view mixes positions). Filter to one position to see its own tier scale.">*</span>':''}</td>
         <td>${effVbd!=null?fmt1(effVbd):'—'}</td>
         <td>${p.computed.points!=null?fmt1(p.computed.points):'—'}</td>
+        ${survCell}
         <td>${srcBadge(p)}</td>
         <td>${signalBadges(p, adpDeltaMap)}</td>
       </tr>`;
@@ -3260,8 +3310,25 @@ const UI = (function () {
       }
     }
 
-    const alts = recs.slice(1,6);
-    el('recAlts').innerHTML = alts.map(r=>`<div class="alt-row"><span>${esc(r.player.name)} (${esc(r.player.position)})</span><span>${fmt1(r.value)}</span></div>`).join('');
+    // Places 2-4 of the exact same need-weighted ranking that already produced the top pick above --
+    // not a separate/looser list, so "Other Considerations" never disagrees with "Recommended Pick"
+    // about what's actually best, only about how many rungs down the ladder each option sits. The %
+    // is that ranking's own `score` (need-weight already applied) as a fraction of the top pick's --
+    // always a safe, positive ratio (scoreCandidates guarantees score > 0 for every candidate via its
+    // internal shift), so 95% genuinely means "nearly as good," not just "nearly as much raw VBD."
+    const others = recs.slice(1,4);
+    if (!recs.length) {
+      el('recAlts').innerHTML = '<div class="rec-why">No priced players available yet.</div>';
+    } else if (!others.length) {
+      el('recAlts').innerHTML = '<div class="rec-why">Nobody else priced right now.</div>';
+    } else {
+      const topScore = recs[0].score;
+      el('recAlts').innerHTML = others.map(r=>{
+        const pct = Math.round(100*r.score/topScore);
+        const cls = pct>=85?'pct-high':pct<=50?'pct-low':'';
+        return `<div class="alt-row"><span>${esc(r.player.name)} <span class="pos-badge pos-${esc(r.player.position)}">${esc(r.player.position)}</span></span><span class="alt-pct ${cls}" title="${pct}% as strong a pick as ${esc(recs[0].player.name)}, by the same value+need scoring">${pct}%</span></div>`;
+      }).join('');
+    }
 
     const scarcity = Recommend.scarcityWarnings(available, userRoster, settings.roster);
     renderWarnings(scarcity);
