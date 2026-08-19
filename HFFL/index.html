@@ -262,8 +262,12 @@
       <div class="toolbar-row">
         <label><input type="checkbox" id="chkShowDrafted"> Show drafted players</label>
         <label><input type="checkbox" id="chkEnvAdjust"> Factor team scoring environment into rankings</label>
-        <label><input type="checkbox" id="chkConsensusAdjust"> Factor FantasyPros/Draft Sharks consensus into rankings</label>
+        <label><input type="checkbox" id="chkFpAdjust"> Factor FantasyPros</label>
+        <label><input type="checkbox" id="chkDsAdjust"> Factor Draft Sharks</label>
         <label><input type="checkbox" id="chkPropsAdjust"> Factor BettingPros market lines into rankings</label>
+        <label><input type="checkbox" id="chkFpOnly" title="Ignores VBD entirely -- ranks purely by FantasyPros ECR. Mutually exclusive with every other ranking toggle."> Rank by FantasyPros ONLY</label>
+        <label><input type="checkbox" id="chkDsOnly" title="Ignores VBD entirely -- ranks purely by Draft Sharks RK. Mutually exclusive with every other ranking toggle."> Rank by Draft Sharks ONLY</label>
+        <label><input type="checkbox" id="chkPropsOnly" title="Ignores VBD entirely -- ranks purely by BettingPros market-implied points. Mutually exclusive with every other ranking toggle."> Rank by BettingPros market ONLY</label>
         <button id="btnQuickAdd" class="small">+ Quick-add player not in pool</button>
       </div>
       <div class="pool-wrap">
@@ -271,7 +275,7 @@
           <thead>
             <tr>
               <th data-sort="rank">#</th><th data-sort="name">Player</th><th data-sort="pos">Pos</th><th>Tm</th>
-              <th data-sort="tier">Tier</th><th data-sort="vbd">VBD</th><th data-sort="points">Pts</th>
+              <th data-sort="tier">Tier</th><th data-sort="vbd" id="vbdColHeader">VBD</th><th data-sort="points">Pts</th>
               <th title="Modeled probability this player is still on the board when your turn comes back around, from their Sleeper ADP -- a directional guide, not measured historical data.">Avail%</th>
               <th>Src</th><th>Signals</th>
             </tr>
@@ -1333,16 +1337,20 @@ const State = (function () {
   }
 
   // Optional overlay, same spirit as applyEnvironment above: nudges VBD toward the FantasyPros ECR /
-  // Draft Sharks RK consensus (CONSENSUS_DATA/CONSENSUS_WEIGHTS, defined above SLEEPER LIVE DRAFT
-  // SYNC), bounded and position-weighted, never touching the raw stats-driven `vbd` itself. Stored as
-  // a raw point DELTA (not a final adjusted value) specifically so it composes additively with the
-  // env-adjustment delta in effectiveValue() -- an earlier multiplicative version of this pattern
-  // (see envAdjustedVbd) silently flips direction for anyone with negative VBD, which an additive
-  // delta against a position-scaled unit avoids entirely.
+  // FantasyPros ECR and Draft Sharks RK (CONSENSUS_DATA/CONSENSUS_WEIGHTS, defined above SLEEPER LIVE
+  // DRAFT SYNC), bounded and position-weighted, never touching the raw stats-driven `vbd` itself.
+  // FP and DS are kept as two fully independent deltas (not averaged into one "consensus" figure) --
+  // they're different panels with different methodologies, and the draft-screen toggles let each be
+  // factored in, ignored, or ranked by exclusively, on its own. Each delta is stored as a raw point
+  // DELTA (not a final adjusted value) specifically so it composes additively with the env-adjustment
+  // delta in effectiveValue() -- an earlier multiplicative version of this pattern (see
+  // envAdjustedVbd) silently flips direction for anyone with negative VBD, which an additive delta
+  // against a position-scaled unit avoids entirely.
   function applyConsensus() {
     const byPos = {};
     players.forEach(p => {
-      p.computed.consensusAdjustDelta = null;
+      p.computed.fpAdjustDelta = null;
+      p.computed.dsAdjustDelta = null;
       p.computed.consensusFpEcr = null;
       p.computed.consensusDsRk = null;
       if (p.computed.valueSource === 'adp-only' || !CONSENSUS_WEIGHTS[p.position]) return;
@@ -1372,13 +1380,16 @@ const State = (function () {
         p.computed.consensusFpEcr = c[0];
         p.computed.consensusDsRk = c[1];
         const vbdPct = n > 1 ? 1 - (p.computed.positionRank - 1) / (n - 1) : 1;
-        const pieces = [];
-        if (fpPosRank.has(p)) pieces.push(1 - (fpPosRank.get(p) - 1) / ((fpEntries.length - 1) || 1));
-        if (dsPosRank.has(p)) pieces.push(1 - (dsPosRank.get(p) - 1) / ((dsEntries.length - 1) || 1));
-        if (!pieces.length) return;
-        const externalPct = pieces.reduce((a,b)=>a+b, 0) / pieces.length;
-        const delta = externalPct - vbdPct; // + means consensus rates them better than VBD does
-        p.computed.consensusAdjustDelta = CONSENSUS_WEIGHTS[pos] * delta * topVbd;
+        // + means that source rates them better than VBD does. Each source's delta only exists when
+        // that source actually covers this player -- no cross-filling from the other source.
+        if (fpPosRank.has(p)) {
+          const fpPct = 1 - (fpPosRank.get(p) - 1) / ((fpEntries.length - 1) || 1);
+          p.computed.fpAdjustDelta = CONSENSUS_WEIGHTS[pos] * (fpPct - vbdPct) * topVbd;
+        }
+        if (dsPosRank.has(p)) {
+          const dsPct = 1 - (dsPosRank.get(p) - 1) / ((dsEntries.length - 1) || 1);
+          p.computed.dsAdjustDelta = CONSENSUS_WEIGHTS[pos] * (dsPct - vbdPct) * topVbd;
+        }
       });
     });
   }
@@ -1571,6 +1582,14 @@ const Recommend = (function () {
     const pool = candidates.filter(p => {
       if (p.computed.valueSource === 'adp-only' || p.computed.vbd == null) return false;
       if ((p.position==='K'||p.position==='DEF') && !kDefOk) return false;
+      // Under a pure "rank by X ONLY" mode, valueFn can return null for a real, stats-priced player
+      // who simply has no data from that one external source (e.g. no FantasyPros ECR entry) --
+      // exclude them here rather than let `value+shift` silently coerce null to 0 below, which was
+      // producing identical, meaningless scores for every uncovered player (they'd tie every other
+      // uncovered player at exactly `shift*multiplier`) and could easily out-rank real, covered
+      // players. In the default/nudge mode this check is a no-op: valueFn is null there exactly when
+      // vbd is null, already excluded above.
+      if (valueFn(p) == null) return false;
       return true;
     });
     // Multiplying a possibly-negative value (VBD can be negative below replacement; -ADP is
@@ -1675,11 +1694,17 @@ const Recommend = (function () {
     return scoreCandidates(atRisk, userRoster, settings, currentRound, valueFn);
   }
 
-  function explanation(rec) {
+  // valueLabel is supplied by the caller (UI module), which is the one place that actually knows
+  // which nudge(s)/pure mode are currently active -- this module only sees the resulting numbers.
+  // Falls back to a generic label if a caller doesn't pass one, rather than guessing "env" the way
+  // this used to (wrong whenever a different signal, or a pure mode, was what actually moved it).
+  function explanation(rec, valueLabel, displayValue) {
     const p = rec.player;
     const tierText = p.computed.tier ? `Tier ${p.computed.tier}` : 'Untiered';
-    const vbdLabel = (rec.value !== p.computed.vbd) ? 'env-adj. VBD' : 'VBD';
-    return `Best available ${p.position} (${tierText}, ${vbdLabel} +${fmt1(rec.value)}) — ${NEED_TEXT[rec.need](p)}.`;
+    const label = valueLabel || ((rec.value !== p.computed.vbd) ? 'adj. VBD' : 'VBD');
+    const val = displayValue != null ? displayValue : rec.value;
+    const sign = val >= 0 ? '+' : '';
+    return `Best available ${p.position} (${tierText}, ${label} ${sign}${fmt1(val)}) — ${NEED_TEXT[rec.need](p)}.`;
   }
 
   function explanationUrgent(rec, nextMyPickOverall) {
@@ -2781,24 +2806,57 @@ const UI = (function () {
   let posFilter = 'ALL';
   let showDrafted = false;
   let envAdjustEnabled = false;
-  let consensusAdjustEnabled = false;
+  let fpAdjustEnabled = false;
+  let dsAdjustEnabled = false;
   let propsAdjustEnabled = false;
+  let fpOnlyEnabled = false;
+  let dsOnlyEnabled = false;
+  let propsOnlyEnabled = false;
   let mockDraftEnabled = false;
   let parsedTable = null; // { headers, rows, mapping }
   let pendingPickPlayerId = null;
 
-  // Whichever value should currently drive sort/tier/recommendation: raw VBD, plus whichever of the
-  // three independent optional overlays are toggled on -- team-scoring-environment, FantasyPros/Draft
-  // Sharks consensus, and BettingPros market-implied points. All three are stored as bounded point
-  // deltas (see State.applyEnvironment/applyConsensus/applyProps) specifically so they compose
-  // additively here rather than needing to pick just one.
+  // Whichever value should currently drive sort/tier/recommendation. Two different modes:
+  // - Normal (default): raw VBD, plus whichever of the four independent bounded-nudge overlays are
+  //   toggled on -- team-scoring-environment, FantasyPros ECR, Draft Sharks RK, and BettingPros
+  //   market-implied points. These compose additively (see State.applyEnvironment/applyConsensus/
+  //   applyProps) and are all capped, so VBD stays the backbone even with all four checked.
+  // - "Just X" (fpOnlyEnabled / dsOnlyEnabled / propsOnlyEnabled, mutually exclusive with everything
+  //   else via the checkbox wiring below): ignores VBD entirely and ranks purely by that one external
+  //   source, for when you want to see what FP, DS, or the betting market alone would say, not a
+  //   VBD-anchored nudge. fpOnly/dsOnly use -rank (lower rank = higher value, same sort convention as
+  //   VBD); propsOnly uses the market-implied points directly since that's already points-equivalent,
+  //   comparable the same way `vbd`/`points` are.
+  // FantasyPros and Draft Sharks are deliberately kept separate rather than averaged into one
+  // "consensus" figure -- they're different expert panels with different methodologies, so each gets
+  // its own nudge and its own pure mode instead of being blended together.
+  // Every pure mode returns null for a player with no data from that source at all -- same "don't
+  // invent a number" convention as everywhere else, not a silent 0.
   function effectiveValue(p) {
+    if (fpOnlyEnabled) return p.computed.consensusFpEcr == null ? null : -p.computed.consensusFpEcr;
+    if (dsOnlyEnabled) return p.computed.consensusDsRk == null ? null : -p.computed.consensusDsRk;
+    if (propsOnlyEnabled) return p.computed.propsImpliedPoints;
     let v = p.computed.vbd;
     if (v == null) return v;
     if (envAdjustEnabled && p.computed.envAdjustedVbd != null) v += (p.computed.envAdjustedVbd - p.computed.vbd);
-    if (consensusAdjustEnabled && p.computed.consensusAdjustDelta != null) v += p.computed.consensusAdjustDelta;
+    if (fpAdjustEnabled && p.computed.fpAdjustDelta != null) v += p.computed.fpAdjustDelta;
+    if (dsAdjustEnabled && p.computed.dsAdjustDelta != null) v += p.computed.dsAdjustDelta;
     if (propsAdjustEnabled && p.computed.propsAdjustDelta != null) v += p.computed.propsAdjustDelta;
     return v;
+  }
+
+  // Short label for whichever metric effectiveValue() is currently driving recommendations from --
+  // fed to Recommend.explanation() so its "why" text names the real signal instead of a stale guess.
+  function currentValueLabel() {
+    if (fpOnlyEnabled) return 'FP ECR';
+    if (dsOnlyEnabled) return 'DS Rank';
+    if (propsOnlyEnabled) return 'Mkt Pts';
+    const nudges = [];
+    if (envAdjustEnabled) nudges.push('env');
+    if (fpAdjustEnabled) nudges.push('FP');
+    if (dsAdjustEnabled) nudges.push('DS');
+    if (propsAdjustEnabled) nudges.push('props');
+    return nudges.length ? nudges.join('+') + '-adj. VBD' : 'VBD';
   }
 
   // Day-to-day tags like "Questionable"/"Probable" apply to nearly every player at some point and
@@ -2820,7 +2878,7 @@ const UI = (function () {
   function retierForDisplay() {
     const settings = State.getSettings();
     const players = State.getPlayers();
-    if (!envAdjustEnabled && !consensusAdjustEnabled && !propsAdjustEnabled) { VBD.recompute(players, settings.roster, settings.numTeams); return; }
+    if (!envAdjustEnabled && !fpAdjustEnabled && !dsAdjustEnabled && !propsAdjustEnabled && !fpOnlyEnabled && !dsOnlyEnabled && !propsOnlyEnabled) { VBD.recompute(players, settings.roster, settings.numTeams); return; }
     const priced = players.filter(p=>p.computed.valueSource!=='adp-only');
     ['QB','RB','WR','TE','K','DEF'].forEach(pos=>{
       const posPlayers = priced.filter(p=>p.position===pos);
@@ -3248,12 +3306,13 @@ const UI = (function () {
       const up = p.computed.envDelta > 0;
       html += `<span class="badge-env ${up?'env-up':'env-down'}" title="Team implied total ${fmt1(p.computed.envImplied)}, ${up?'+':''}${fmt1(p.computed.envDelta)} vs league average">${up?'▲':'▼'}${fmt1(Math.abs(p.computed.envDelta))}</span>`;
     }
-    if (p.computed.consensusAdjustDelta != null && Math.abs(p.computed.consensusAdjustDelta) >= 3) {
-      const up = p.computed.consensusAdjustDelta > 0;
-      const parts = [];
-      if (p.computed.consensusFpEcr != null) parts.push('FP ECR #'+fmt0(p.computed.consensusFpEcr));
-      if (p.computed.consensusDsRk != null) parts.push('DS RK #'+fmt0(p.computed.consensusDsRk));
-      html += `<span class="badge-consensus ${up?'env-up':'env-down'}" title="${esc(parts.join(', '))} rates them ${up?'higher':'lower'} than our VBD">${up?'▲':'▼'}consensus ${fmt1(Math.abs(p.computed.consensusAdjustDelta))}</span>`;
+    if (p.computed.fpAdjustDelta != null && Math.abs(p.computed.fpAdjustDelta) >= 3) {
+      const up = p.computed.fpAdjustDelta > 0;
+      html += `<span class="badge-consensus ${up?'env-up':'env-down'}" title="FP ECR #${fmt0(p.computed.consensusFpEcr)} rates them ${up?'higher':'lower'} than our VBD">${up?'▲':'▼'}FP ${fmt1(Math.abs(p.computed.fpAdjustDelta))}</span>`;
+    }
+    if (p.computed.dsAdjustDelta != null && Math.abs(p.computed.dsAdjustDelta) >= 3) {
+      const up = p.computed.dsAdjustDelta > 0;
+      html += `<span class="badge-consensus ${up?'env-up':'env-down'}" title="DS RK #${fmt0(p.computed.consensusDsRk)} rates them ${up?'higher':'lower'} than our VBD">${up?'▲':'▼'}DS ${fmt1(Math.abs(p.computed.dsAdjustDelta))}</span>`;
     }
     if (p.computed.propsAdjustDelta != null && Math.abs(p.computed.propsAdjustDelta) >= 3) {
       const up = p.computed.propsAdjustDelta > 0;
@@ -3289,6 +3348,14 @@ const UI = (function () {
     const settings = State.getSettings();
     const nextMyPick = Snake.nextUserPick(State.currentPickNumber(), settings.userSlot, settings.numTeams);
 
+    // In a "just X" pure ranking mode, that column is no longer really VBD -- relabel it so the
+    // number on screen is honestly described rather than left mislabeled "VBD".
+    const vbdHeader = el('vbdColHeader');
+    vbdHeader.textContent = fpOnlyEnabled ? 'FP ECR' : dsOnlyEnabled ? 'DS Rank' : propsOnlyEnabled ? 'Mkt Pts' : 'VBD';
+    vbdHeader.title = fpOnlyEnabled ? 'FantasyPros ECR (lower is better) -- VBD is not a factor in this mode.'
+      : dsOnlyEnabled ? 'Draft Sharks RK (lower is better) -- VBD is not a factor in this mode.'
+      : propsOnlyEnabled ? 'BettingPros market-implied points -- VBD is not a factor in this mode.' : '';
+
     const tbody = el('poolTbody');
     let html = '';
     const mixedView = (posFilter === 'ALL' || posFilter === 'FLEX');
@@ -3299,6 +3366,10 @@ const UI = (function () {
       const tierBreak = (shownTier!=null && lastTier!=null && shownTier!==lastTier) ? ' tier-break' : '';
       lastTier = shownTier;
       const effVbd = effectiveValue(p);
+      // fpOnly/dsOnly's effectiveValue is negated (-rank) purely so higher-value sorting still means
+      // "better," matching every other mode -- flip it back for display so "FP ECR"/"DS Rank" reads
+      // as a normal positive rank number (e.g. "3", not "-3").
+      const vbdDisplay = effVbd==null ? '—' : fmt1((fpOnlyEnabled || dsOnlyEnabled) ? -effVbd : effVbd);
       const survPct = isDrafted ? null : survivalProbability(p.source.adp, nextMyPick);
       const survCell = survPct==null ? '<td>—</td>'
         : `<td class="${survPct>=0.75?'surv-safe':survPct<=0.25?'surv-risky':''}" title="Modeled estimate from ADP ${fmt0(p.source.adp)} that they're still available at pick ${nextMyPick} (your next turn) -- not fitted to real historical variance, a directional guide only.">${Math.round(survPct*100)}%</td>`;
@@ -3308,7 +3379,7 @@ const UI = (function () {
         <td><span class="pos-badge pos-${esc(p.position)}">${esc(p.position)}</span></td>
         <td>${esc(p.team)}</td>
         <td>${shownTier!=null?shownTier:'—'}${mixedView?'<span class="tier-scope" title="Cross-position tier (this view mixes positions). Filter to one position to see its own tier scale.">*</span>':''}</td>
-        <td>${effVbd!=null?fmt1(effVbd):'—'}</td>
+        <td>${vbdDisplay}</td>
         <td>${p.computed.points!=null?fmt1(p.computed.points):'—'}</td>
         ${survCell}
         <td>${srcBadge(p)}</td>
@@ -3362,7 +3433,7 @@ const UI = (function () {
     } else {
       const top = recs[0];
       recMain.innerHTML = `<div class="rec-name">${esc(top.player.name)} <span class="pos-badge pos-${esc(top.player.position)}">${esc(top.player.position)}</span></div>
-        <div class="rec-why">${esc(Recommend.explanation(top))}</div>`;
+        <div class="rec-why">${esc(Recommend.explanation(top, currentValueLabel(), (fpOnlyEnabled || dsOnlyEnabled) ? -top.value : top.value))}</div>`;
     }
 
     const recUrgentEl = el('recUrgent');
@@ -3606,9 +3677,44 @@ const UI = (function () {
       }
     });
     el('chkShowDrafted').addEventListener('change', e=>{ showDrafted = e.target.checked; renderPool(); });
-    el('chkEnvAdjust').addEventListener('change', e=>{ envAdjustEnabled = e.target.checked; retierForDisplay(); renderAll(); });
-    el('chkConsensusAdjust').addEventListener('change', e=>{ consensusAdjustEnabled = e.target.checked; retierForDisplay(); renderAll(); });
-    el('chkPropsAdjust').addEventListener('change', e=>{ propsAdjustEnabled = e.target.checked; retierForDisplay(); renderAll(); });
+    // The four nudge toggles (env/FP/DS/props) and the three "just X" pure-ranking toggles are
+    // mutually exclusive as a group -- "nudge VBD by FP" and "ignore VBD, rank purely by FP" can't
+    // both be true at once. Turning on any pure mode clears all four nudges (and the other pure
+    // modes); turning on any nudge clears all three pure modes. Each handler un-checks the
+    // conflicting boxes' actual DOM state too, not just the JS flags, so the UI never silently
+    // disagrees with what's active. Driven off small tables rather than one-off per-checkbox
+    // clearing logic so a future fifth toggle in either group can't be added while forgetting to
+    // wire it into the other group's clear step.
+    const ADJUST_TOGGLES = [
+      ['chkEnvAdjust', v => envAdjustEnabled = v],
+      ['chkFpAdjust', v => fpAdjustEnabled = v],
+      ['chkDsAdjust', v => dsAdjustEnabled = v],
+      ['chkPropsAdjust', v => propsAdjustEnabled = v],
+    ];
+    const PURE_TOGGLES = [
+      ['chkFpOnly', v => fpOnlyEnabled = v],
+      ['chkDsOnly', v => dsOnlyEnabled = v],
+      ['chkPropsOnly', v => propsOnlyEnabled = v],
+    ];
+    function clearPureModes() {
+      PURE_TOGGLES.forEach(([id, setter]) => { setter(false); el(id).checked = false; });
+    }
+    function clearNudges() {
+      ADJUST_TOGGLES.forEach(([id, setter]) => { setter(false); el(id).checked = false; });
+    }
+    ADJUST_TOGGLES.forEach(([id, setter]) => {
+      el(id).addEventListener('change', e => { setter(e.target.checked); if (e.target.checked) clearPureModes(); retierForDisplay(); renderAll(); });
+    });
+    PURE_TOGGLES.forEach(([id, setter]) => {
+      el(id).addEventListener('change', e => {
+        setter(e.target.checked);
+        if (e.target.checked) {
+          PURE_TOGGLES.forEach(([otherId, otherSetter]) => { if (otherId !== id) { otherSetter(false); el(otherId).checked = false; } });
+          clearNudges();
+        }
+        retierForDisplay(); renderAll();
+      });
+    });
     el('btnQuickAdd').addEventListener('click', openQuickAddModal);
     el('quickAddCancel').addEventListener('click', closeQuickAddModal);
     el('quickAddConfirm').addEventListener('click', ()=>{
