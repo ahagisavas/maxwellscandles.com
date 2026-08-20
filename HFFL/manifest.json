@@ -1,0 +1,18 @@
+{
+  "name": "Fantasy Draft Assistant",
+  "short_name": "HFFL Draft",
+  "description": "Live fantasy football draft assistant for the Haraki Fantasy Football League",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f1216",
+  "theme_color": "#0f1216",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f1216'/%3E%3Cellipse cx='50' cy='50' rx='34' ry='21' fill='%23a0632f' stroke='%234f9eff' stroke-width='3' transform='rotate(-28 50 50)'/%3E%3Cg stroke='%23e6e9ee' stroke-width='2.5' stroke-linecap='round' transform='rotate(-28 50 50)'%3E%3Cline x1='34' y1='50' x2='66' y2='50' stroke-width='3'/%3E%3Cline x1='44' y1='44' x2='44' y2='56'/%3E%3Cline x1='56' y1='44' x2='56' y2='56'/%3E%3C/g%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
