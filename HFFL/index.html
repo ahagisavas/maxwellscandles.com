@@ -314,53 +314,66 @@
 'use strict';
 
 /* =========================================================================
-   HARD-CODED LEAGUE CONFIG — Haraki Fantasy Football League (Yahoo, 12-team
-   snake, slot #11). Not user-editable by design; change these values directly
-   to reuse for another league/season.
+   HARD-CODED LEAGUE CONFIG — ABFFL (Yahoo, league ID 539375, 12-team snake,
+   half-PPR). Scoring pulled live from
+   football.fantasysports.yahoo.com/f1/539375/editstatcategories on 2026-08-24
+   (every category cross-checked against its actual selected value, not just
+   the option list). Not user-editable by design; change these values
+   directly to reuse for another league/season.
    ========================================================================= */
 function defaultSettings() {
   return {
     numTeams: 12,
-    userSlot: 11,
-    // The real Sleeper draft (draft_id 1387098256592367616, confirmed live 2026-08-19) runs 14
-    // rounds -- IR is a roster slot filled via waivers during the season, never actually drafted,
-    // so it's excluded from totalRounds even though it's still counted in roster.slots below (that
-    // describes the full roster, not just what gets drafted).
-    totalRounds: 14,
+    // PLACEHOLDER -- this league drafts offline (Yahoo: "Submit Draft Results" is still an open
+    // setup step as of 2026-08-24) and no draft order/slot has been assigned yet. Update this the
+    // moment your real slot is known. Deliberately paired with teams[0] below so "my roster"
+    // tracking is at least attributed to the right team/human in the meantime, even though the
+    // numeric pick position itself is still a guess.
+    userSlot: 1,
+    // No IR slot in this league's roster (see roster.slots below) -- every roster spot is actually
+    // drafted, nothing is waiver-only, so totalRounds is just the sum of all slots (1+2+2+1+1+1+1+6).
+    totalRounds: 15,
     roster: {
-      slots: { QB: 1, RB: 2, WR: 3, TE: 1, FLEX: 1, K: 1, DEF: 1, BN: 4, IR: 1 },
+      slots: { QB: 1, RB: 2, WR: 2, TE: 1, FLEX: 1, K: 1, DEF: 1, BN: 6 },
       flexEligible: ['RB', 'WR', 'TE']
     },
     scoring: {
-      passing:   { yardsPerPoint: 20, td: 4, interception: -1, pickSixThrown: -4 },
+      passing:   { yardsPerPoint: 25, td: 4, interception: -1, pickSixThrown: 0 },
       rushing:   { yardsPerPoint: 10, td: 6 },
-      receiving: { yardsPerPoint: 10, td: 6, reception: 0 },
-      returns:   { yardsPerPoint: 20, td: 6 },
+      receiving: { yardsPerPoint: 10, td: 6, reception: 0.5 },
+      // Return yards aren't scored in this league, only return TDs -- Infinity makes the yards
+      // term divide to exactly 0 without a special-case in the scoring engine.
+      returns:   { yardsPerPoint: Infinity, td: 6 },
       misc:      { twoPtConversion: 2, fumbleLost: -2, fumbleRecoveryTd: 6 },
       kicking: {
         fgMadeTiers: [{max:19,pts:3},{max:29,pts:3},{max:39,pts:3},{max:49,pts:4},{max:Infinity,pts:5}],
-        fgMissTiers: [{max:19,pts:-3},{max:29,pts:-2},{max:39,pts:-1},{max:49,pts:-1},{max:Infinity,pts:0}],
-        patMade: 1, patMissed: -1
+        // Missed field goals aren't penalized at all in this league (every "Field Goals Missed"
+        // category is off), unlike HFFL's negative-points version of this same tier shape.
+        fgMissTiers: [{max:19,pts:0},{max:29,pts:0},{max:39,pts:0},{max:49,pts:0},{max:Infinity,pts:0}],
+        patMade: 1, patMissed: 0
       },
       defense: {
-        sack: 1, interception: 2, fumbleRecovery: 2, touchdown: 6, safety: 4,
-        blockedKick: 4, kickPuntReturnTd: 6, extraPointReturned: 2,
+        sack: 1, interception: 2, fumbleRecovery: 2, touchdown: 6, safety: 2,
+        blockedKick: 2, kickPuntReturnTd: 6, extraPointReturned: 2,
         pointsAllowedTiers: [{max:0,pts:10},{max:6,pts:7},{max:13,pts:4},{max:20,pts:1},{max:27,pts:0},{max:34,pts:-1},{max:Infinity,pts:-4}]
       }
     },
+    // Slot order below is just League Members join-order, NOT real draft position -- this league's
+    // draft is offline and hasn't set an order yet. Replace with the real slot assignments once
+    // they're known (same caveat as userSlot above).
     teams: [
-      {slot:1,label:'Matiasmeni'},
-      {slot:2,label:'Malona Karaoulous'},
-      {slot:3,label:'MANDRAHALOS'},
-      {slot:4,label:'HackGisavas'},
-      {slot:5,label:'Malona Yemista'},
-      {slot:6,label:'Feraklos'},
-      {slot:7,label:'Vothros'},
-      {slot:8,label:'Big Mythos'},
-      {slot:9,label:'Oilers'},
-      {slot:10,label:'3G'},
-      {slot:11,label:"Tasi's DOMATIA"},
-      {slot:12,label:'BM@LAPLAZ'}
+      {slot:1,label:"Tasi's Team"},
+      {slot:2,label:'Team Walker'},
+      {slot:3,label:'Welcome to the Nabershood'},
+      {slot:4,label:"Gaetano's Jounce"},
+      {slot:5,label:"Beginner's Luck"},
+      {slot:6,label:'The Oracle'},
+      {slot:7,label:"Ram's Team"},
+      {slot:8,label:'Team Mandras'},
+      {slot:9,label:"MAY's Day"},
+      {slot:10,label:'The Uconnvicts'},
+      {slot:11,label:'Mr. Unlimited'},
+      {slot:12,label:"Tuckin' Right's"}
     ]
   };
 }
@@ -4640,10 +4653,13 @@ const UI = (function () {
 
   function renderLeagueChip() {
     const s = State.getSettings();
+    // IR is optional -- not every league carries one (roster.slots.IR may be 0 or absent entirely),
+    // so only append it when there's actually a slot to show.
+    const ir = s.roster.slots.IR || 0;
     el('leagueChip').innerHTML = `<b>${s.numTeams}-team Snake</b> · You pick <b>#${s.userSlot}</b> · <b>${esc(scoringFormatLabel(s))}</b> · `
       + `${s.roster.slots.QB}QB / ${s.roster.slots.RB}RB / ${s.roster.slots.WR}WR / ${s.roster.slots.TE}TE / `
       + `${s.roster.slots.FLEX} FLEX (${s.roster.flexEligible.join('/')}) / ${s.roster.slots.K}K / ${s.roster.slots.DEF}DEF `
-      + `· ${s.roster.slots.BN} BN + ${s.roster.slots.IR} IR`;
+      + `· ${s.roster.slots.BN} BN${ir ? ` + ${ir} IR` : ''}`;
   }
 
   /* ---- Draft screen ---- */
