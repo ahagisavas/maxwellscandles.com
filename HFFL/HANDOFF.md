@@ -1,6 +1,6 @@
 # Handoff Document — Fantasy Draft Assistant
 
-**As of:** 2026-08-24, commit `0419354` on `main`.
+**As of:** 2026-08-24, commit `ca0d41c` on `main`.
 **Purpose of this file:** if you're picking this project up on a different machine, in a hurry,
 or with a fresh Claude session that has none of this project's history — start here. This is the
 only copy of this context that isn't trapped in one machine's local session/memory: it lives in
@@ -61,14 +61,14 @@ this commit; they drift a little with every edit, treat them as approximate)
 | Draft state | 1270 | Picks log is the single source of truth; everything else derives from it |
 | Recommendation engine | 1560 | Staged, explainable pick suggestions |
 | Importer | 1862 | Paste/CSV import with fuzzy column mapping (for one-off manual data adds) |
-| `CONSENSUS_DATA` | 2004 | FantasyPros ECR + Draft Sharks RK |
-| `PROPS_DATA` | 2444 | BettingPros market prop lines — **see §5, this one has a parsing gotcha** |
-| `FFBALLERS_DATA` | 2626 | The Fantasy Footballers' blended ranks |
-| `DS_TIER_DATA` | 2944 | Draft Sharks tier/flag data |
-| Sleeper live draft sync | 4105 | Polls the real Sleeper API, auto-applies matched picks |
-| Persistence | 4235 | localStorage autosave + JSON export/import |
-| UI | 4282 | Rendering, event wiring |
-| Main | 5310 | Bootstraps everything on load |
+| `CONSENSUS_DATA` | 2004 | FantasyPros ECR (half-PPR as of `ca0d41c`) + Draft Sharks RK (still non-PPR) |
+| `PROPS_DATA` | 2956 | BettingPros market prop lines — **see §5, this one has a parsing gotcha** |
+| `FFBALLERS_DATA` | 3138 | The Fantasy Footballers' blended ranks (still non-PPR, not yet refreshed) |
+| `DS_TIER_DATA` | 3456 | Draft Sharks tier/flag data (half-PPR as of `6bf144f`) |
+| Sleeper live draft sync | 4626 | Polls the real Sleeper API, auto-applies matched picks |
+| Persistence | 4756 | localStorage autosave + JSON export/import |
+| UI | 4803 | Rendering, event wiring |
+| Main | 5831 | Bootstraps everything on load |
 
 ## 4. League configuration (all hardcoded in `defaultSettings()`, ~line 324)
 
@@ -99,15 +99,47 @@ what happened going HFFL → ABFFL; see §7 for what that reformat touched vs. l
 
 ## 5. Data pipeline — how the player pool gets built/refreshed
 
-**This data is NFL-wide, not tied to any one league** — it didn't need to change when the tool
-switched from HFFL to ABFFL, only `defaultSettings()` did. Four independent sources get blended
-together; each has its own one-time or repeatable script, all living next to `index.html`:
+**Most of this data is NFL-wide, not tied to any one league** — the raw stat projections
+(`DEFAULT_PLAYER_ROWS`, `PROPS_DATA`) didn't need to change when the tool switched from HFFL to
+ABFFL. **The consensus RANKING sources are different: they're scoring-format-specific**, and this
+bit HFFL→ABFFL hard — `CONSENSUS_DATA` and `DS_TIER_DATA` both originally came from HFFL's
+non-PPR setup, and stayed non-PPR (silently wrong for ABFFL's half-PPR) until refreshed on
+2026-08-24 (commits `af722ba`→`6bf144f`→`ca0d41c`). If this tool is ever reformatted for a *third*
+league with yet another scoring format, re-check these two blocks specifically, even though
+nothing else about "the pool" needs to change.
+
+Six independent sources feed the pool; each has its own one-time or repeatable script, all living
+next to `index.html`:
 
 - **`refresh_fantasypros.py`** — pulls the FantasyPros API (premium/HOF-tier key required, kept in
   a git-ignored local config, never committed) and regenerates `DEFAULT_PLAYER_HEADERS`/`ROWS`.
-  Repeatable — safe to re-run for a fresh season.
-- **`build_ds_tiers.py`** — Draft Sharks tier/flag data → `DS_TIER_DATA`.
-- **`build_ffballers_data.py`** — The Fantasy Footballers blended ranks → `FFBALLERS_DATA`.
+  Repeatable — safe to re-run for a fresh season. Does NOT touch `CONSENSUS_DATA`'s ECR (see
+  `refresh_consensus_ecr.py` below) — despite the similar name, this script's job is raw stat
+  projections only.
+- **`refresh_consensus_ecr.py`** — refreshes just the FantasyPros-ECR half of `CONSENSUS_DATA`
+  (`[ecr, ds_rk]` — only the first element) from a CSV the user downloads directly from
+  FantasyPros' own rankings page. **Not click-and-run**: needs a fresh CSV re-confirmed to be the
+  right scoring format before every use (screenshot the FantasyPros page's own Scoring/My
+  Leagues selectors and cross-check a few rows against the CSV — don't trust the filename or
+  column headers to declare format on their own, they don't). Gotcha already hit once: the CSV
+  labels defenses `DST`, the pool uses `DEF` — `POS_FIX` handles it, but watch for the same class
+  of mismatch if FantasyPros changes their export format later.
+- **`build_ds_tiers.py`** — Draft Sharks tier/flag data from a login-walled, subscriber-only
+  "Draft War Room" export tuned to one league's exact settings. This is the ORIGINAL, HFFL-only
+  version of this data (non-PPR) — superseded for ABFFL by `build_ds_halfppr.py` below, but kept
+  as-is since it's still the right tool if a future league needs that deeper subscriber-only
+  export (tiers/flags together) rather than the public-page version.
+- **`build_ds_halfppr.py`** — the ABFFL-era replacement, sourced from Draft Sharks' PUBLIC
+  half-PPR rankings pages instead (no login wall, no row cap — confirmed by reaching the true page
+  footer on every position). Gets `overallTier`/`posTier` but NOT the qualitative flag (Value/
+  Sleeper/Bust/Handcuff Flyer — not on the public page); existing flags were left as-is rather
+  than deleted, so they're stale non-PPR-era judgment calls until a fresh Draft War Room export
+  refreshes them properly. **Not click-and-run** — see its own docstring; it reads from
+  session-local scratchpad files that don't persist, so a future refresh means redoing the live
+  page-scroll-and-save pull first, same method, not just re-running this script directly.
+- **`build_ffballers_data.py`** — The Fantasy Footballers blended ranks → `FFBALLERS_DATA`. Not
+  yet refreshed for half-PPR as of this writing — same risk as `CONSENSUS_DATA`/`DS_TIER_DATA` had
+  before their refresh, just not yet addressed.
 - **`merge_props.py`** — **not repeatable, not an API pull.** BettingPros has no public API, and an
   AI-sourced (Gemini) export of their odds was tried and found to be **wrong** (e.g. showed Josh
   Allen's rushing-TD line as 4.5 when the real live consensus was ~11.0, and missed his passing-yards
@@ -155,7 +187,10 @@ league-wide draft grading) — that was this tool's first real, complete use. Th
 then reformatted for ABFFL on 2026-08-24 (see §4) — HFFL's specific settings (Haraki Fantasy
 Football League, slot #11, non-PPR, real Sleeper draft_id `1387098256592367616`) no longer exist
 in `index.html` itself, only in git history (`git log -- HFFL/index.html`, look before commit
-`0419354`) and in the offline snapshot files listed in §9.
+`0419354`) and in the offline snapshot files listed in §9. The reformat initially left the
+consensus RANKING sources (`CONSENSUS_DATA`, `DS_TIER_DATA`) on HFFL's old non-PPR data — this was
+caught and fixed on the same day (see §5), except **`FFBALLERS_DATA` is still non-PPR/HFFL-era as
+of this writing** — same class of staleness, just not yet addressed.
 
 **Explicitly deferred, not started:**
 - **Draft Sharks CSV/table import** for Jody Smith's RB rankings specifically — no public API exists;
