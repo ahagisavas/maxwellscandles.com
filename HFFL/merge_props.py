@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
-One-time merge of hand-verified BettingPros consensus lines (pulled live, player-by-player, from
-bettingpros.com/nfl/odds/player-futures/ -- see qb_props_pull.md for the full trail) into the
-PROPS_DATA block in index.html. Unlike refresh_fantasypros.py this isn't a repeatable/re-runnable
-pipeline against an API -- it's a manual verification pass, run in stages (QB first, then RB/WR/TE).
+One-time (well -- one-time-per-pass) merge of hand-verified BettingPros consensus lines (pulled
+live, player-by-player, from bettingpros.com/nfl/odds/player-futures/ -- see qb_props_pull.md and
+props_refresh_2026-09-01.md for the full source trails) into the PROPS_DATA block in index.html.
+Unlike refresh_fantasypros.py this isn't a repeatable/re-runnable pipeline against an API -- BettingPros
+has no API -- it's a manual verification pass, run in stages (QB, then RB/WR/TE, then periodic
+refreshes of whichever lines have likely moved since). Each new stage is its own dict below, run
+in order in main() -- don't delete old ones, they document what was confirmed and when.
 
 Text-surgical, not JSON round-tripped: PROPS_DATA's inner field names (rushYds, recTd, ...) are
 bare JS identifiers, not quoted JSON keys, so json.loads() can't parse the block at all. Instead
@@ -92,6 +95,38 @@ RBWRTE_UPDATES = {
     ('Garrett Wilson', 'WR'):      {'receptions': 84.5},
 }
 
+# 2026-09-01 refresh pass -- re-pulled all 7 target markets live (Total Passing/Rushing/Receiving
+# Yards, Total Passing/Rushing/Receiving Touchdowns, Total Receptions), ~2 weeks after the original
+# pull. See props_refresh_2026-09-01.md in the scratchpad for the full source trail. Most lines
+# hadn't moved; where a player's line DID move, this dict's value wins over the two passes above
+# (same key, later pass in the main loop below overwrites that specific field -- unmentioned
+# fields on an existing line, e.g. a player's rushTd here not touching their already-good passYds,
+# are left alone same as always). A field simply not re-confirmed this pass (e.g. Josh Jacobs'
+# rushTd, which had no usable consensus this time -- see the .md notes) is NOT included below, so
+# it stays whatever it already was rather than being blanked out.
+# Gotcha hit this pass: BettingPros' own market-type URL slugs aren't always the obvious guess --
+# "Total Receiving Touchdowns" is actually /total-rec-touchdowns/, not /total-receiving-touchdowns/
+# (that URL just hangs on a loading skeleton, no error, no redirect -- silently wrong, not visibly
+# broken). Total Receiving Yards and Total Receptions matched their obvious full-word guesses fine.
+# Don't assume a slug pattern generalizes; verify a new market's real slug via the dropdown first.
+REFRESH_2026_09_01 = {
+    ('Jordan Love', 'QB'):        {'passYds': 3525.5},
+    ('Lamar Jackson', 'QB'):      {'passYds': 3258.25},
+    ('Jayden Daniels', 'QB'):     {'passYds': 3224.5},
+    ('Jacoby Brissett', 'QB'):    {'passYds': 2600.5},
+    ('Quinshon Judkins', 'RB'):   {'rushYds': 890.5},
+    ('Bryce Young', 'QB'):        {'passTd': 20.5, 'rushTd': 2.0},
+    ('Stefon Diggs', 'WR'):       {'recYds': 749.5},
+    ('Brenton Strange', 'TE'):    {'recYds': 500.5},
+    ('Kyle Pitts Sr.', 'TE'):     {'recYds': 750.0},
+    ('Jaylen Waddle', 'WR'):      {'recYds': 900.5},
+    ('DJ Moore', 'WR'):           {'recYds': 825.5, 'recTd': 6.5, 'receptions': 59.5},
+    ('Jakobi Meyers', 'WR'):      {'recTd': 4.5},
+    ('Dalton Kincaid', 'TE'):     {'receptions': 49.5},
+    ('Jake Ferguson', 'TE'):      {'receptions': 64.5},
+    ('Garrett Wilson', 'WR'):     {'receptions': 84.0},
+}
+
 
 def normalize_name(name):
     name = str(name or '').lower()
@@ -139,10 +174,11 @@ def main():
     updated, added, not_in_pool = [], [], []
     new_lines_to_append = []
 
-    # Two sequential passes (not a merged dict) -- a name can appear in both stages with
-    # different fields (e.g. Kenneth Walker III: rushYds from the QB-phase pass, recYds from
-    # this one), and each pass must layer onto whatever the line already has, not replace it.
-    for updates in (QB_UPDATES, RBWRTE_UPDATES):
+    # Sequential passes, in order (not a merged dict) -- a name can appear in more than one stage
+    # with different (or updated) fields, and each pass must layer onto whatever the line already
+    # has, not replace it. Later passes win on a field both mention (e.g. REFRESH_2026_09_01's
+    # newer Bryce Young rushTd overwrites QB_UPDATES' older one; its unchanged passTd is a no-op).
+    for updates in (QB_UPDATES, RBWRTE_UPDATES, REFRESH_2026_09_01):
         for (name, pos), new_fields in updates.items():
             pool_key = (normalize_name(name), pos)
             if pool_key not in pool_names:
