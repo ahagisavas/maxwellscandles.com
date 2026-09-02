@@ -1,6 +1,6 @@
 # Handoff Document — Fantasy Draft Assistant
 
-**As of:** 2026-08-24, commit `ca0d41c` on `main`.
+**As of:** 2026-09-01, commit `50e6f68` on `main`.
 **Purpose of this file:** if you're picking this project up on a different machine, in a hurry,
 or with a fresh Claude session that has none of this project's history — start here. This is the
 only copy of this context that isn't trapped in one machine's local session/memory: it lives in
@@ -137,9 +137,13 @@ next to `index.html`:
   refreshes them properly. **Not click-and-run** — see its own docstring; it reads from
   session-local scratchpad files that don't persist, so a future refresh means redoing the live
   page-scroll-and-save pull first, same method, not just re-running this script directly.
-- **`build_ffballers_data.py`** — The Fantasy Footballers blended ranks → `FFBALLERS_DATA`. Not
-  yet refreshed for half-PPR as of this writing — same risk as `CONSENSUS_DATA`/`DS_TIER_DATA` had
-  before their refresh, just not yet addressed.
+- **`build_ffballers_data.py`** — The Fantasy Footballers ranks → `FFBALLERS_DATA`. Now run with
+  `--host Mike` (added 2026-09-01, explicit user choice — "only use Mike's Rankings," not the
+  blended composite of all three hosts). Default stays `Rank` for any future run without that
+  instruction. **Scoring-format status here is genuinely unverified, not confirmed-fine** — unlike
+  `CONSENSUS_DATA`'s CSV, nothing cross-checked whether this source's rankings reflect half-PPR;
+  these are ordinal position ranks, not points, but ordinal rankings are still generally
+  format-sensitive. Worth resolving if the FFBallers badge/pure-mode ever looks off.
 - **`merge_props.py`** — **not repeatable, not an API pull.** BettingPros has no public API, and an
   AI-sourced (Gemini) export of their odds was tried and found to be **wrong** (e.g. showed Josh
   Allen's rushing-TD line as 4.5 when the real live consensus was ~11.0, and missed his passing-yards
@@ -171,6 +175,11 @@ next to `index.html`:
   is *selected* — read the accessibility tree (or equivalent) for real input/radio values instead.
   This is exactly how ABFFL's scoring got captured correctly (see §4) after an initial screenshot
   pass proved ambiguous.
+- **Deploy verification needs a marker value that actually differs between old and new.** GitHub
+  Pages' CDN can take much longer than the usual 1-3 minutes to propagate to every edge node (hit
+  10+ minutes at least once), and a poll that checks for a value which happens to be identical in
+  both the old and new content gives a false "it's live" the moment ANY edge node (old or new) is
+  hit — pick something the refresh actually changed, not something that happens to coincide.
 - **Windows text encoding:** if doing bulk text edits with PowerShell (`Get-Content`/
   `[IO.File]::WriteAllText` etc.) instead of Claude's own Edit/Write tools, special characters can get
   silently mangled. Prefer Python with explicit `encoding='utf-8'` for any bulk text surgery, same as
@@ -188,9 +197,11 @@ then reformatted for ABFFL on 2026-08-24 (see §4) — HFFL's specific settings 
 Football League, slot #11, non-PPR, real Sleeper draft_id `1387098256592367616`) no longer exist
 in `index.html` itself, only in git history (`git log -- HFFL/index.html`, look before commit
 `0419354`) and in the offline snapshot files listed in §9. The reformat initially left the
-consensus RANKING sources (`CONSENSUS_DATA`, `DS_TIER_DATA`) on HFFL's old non-PPR data — this was
-caught and fixed on the same day (see §5), except **`FFBALLERS_DATA` is still non-PPR/HFFL-era as
-of this writing** — same class of staleness, just not yet addressed.
+consensus RANKING sources (`CONSENSUS_DATA`, `DS_TIER_DATA`) on HFFL's old non-PPR data — caught
+and fixed the same day (see §5). `FFBALLERS_DATA` was separately rebuilt on 2026-09-01, but for a
+different reason (switching to Mike's individual rankings on user request, not a PPR-format fix)
+— see §5's own caveat there about scoring-format verification still being an open question for
+that specific source.
 
 **Explicitly deferred, not started:**
 - **Draft Sharks CSV/table import** for Jody Smith's RB rankings specifically — no public API exists;
