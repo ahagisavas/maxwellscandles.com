@@ -20,13 +20,16 @@ USAGE
         --wr "path/to/2026 WR Draft Rankings - Fantasy Footballers Podcast.csv" \
         --rb "path/to/2026 RB Draft Rankings - Fantasy Footballers Podcast.csv" \
         --te "path/to/2026 TE Draft Rankings - Fantasy Footballers Podcast.csv" \
-        --qb "path/to/2026 QB Draft Rankings - Fantasy Footballers Podcast.csv"
+        --qb "path/to/2026 QB Draft Rankings - Fantasy Footballers Podcast.csv" \
+        [--host Rank|Andy|Jason|Mike]
 
     Add --dry-run to see the match report without writing index.html.
 
 Expected CSV columns (exact header, one file per position): "Name","Team","Rank","Andy","Jason","Mike"
-Only Name and Rank are used -- Rank is the Footballers' own blended composite of the three hosts,
-not something this script re-derives from the Andy/Jason/Mike columns itself.
+--host selects which column becomes FFBALLERS_DATA's rank value; default "Rank" is the Footballers'
+own blended composite of the three hosts. As of 2026-09-01 this tool is run with --host Mike
+specifically (explicit user choice -- "only use Mike's Rankings", moving off the blended default).
+If reusing this for a future refresh, confirm which host is still wanted rather than assuming Mike.
 """
 import sys, os, re, csv, json, argparse
 
@@ -41,13 +44,13 @@ def normalize_name(name):
     return name.strip()
 
 
-def load_position_csv(path, pos):
+def load_position_csv(path, pos, host):
     rows = {}
     with open(path, encoding='utf-8-sig', newline='') as f:
         reader = csv.DictReader(f)
         for r in reader:
             name = r.get('Name')
-            rank = r.get('Rank')
+            rank = r.get(host)
             if not name or not rank:
                 continue
             key = normalize_name(name) + '|' + pos
@@ -73,12 +76,14 @@ def main():
     ap.add_argument('--rb', required=True)
     ap.add_argument('--te', required=True)
     ap.add_argument('--qb', required=True)
+    ap.add_argument('--host', default='Rank', choices=['Rank', 'Andy', 'Jason', 'Mike'])
     ap.add_argument('--dry-run', action='store_true')
     args = ap.parse_args()
 
+    print(f'Using host column: {args.host}')
     combined = {}
     for pos, path in [('WR', args.wr), ('RB', args.rb), ('TE', args.te), ('QB', args.qb)]:
-        posrows = load_position_csv(path, pos)
+        posrows = load_position_csv(path, pos, args.host)
         print(f'{pos}: {len(posrows)} players loaded from {os.path.basename(path)}')
         combined.update(posrows)
 
