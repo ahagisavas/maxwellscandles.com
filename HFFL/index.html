@@ -324,12 +324,12 @@
 function defaultSettings() {
   return {
     numTeams: 12,
-    // PLACEHOLDER -- this league drafts offline (Yahoo: "Submit Draft Results" is still an open
-    // setup step as of 2026-08-24) and no draft order/slot has been assigned yet. Update this the
-    // moment your real slot is known. Deliberately paired with teams[0] below so "my roster"
-    // tracking is at least attributed to the right team/human in the meantime, even though the
-    // numeric pick position itself is still a guess.
-    userSlot: 1,
+    // CONFIRMED 2026-09-08, live in Yahoo's own draft client (draft is live there, not offline --
+    // corrects the 2026-08-24 note below this one, which assumed no draft order existed yet).
+    // User-reported, not independently re-verified against the board -- the live draft client
+    // enforces a single active session, so re-checking it here would log the user back out (this
+    // happened once already this session). If it's ever in doubt, ask rather than re-open that URL.
+    userSlot: 5,
     // No IR slot in this league's roster (see roster.slots below) -- every roster spot is actually
     // drafted, nothing is waiver-only, so totalRounds is just the sum of all slots (1+2+2+1+1+1+1+6).
     totalRounds: 15,
@@ -358,15 +358,18 @@ function defaultSettings() {
         pointsAllowedTiers: [{max:0,pts:10},{max:6,pts:7},{max:13,pts:4},{max:20,pts:1},{max:27,pts:0},{max:34,pts:-1},{max:Infinity,pts:-4}]
       }
     },
-    // Slot order below is just League Members join-order, NOT real draft position -- this league's
-    // draft is offline and hasn't set an order yet. Replace with the real slot assignments once
-    // they're known (same caveat as userSlot above).
+    // Slot 5 (Tasi's Team) is CONFIRMED -- swapped in from its old join-order placeholder position
+    // (slot 1) now that the user's real draft slot is known. Every OTHER team below is still just
+    // League Members join-order, NOT their real draft position -- this tool only ever asked for the
+    // user's own slot, not the full board, precisely to avoid re-opening the single-session live
+    // draft client (see userSlot comment above). Fix the rest only if it's actually needed for
+    // something -- it isn't load-bearing for your own pick recommendations.
     teams: [
-      {slot:1,label:"Tasi's Team"},
+      {slot:1,label:"Beginner's Luck"},
       {slot:2,label:'Team Walker'},
       {slot:3,label:'Welcome to the Nabershood'},
       {slot:4,label:"Gaetano's Jounce"},
-      {slot:5,label:"Beginner's Luck"},
+      {slot:5,label:"Tasi's Team"},
       {slot:6,label:'The Oracle'},
       {slot:7,label:"Ram's Team"},
       {slot:8,label:'Team Mandras'},
