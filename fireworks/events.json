@@ -1,24 +1,14 @@
 {
-  "last_updated": "2026-09-10T00:00:00",
-  "event_count": 2,
+  "last_updated": "2026-09-10T10:13:05.326514",
+  "event_count": 1,
   "events": [
     {
-      "title": "Macy's 4th of July Fireworks - Hudson River",
-      "description": "Annual NYC fireworks show along the Hudson River, visible from multiple vantage points including Hoboken waterfront.",
-      "source": "NYC Parks",
-      "url": "https://www.nycgovparks.org/events/macys-fireworks",
-      "date": "2027-07-04",
-      "type": "fireworks",
-      "confidence": "high"
-    },
-    {
-      "title": "New Year's Eve Countdown - Times Square",
-      "description": "Annual celebration with pyrotechnics visible from throughout Manhattan and surrounding areas.",
-      "source": "NYC Tourism",
-      "url": "https://nycgo.com/",
-      "date": "2026-12-31",
-      "type": "fireworks",
-      "confidence": "high"
+      "title": "Intel Drone Show (Check Website)",
+      "description": "Potential upcoming drone show - check source for details",
+      "source": "Intel Website",
+      "url": "https://www.intel.com/content/www/us/en/technology-innovation/aerial-technology-light-show/overview.html",
+      "type": "drone show",
+      "confidence": "low"
     }
   ]
 }
