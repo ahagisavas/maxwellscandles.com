@@ -374,6 +374,17 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.35);
             z-index: 2;
         }
+        .just-for-meg-badge {
+            position: absolute; top: 14px; left: -44px;
+            width: 140px;
+            background: #9b3e7a; color: #fff;
+            font-size: 0.55rem; font-weight: 700;
+            letter-spacing: 0.16em; text-transform: uppercase;
+            text-align: center; padding: 3px 0;
+            transform: rotate(-45deg);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+            z-index: 2;
+        }
         .sold-out-badge {
             position: absolute; top: 14px; left: -44px;
             width: 140px;
@@ -1380,8 +1391,9 @@ function toggleMusic() {
 
             <!-- Frasier Fir Fugitive -->
             <div class="product-card fade-up" data-scent="Frasier Fir Fugitive">
-                <div class="product-img">
+                <div class="product-img" style="position: relative;">
                     <img loading="lazy" src="Scents/FrasierFirFugitive.PNG" alt="Maxwell with Frasier Fir Fugitive">
+                    <span class="just-for-meg-badge">Just For Meg</span>
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Green</span>
