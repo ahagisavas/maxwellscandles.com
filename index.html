@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maxwell's Candles | Hand-Crafted Coconut Apricot Candles</title>
     <meta property="og:title" content="Maxwell's Candles | Hand-Crafted Coconut Apricot Candles">
-    <meta property="og:description" content="56 signature hand-crafted coconut apricot wax candles with wood wicks. Bold aromas, long burn times. Order today.">
+    <meta property="og:description" content="101 signature hand-crafted coconut apricot wax candles with wood wicks. Bold aromas, long burn times. Order today.">
     <meta property="og:url" content="https://maxwellscandles.com/">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://maxwellscandles.com/Logo/MC_LOGO_Square.PNG">
-    <meta property="og:image:alt" content="Maxwell's Candles — all 56 scents with Maxwell">
+    <meta property="og:image:alt" content="Maxwell's Candles — all 101 scents with Maxwell">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="https://maxwellscandles.com/Logo/MC_LOGO_Square.PNG">
     <link rel="apple-touch-icon" href="https://maxwellscandles.com/Logo/MC_LOGO_Square.PNG">
@@ -39,6 +39,7 @@
             --tag-coastal: #1a5c8c;
             --tag-woody:   #6b4a18;
             --tag-bakery:  #b06010;
+            --tag-floral:  #b5477a;
         }
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -366,6 +367,29 @@
             position: absolute; top: 22px; left: -38px;
             width: 140px;
             background: #c48b10; color: #fff;
+            font-size: 0.55rem; font-weight: 700;
+            letter-spacing: 0.16em; text-transform: uppercase;
+            text-align: center; padding: 3px 0;
+            transform: rotate(-45deg);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+            z-index: 2;
+        }
+        .just-for-meg-badge {
+            position: absolute; top: 26px; left: -38px;
+            width: 160px;
+            background: #9b3e7a; color: #fff;
+            font-size: 0.55rem; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            text-align: center; padding: 4px 0;
+            transform: rotate(-45deg);
+            transform-origin: center center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+            z-index: 2;
+        }
+        .sold-out-badge {
+            position: absolute; top: 14px; left: -44px;
+            width: 140px;
+            background: #555; color: #fff;
             font-size: 0.55rem; font-weight: 700;
             letter-spacing: 0.16em; text-transform: uppercase;
             text-align: center; padding: 3px 0;
@@ -832,12 +856,26 @@ function toggleMusic() {
 <section class="collection-section section-pad" id="collection">
     <div class="inner">
         <div class="text-center fade-up">
-            <p class="section-eyebrow">56 Signature Scents</p>
+            <p class="section-eyebrow">101 Signature Scents</p>
             <h2 class="section-title">The Collection</h2>
             <p class="section-sub">Every candle is hand-poured in small batches using premium coconut apricot wax and wood wicks. Bold aromas, long burn times, every time.</p>
         </div>
 
         <div class="product-grid">
+
+            <!-- Amber Noir Final Score -->
+            <div class="product-card fade-up" data-scent="Amber Noir Final Score">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/AmberNoir.PNG" alt="Maxwell with Amber Noir Final Score">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-deep);">Rich &amp; Deep</span>
+                    <h3 class="product-name">Amber Noir Final Score</h3>
+                    <p class="product-aka">Amber Noir</p>
+                    <p class="product-desc">A rich amber fragrance with plum and citrus opening notes, jasmine at the heart, and a warm foundation of musk and amyris. The kind of scent that doesn't start trouble. It just finishes it.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
 
             <!-- Apple Pie Alibi -->
             <div class="product-card fade-up" data-scent="Apple Pie Alibi">
@@ -855,7 +893,7 @@ function toggleMusic() {
 
             <!-- Grand Theft Apple -->
             <div class="product-card fade-up" data-scent="Grand Theft Apple">
-                <div class="product-img">
+                <div class="product-img" style="position: relative;">
                     <img loading="lazy" src="Scents/GrandTheftApples.PNG" alt="Maxwell with Grand Theft Apple">
                 </div>
                 <div class="product-body">
@@ -863,6 +901,65 @@ function toggleMusic() {
                     <h3 class="product-name">Grand Theft Apple</h3>
                     <p class="product-aka">Apple Harvest</p>
                     <p class="product-desc">A ripe-apple scent with crisp bright fruit and a hint of warm spice, like a fresh orchard haul loaded straight into the getaway truck.</p>
+                </div>
+            
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+
+            <!-- Apricot Grove Smuggler's Cove -->
+            <div class="product-card fade-up" data-scent="Apricot Grove Smuggler's Cove">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/ApricotGroveSmugglersCove.PNG" alt="Maxwell with Apricot Grove Smuggler's Cove">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-sweet);">Sweet &amp; Fruity</span>
+                    <h3 class="product-name">Apricot Grove Smuggler's Cove</h3>
+                    <p class="product-aka">Apricot Grove</p>
+                    <p class="product-desc">Ripe apricot, juicy nectarine, and fresh pear soften into jasmine, vanilla, patchouli, and vetiver. A hidden treasure, ripe for the taking.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Autumn Ambrette Roulette -->
+            <div class="product-card fade-up" data-scent="Autumn Ambrette Roulette">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/AutumnAmbretteRoulette.png" alt="Maxwell with Autumn Ambrette Roulette">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
+                    <h3 class="product-name">Autumn Ambrette Roulette</h3>
+                    <p class="product-aka">Autumn Ambrette</p>
+                    <p class="product-desc">Maple and cinnamon open with warm autumn sweetness before melting into creamy milk, sandalwood, orange blossom, heliotrope, and soft vanilla. They say the house always wins, yet Maxwell never leaves the table empty-handed.</p>
+                </div>
+            
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+
+            <!-- Autumn Glow on the Low -->
+            <div class="product-card fade-up" data-scent="Autumn Glow on the Low">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/AutumnGlow.png" alt="Maxwell with Autumn Glow on the Low">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
+                    <h3 class="product-name">Autumn Glow on the Low</h3>
+                    <p class="product-aka">Autumn Glow</p>
+                    <p class="product-desc">Warm apple, cinnamon, and clove blend with cranberry, eucalyptus, pine, juniper, and cedar, balancing autumn spice with the freshness of chilly evening air. Maxwell's keeping this one tucked away until the heat dies down.</p>
+                </div>
+            
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+
+            <!-- Apple Cinnamon Crime Ring -->
+            <div class="product-card fade-up" data-scent="Apple Cinnamon Crime Ring">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/AppleCinnamonCrimeRing.PNG" alt="Maxwell with Apple Cinnamon Crime Ring">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
+                    <h3 class="product-name">Apple Cinnamon Crime Ring</h3>
+                    <p class="product-aka">Apple Cinnamon</p>
+                    <p class="product-desc">Grand theft apple meets possession of cinnamon. A warm, sweet, comforting blend that's guilty on all counts.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
@@ -881,30 +978,30 @@ function toggleMusic() {
                 </div>
             </div>
 
-            <!-- Bad Apple -->
-            <div class="product-card fade-up" data-scent="Bad Apple">
-                <div class="product-img">
-                    <img loading="lazy" src="Scents/BadApples.PNG" alt="Maxwell with Bad Apple">
-                </div>
-                <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
-                    <h3 class="product-name">Bad Apple</h3>
-                    <p class="product-aka">Apple Cinnamon</p>
-                    <p class="product-desc">Grand theft apple meets possession of cinnamon. A warm, sweet, comforting blend that's guilty on all counts.</p>
-                    <button class="product-btn">Order This Scent</button>
-                </div>
-            </div>
-
             <!-- BAIES & Switch -->
             <div class="product-card fade-up" data-scent="BAIES &amp; Switch">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/BAIESandSwitch.PNG" alt="Maxwell with BAIES &amp; Switch">
+                    <img loading="lazy" src="Scents/BAIESSwitch.png" alt="Maxwell with BAIES &amp; Switch">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Floral</span>
                     <h3 class="product-name">BAIES &amp; Switch</h3>
                     <p class="product-aka">BAIES (Diptyque)</p>
                     <p class="product-desc">Maxwell somehow came into possession of a legendary French formula. Tart blackcurrant berries, aromatic green leaves, and elegant rose create a fresh, refined scent that smells like a wealthy Upper East Side widow with old-money taste.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Bamboo & Coconut Bamboozled -->
+            <div class="product-card fade-up" data-scent="Bamboo &amp; Coconut Bamboozled">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/BambooCoconutBamboozled.PNG" alt="Maxwell with Bamboo &amp; Coconut Bamboozled">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Green</span>
+                    <h3 class="product-name">Bamboo &amp; Coconut Bamboozled</h3>
+                    <p class="product-aka">Bamboo &amp; Coconut</p>
+                    <p class="product-desc">Fresh spearmint and pineapple mingle with crisp bamboo and green florals, softened by creamy coconut and coconut milk for a fresh, luxurious spa-like escape that is a little too good to be true.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
@@ -923,47 +1020,35 @@ function toggleMusic() {
                 </div>
             </div>
 
-            <!-- 2. Banana Nut Bread -->
-            <div class="product-card fade-up" data-scent="Banana Nut Bread">
+            <!-- Banana Nut Bread Break-In -->
+            <div class="product-card fade-up" data-scent="Banana Nut Bread Break-In">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/Banana Nut Bread.PNG" alt="Maxwell with Banana Nut Bread">
-
+                    <img loading="lazy" src="Scents/BananaNutzBread.png" alt="Maxwell with Banana Nut Bread Break-In">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-bakery);">Sweet &amp; Bakery</span>
-                    <h3 class="product-name">Banana Nut Bread</h3>
+                    <h3 class="product-name">Banana Nut Bread<br>Break-In</h3>
+                    <p class="product-aka">Banana Nut Bread</p>
                     <p class="product-desc">Warm bakery gourmand with ripe banana, walnut, nutmeg, sugar, buttery vanilla, and tonka.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
-            <!-- 3. Beachwood -->
-            <div class="product-card fade-up" data-scent="Beachwood">
+            <!-- 3. Beachwood Crime Wave -->
+            <div class="product-card fade-up" data-scent="Beachwood Crime Wave">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/Beachwood3.PNG" alt="Maxwell with Beachwood">
+                    <img loading="lazy" src="Scents/BearchwoodCrimeWave.PNG" alt="Maxwell with Beachwood Crime Wave">
 
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-coastal);">Coastal</span>
-                    <h3 class="product-name">Beachwood</h3>
-                    <p class="product-desc">A soothing coastal-wood scent: sea salt and marine air balanced with grass, sage, moss, and woods.</p>
+                    <h3 class="product-name">Beachwood Crime Wave</h3>
+                    <p class="product-aka">Beachwood</p>
+                    <p class="product-desc">A soothing coastal-wood scent: sea salt and marine air balanced with grass, sage, moss, and woods. The perfect scent for making waves and breaking laws.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
-            <div class="product-card fade-up" data-scent="Bergamot Berry">
-                <div class="product-img">
-
-                    <img loading="lazy" src="Scents/Bergamot_Berry.PNG" alt="Maxwell with Bergamot Berry">
-                </div>
-                <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Fruity</span>
-                    <h3 class="product-name">Bergamot Berry</h3>
-                    <p class="product-aka">Strawberry Bergamot</p>
-                    <p class="product-desc">Strawberry and bergamot with fresh green notes and a soft, clean finish.</p>
-                    <button class="product-btn">Order This Scent</button>
-                </div>
-            </div>
 
             <!-- Basil Breakout -->
             <div class="product-card fade-up" data-scent="Basil Breakout">
@@ -973,20 +1058,36 @@ function toggleMusic() {
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Herbal</span>
                     <h3 class="product-name">Basil Breakout</h3>
+                    <p class="product-aka">Basil Element</p>
                     <p class="product-desc">Basil Breakout is a fresh escape into crushed basil leaves, delivering a bold green aroma with a sweet, lightly spicy edge. The perfect scent for anyone fresh out of the clink and looking to turn over a new leaf.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
-            <!-- Bergamot Element -->
-            <div class="product-card fade-up" data-scent="Bergamot Element">
+            <!-- Bergamot Crime Plot -->
+            <div class="product-card fade-up" data-scent="Bergamot Crime Plot">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/Bergamot_Element.PNG" alt="Maxwell with Bergamot Element">
+                    <img loading="lazy" src="Scents/BergamotCrimePlot.png" alt="Maxwell with Bergamot Crime Plot">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Clean</span>
-                    <h3 class="product-name">Bergamot Element</h3>
-                    <p class="product-desc">Bright, clean citrus with a refined, slightly bitter edge. Fresh, modern, and spa-like.</p>
+                    <h3 class="product-name">Bergamot Crime Plot</h3>
+                    <p class="product-aka">Bergamot Element</p>
+                    <p class="product-desc">Bright, clean citrus with a refined, slightly bitter edge. Fresh, modern, and spa-like. A clean scent with criminal intentions.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Black Currant Warrant -->
+            <div class="product-card fade-up" data-scent="Black Currant Warrant">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/BlackCurrantWarrant.PNG" alt="Maxwell with Black Currant Warrant">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-deep);">Rich &amp; Deep</span>
+                    <h3 class="product-name">Black Currant Warrant</h3>
+                    <p class="product-aka">Black Currant Element</p>
+                    <p class="product-desc">Deep, juicy cassis balances rich sweetness with a lively tart edge for a bold, modern fruit scent. Wanted on one count of berry bad judgment.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
@@ -1001,6 +1102,20 @@ function toggleMusic() {
                     <h3 class="product-name">Brunson Burner</h3>
                     <p class="product-aka">Fireplace Embrace</p>
                     <p class="product-desc">Smoky embers, warm woods, soft amber, and subtle sweet spice. A bold, clutch fragrance with late-game heat. The spark that catches fire in the fourth and powers the comeback.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Cactus Flower and Jade Desert Raid -->
+            <div class="product-card fade-up" data-scent="Cactus Flower and Jade Desert Raid">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/CactusFlowerJadeDesertRaid.PNG" alt="Maxwell with Cactus Flower and Jade Desert Raid">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Floral</span>
+                    <h3 class="product-name">Cactus Flower and Jade Desert Raid</h3>
+                    <p class="product-aka">Cactus Flower and Jade</p>
+                    <p class="product-desc">Fresh, green, and just a little wild. Sweet agave and watery aloe blend with crisp green leaves and soft chrysanthemum, while earthy patchouli keeps everything grounded. Smells like a clean desert escape.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
@@ -1034,23 +1149,10 @@ function toggleMusic() {
                 </div>
             </div>
 
-            <!-- 8. Cashmere Pumpkin -->
-            <div class="product-card fade-up" data-scent="Cashmere Pumpkin">
-                <div class="product-img">
-                    <img loading="lazy" src="Scents/Cashmere Pumpkin.PNG" alt="Maxwell with Cashmere Pumpkin">
-                </div>
-                <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
-                    <h3 class="product-name">Cashmere Pumpkin</h3>
-                    <p class="product-desc">Upscale autumn pumpkin with green pumpkin vine, cinnamon, clove, smoky embers, moss, and soft caramel.</p>
-                    <button class="product-btn">Order This Scent</button>
-                </div>
-            </div>
-
             <!-- Certified O.G. -->
             <div class="product-card fade-up" data-scent="Certified O.G.">
                 <div class="product-img" style="position: relative;">
-                    <img loading="lazy" src="Scents/CertifiedO.G..PNG" alt="Maxwell with Certified O.G.">
+                    <img loading="lazy" src="Scents/Certified_OG.PNG" alt="Maxwell with Certified O.G.">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-bakery);">Warm &amp; Sweet</span>
@@ -1063,9 +1165,23 @@ function toggleMusic() {
 
             <!-- 9. Cinnamon Stick -->
 
+            <!-- Cinnamon Chai Hideaway -->
+            <div class="product-card fade-up" data-scent="Cinnamon Chai Hideaway">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/CinnamonChaiHideaway.PNG" alt="Maxwell with Cinnamon Chai Hideaway">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
+                    <h3 class="product-name">Cinnamon Chai Hideaway</h3>
+                    <p class="product-aka">Cinnamon Chai</p>
+                    <p class="product-desc">The perfect hideout after a successful cinnamon chai heist. Warm cinnamon, cardamom, cloves, vanilla, and cozy spices set the scene for laying low until the heat dies down.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
             <div class="product-card fade-up" data-scent="Cinnamon Rollin'">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/CinnamonRollin.PNG" alt="Maxwell with Cinnamon Rollin'">
+                    <img loading="lazy" src="Scents/Cinnamon__Rolling.PNG" alt="Maxwell with Cinnamon Rollin'">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-spicy);">Bold &amp; Spicy</span>
@@ -1076,39 +1192,86 @@ function toggleMusic() {
                 </div>
             </div>
 
-            <!-- 10. Citronella -->
-            <div class="product-card fade-up" data-scent="Citronella">
-                <div class="product-img">
-                    <img loading="lazy" src="Scents/Citronella2.PNG" alt="Maxwell with Citronella">
+
+            <!-- Citron & Mandarin Manhunt -->
+            <div class="product-card fade-up" data-scent="Citron & Mandarin Manhunt">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/CitronMandarinManhunt.PNG" alt="Maxwell with Citron &amp; Mandarin Manhunt">
                 </div>
                 <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh</span>
-                    <h3 class="product-name">Citronella</h3>
-                    <p class="product-desc">Bright lemongrass and citrus top notes with a clean herbal base. Refreshing, uplifting, and perfect for indoor or outdoor spaces.</p>
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Citrus</span>
+                    <h3 class="product-name">Citron &amp; Mandarin Manhunt</h3>
+                    <p class="product-aka">Citron &amp; Mandarin</p>
+                    <p class="product-desc">Bright mandarin, grapefruit, and lemon blend with juicy orange, peach, and a touch of vanilla. The trail was freshly squeezed.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
-            <div class="product-card fade-up" data-scent="Coconut & Santal">
+            <!-- 10. Citronella Goodfella -->
+            <div class="product-card fade-up" data-scent="Citronella Goodfella">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/Coconut&Santal.png" alt="Maxwell with Coconut and Santal">
+                    <img loading="lazy" src="Scents/Citronella2.PNG" alt="Maxwell with Citronella Goodfella">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh</span>
+                    <h3 class="product-name">Citronella Goodfella</h3>
+                    <p class="product-aka">Citronella</p>
+                    <p class="product-desc">Bright lemongrass and zesty citrus blend with a clean herbal base for a crisp, refreshing scent. A made man with a fresh reputation.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Citrus Agave Acquittal -->
+            <div class="product-card fade-up" data-scent="Citrus Agave Acquittal">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/CitrusAgaveAcquittal.PNG" alt="Maxwell with Citrus Agave Acquittal">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Citrus</span>
+                    <h3 class="product-name">Citrus Agave Acquittal</h3>
+                    <p class="product-aka">Citrus Agave</p>
+                    <p class="product-desc">Juicy orange, grapefruit, mandarin, and tangerine blend with zesty lemon and lime, sweet agave nectar, and a hint of peach for a bright tropical burst. If the peel doesn't fit, you must acquit.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Coconut Element of Surprise -->
+            <div class="product-card fade-up" data-scent="Coconut Element of Surprise">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/CoconutElementOfSurprise.PNG" alt="Maxwell with Coconut Element of Surprise">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-woody);">Woody &amp; Tropical</span>
-                    <h3 class="product-name">Coconut &amp; Santal</h3>
-                    <p class="product-desc">Luxe tropical coconut with a woody, less-sweet base of sandalwood, cedar, and amyris.</p>
+                    <h3 class="product-name">Coconut Element of Surprise</h3>
+                    <p class="product-aka">Coconut Element</p>
+                    <p class="product-desc">Creamy coconut with soft, nutty undertones creates a smooth, mellow scent that feels like an instant beachside escape. You'll never see it coming.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Coconut Lime Hard Time -->
+            <div class="product-card fade-up" data-scent="Coconut Lime Hard Time">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/CoconutLimeHardTime.PNG" alt="Maxwell with Coconut Lime Hard Time">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Citrus</span>
+                    <h3 class="product-name">Coconut Lime Hard Time</h3>
+                    <p class="product-aka">Coconut Lime</p>
+                    <p class="product-desc">Bright lime and tropical mango blend with coconut, pineapple, and creamy coconut milk over warm tonka bean. Hard time has never smelled this tropical.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
             <!-- 11. Coffee -->
-            <div class="product-card fade-up" data-scent="Coffee Beans">
+            <div class="product-card fade-up" data-scent="Coffee Beans Crime Scene">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/CoffeeBeans.PNG" alt="Maxwell with Coffee Beans">
+                    <img loading="lazy" src="Scents/CoffeeBeans.PNG" alt="Maxwell with Coffee Beans Crime Scene">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-deep);">Rich &amp; Deep</span>
-                    <h3 class="product-name">Coffee Beans</h3>
+                    <h3 class="product-name">Coffee Beans Crime Scene</h3>
+                    <p class="product-aka">Coffee Beans</p>
                     <p class="product-desc">Rich aroma of roasted coffee beans. Deep, bold, and grounding. For serious coffee lovers.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
@@ -1117,7 +1280,7 @@ function toggleMusic() {
             <!-- Cotton Criminal -->
             <div class="product-card fade-up" data-scent="Cotton Criminal">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/Cotton_Criminal.PNG" alt="Maxwell with Cotton Criminal">
+                    <img loading="lazy" src="Scents/CottonCrimimalz.PNG" alt="Maxwell with Cotton Criminal">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Clean</span>
@@ -1128,10 +1291,24 @@ function toggleMusic() {
                 </div>
             </div>
 
+            <!-- Cranberry Woods Stolen Goods -->
+            <div class="product-card fade-up" data-scent="Cranberry Woods Stolen Goods">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/CranberryWoodsStolenGoods.PNG" alt="Maxwell with Cranberry Woods Stolen Goods">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
+                    <h3 class="product-name">Cranberry Woods Stolen Goods</h3>
+                    <p class="product-aka">Cranberry Woods</p>
+                    <p class="product-desc">Tart cranberry and currants meet warm cinnamon, creamy vanilla, and fresh evergreen notes for a festive scent with just enough edge. Into the woods. Out with the goods.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
             <!-- Cucumber Melon Felon -->
             <div class="product-card fade-up" data-scent="Cucumber Melon Felon">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/MelonFelon.PNG" alt="Maxwell with Cucumber Melon Felon">
+                    <img loading="lazy" src="Scents/CucumberMelonFelon.png" alt="Maxwell with Cucumber Melon Felon">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Clean</span>
@@ -1141,6 +1318,34 @@ function toggleMusic() {
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
+
+            <!-- Cypress & Bayberry Burglary -->
+            <div class="product-card fade-up" data-scent="Cypress &amp; Bayberry Burglary">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/CypressBayberryBurglary.PNG" alt="Maxwell with Cypress &amp; Bayberry Burglary">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Green</span>
+                    <h3 class="product-name">Cypress &amp; Bayberry Burglary</h3>
+                    <p class="product-aka">Cypress &amp; Bayberry</p>
+                    <p class="product-desc">Fresh eucalyptus, cypress, and bayberry blend with earthy moss, fir, patchouli, and incense for a brisk evergreen fragrance with a dark, sophisticated edge. Breaking and entering never smelled this good.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Dark Orchard -->
+            <div class="product-card fade-up" data-scent="Dark Orchard">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/DarkOrchard.png" alt="Maxwell with Dark Orchard">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-deep);">Rich &amp; Deep</span>
+                    <h3 class="product-name">Dark Orchard</h3>
+                    <p class="product-desc">Dark plum, cherry, and orange open with a deep fruitiness, followed by violet and cinnamon over a smooth base of cedar and vanilla. A rich orchard scent with a darker side.</p>
+                </div>
+            
+                    <button class="product-btn">Order This Scent</button>
+                </div>
 
             <!-- Dragon's Blood -->
             <div class="product-card fade-up" data-scent="Dragon's Blood">
@@ -1164,77 +1369,128 @@ function toggleMusic() {
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-soph);">Floral</span>
                     <h3 class="product-name">The Final Rose</h3>
+                    <p class="product-aka">Bohemian Rose</p>
                     <p class="product-desc">Free-spirited rose, bright grapefruit, green basil, soft magnolia, and earthy patchouli. A romantic scent with one rose left to give.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
-            <!-- Eucalyptus Extortion -->
-            <div class="product-card fade-up" data-scent="Eucalyptus Extortion">
+            <!-- 14. Foraged Red Currant Warrant -->
+            <div class="product-card fade-up" data-scent="Foraged Red Currant Warrant">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/EucalayptusExtortion.PNG" alt="Maxwell with Eucalyptus Extortion">
-                </div>
-                <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Clean</span>
-                    <h3 class="product-name">Eucalyptus Extortion</h3>
-                    <p class="product-aka">Eucalyptus</p>
-                    <p class="product-desc">Fresh eucalyptus, cool greens, and spa-like air turn any room into a place of total relaxation. Tranquility is included. The protection fee is not.</p>
-                    <button class="product-btn">Order This Scent</button>
-                </div>
-            </div>
-
-            <!-- 14. Foraged Red Currant -->
-            <div class="product-card fade-up" data-scent="Foraged Red Currant">
-                <div class="product-img">
-                    <img loading="lazy" src="Scents/Foraged Red Currant.PNG" alt="Maxwell with Foraged Red Currant">
+                    <img loading="lazy" src="Scents/ForagedRedCurrant.png" alt="Maxwell with Foraged Red Currant Warrant">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Modern</span>
-                    <h3 class="product-name">Foraged Red Currant</h3>
-                    <p class="product-desc">Tart red currant and mixed berries with green leaves, peppercorn, moss, cedar, and amber. Fresh, modern, not overly sweet.</p>
+                    <h3 class="product-name">Foraged Red Currant Warrant</h3>
+                    <p class="product-aka">Foraged Red Currant</p>
+                    <p class="product-desc">Tart red currant and mixed berries with green leaves, peppercorn, moss, cedar, and amber. Fresh, modern, not overly sweet. Some scents deserve attention. This one warrants it.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
 
-            <!-- Fresh Cut Grass -->
-            <div class="product-card fade-up" data-scent="Fresh Cut Grass">
-                <div class="product-img">
-                    <img loading="lazy" src="Scents/FreshCutGrass.PNG" alt="Maxwell with Fresh Cut Grass">
+            <!-- Frasier Fir Fugitive -->
+            <div class="product-card fade-up" data-scent="Frasier Fir Fugitive">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/FrasierFirFugitive.PNG" alt="Maxwell with Frasier Fir Fugitive">
+                    <span class="too-soon-badge">Too Soon</span>
                 </div>
                 <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh</span>
-                    <h3 class="product-name">Fresh Cut Grass</h3>
-                    <p class="product-desc">Grass and green leaves at the heart, lifted by citrus and moss. A true-to-life homage to the most nostalgic scent of summer.</p>
-                    <button class="product-btn">Order This Scent</button>
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Green</span>
+                    <h3 class="product-name">Frasier Fir Fugitive</h3>
+                    <p class="product-aka">Frasier Fir</p>
+                    <p class="product-desc">Cypress, evergreen, cedar, fir, amber, and moss recreate the scent of a freshly cut Christmas tree. Maxwell stole the tree, but left the scent behind.</p>
                 </div>
             </div>
 
-            <!-- 15. Grapefruit and Mangosteen -->
-            <div class="product-card fade-up" data-scent="Golden Hour">
-                <div class="product-img">
-
-                    <img loading="lazy" src="Scents/Golden_Hour.PNG" alt="Maxwell with Golden Hour">
+            <!-- Garden Mint Prison Stint -->
+            <div class="product-card fade-up" data-scent="Garden Mint Prison Stint">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/GardenMintPrisonStint.PNG" alt="Maxwell with Garden Mint Prison Stint">
                 </div>
                 <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-woody);">Warm &amp; Woody</span>
-                    <h3 class="product-name">Golden Hour</h3>
-                    <p class="product-aka">Bergamot Sandalwood</p>
-                    <p class="product-desc">Bright citrus melts into smooth sandalwood, capturing the peaceful warmth of the day's most beautiful hour.</p>
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Green</span>
+                    <h3 class="product-name">Garden Mint Prison Stint</h3>
+                    <p class="product-aka">Garden Mint</p>
+                    <p class="product-desc">Cool mint, eucalyptus, and crisp tomato leaf mingle with sweet anise and soft woods for a fresh, green scent that feels straight from the garden. Hard time has never smelled this fresh.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
+            <!-- Ginger & Spice & Everything Vice -->
+            <div class="product-card fade-up" data-scent="Ginger &amp; Spice &amp; Everything Vice">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/GingerSpiceEverythingVice.PNG" alt="Maxwell with Ginger &amp; Spice &amp; Everything Vice">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
+                    <h3 class="product-name">Ginger &amp; Spice &amp; Everything Vice</h3>
+                    <p class="product-aka">Ginger &amp; Spice</p>
+                    <p class="product-desc">Sweet crystallized ginger, warm spices, citrus, and vanilla bring holiday treats fresh from the kitchen, with a lot more vice involved.</p>
+                </div>
+            
+                    <button class="product-btn">Order This Scent</button>
+                </div>
 
-            <div class="product-card fade-up" data-scent="Grapefruit and Mangosteen">
+
+
+
+            <div class="product-card fade-up" data-scent="Grapefruit & Mangosteen Guilty Plea">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/Grapefruit_and_Mangosteen.png" alt="Maxwell with Grapefruit and Mangosteen">
+                    <img loading="lazy" src="Scents/Grapefruit_and_Mangosteen.png" alt="Maxwell with Grapefruit &amp; Mangosteen Guilty Plea">
 
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Fruity</span>
-                    <h3 class="product-name">Grapefruit &amp; Mangosteen</h3>
+                    <h3 class="product-name">Grapefruit &amp; Mangosteen Guilty Plea</h3>
+                    <p class="product-aka">Grapefruit &amp; Mangosteen</p>
                     <p class="product-desc">Bright, tangy grapefruit blended with sweet exotic mangosteen, peachy notes, and a slight creamy balance.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Grapefruit Mint Sprint -->
+            <div class="product-card fade-up" data-scent="Grapefruit Mint Sprint">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/GrapefruitMintSprint.PNG" alt="Maxwell with Grapefruit Mint Sprint">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Citrus</span>
+                    <h3 class="product-name">Grapefruit Mint Sprint</h3>
+                    <p class="product-aka">Grapefruit Mint</p>
+                    <p class="product-desc">Juicy grapefruit and garden-fresh mint blend with lavender and rhubarb for a cool, energizing summer scent. Fast, fresh, and built for a clean getaway.</p>
+                </div>
+            
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+
+
+
+            <!-- Green Tea & Lemongrass Larceny -->
+            <div class="product-card fade-up" data-scent="Green Tea &amp; Lemongrass Larceny">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/GreenTeaLemongrassLarceny.PNG" alt="Maxwell with Green Tea &amp; Lemongrass Larceny">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Green</span>
+                    <h3 class="product-name">Green Tea &amp; Lemongrass Larceny</h3>
+                    <p class="product-aka">Green Tea &amp; Lemongrass</p>
+                    <p class="product-desc">Fresh green tea, bright lemongrass, and juicy citrus mingle with jasmine and soft musk for a clean, calming escape. Serenity, acquired illegally.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Himalayan Bamboo Bounty -->
+            <div class="product-card fade-up" data-scent="Himalayan Bamboo Bounty">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/HimalayanBambooBounty.PNG" alt="Maxwell with Himalayan Bamboo Bounty">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Green</span>
+                    <h3 class="product-name">Himalayan Bamboo Bounty</h3>
+                    <p class="product-aka">Himalayan Bamboo</p>
+                    <p class="product-desc">Fresh, green, and quietly luxurious, with bamboo foliage and soft florals creating a serene spa-like escape. Some rewards are worth the chase.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
@@ -1245,10 +1501,82 @@ function toggleMusic() {
                     <img loading="lazy" src="Scents/HouseArrest.PNG" alt="Maxwell with House Arrest">
                 </div>
                 <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-bakery);">Warm &amp; Sweet</span>
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Clean</span>
                     <h3 class="product-name">House Arrest</h3>
-                    <p class="product-aka">Cinnamon Spiced Vanilla</p>
-                    <p class="product-desc">Warm cinnamon spice and smooth vanilla come together in a soft, inviting blend. Almost comforting enough to make your court-ordered confinement feel voluntary.</p>
+                    <p class="product-aka">White Eucalyptus</p>
+                    <p class="product-desc">Marine air, cool spearmint, and eucalyptus settle into sea salt, soft powder, and juniper for a clean, calming scent. Almost comforting enough to make your court-ordered confinement feel voluntary.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Jamaican Me Crazy -->
+            <div class="product-card fade-up" data-scent="Jamaican Me Crazy">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/JamaicanMeCrazy.png" alt="Maxwell with Jamaican Me Crazy">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-sweet);">Sweet &amp; Fruity</span>
+                    <h3 class="product-name">Jamaican Me Crazy</h3>
+                    <p class="product-desc">Tangerine, lemon, pineapple, coconut, rum, and an impending investigation into his alleged criminal activities are Jamaican Maxwell book the first flight out.</p>
+                </div>
+            
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+
+            <!-- Japanese Cherry Blossom Blackmail -->
+            <div class="product-card fade-up" data-scent="Japanese Cherry Blossom Blackmail">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/JapaneseCherryBlossomBlackmail.PNG" alt="Maxwell with Japanese Cherry Blossom Blackmail">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-floral);">Floral</span>
+                    <h3 class="product-name">Japanese Cherry Blossom Blackmail</h3>
+                    <p class="product-aka">Japanese Cherry Blossom</p>
+                    <p class="product-desc">A clean bouquet of cherry blossom, magnolia, and rose settles into cherry, tonka bean, and sandalwood. Beautiful, delicate, and carrying just enough information to ruin someone's week.</p>
+                </div>
+            
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+
+            <!-- Lawn & Order -->
+            <div class="product-card fade-up" data-scent="Lawn &amp; Order">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/LawnAndOrder.PNG" alt="Maxwell with Lawn and Order">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh</span>
+                    <h3 class="product-name">Lawn &amp; Order</h3>
+                    <p class="product-aka">Fresh Cut Grass</p>
+                    <p class="product-desc">Grass and green leaves at the heart, lifted by citrus and moss. A true-to-life homage to the most nostalgic scent of summer. In the lawn-care system, freshly cut grass is considered especially fragrant.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Leafing the Scene -->
+            <div class="product-card fade-up" data-scent="Leafing the Scene">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/LeafingTheScene.png" alt="Maxwell with Leafing the Scene">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
+                    <h3 class="product-name">Leafing the Scene</h3>
+                    <p class="product-aka">Fallen Leaves</p>
+                    <p class="product-desc">Earthy green leaves, apple, berries, and chrysanthemum are wrapped in warm cinnamon, citrus, pecan, and cedar for a rich autumn scent that feels like trouble blowing through the yard.</p>
+                </div>
+            
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+
+            <!-- Leather & Labdanum Larceny -->
+            <div class="product-card fade-up" data-scent="Leather &amp; Labdanum Larceny">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/LeatherLabdanumLarceny.PNG" alt="Maxwell with Leather &amp; Labdanum Larceny">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-soph);">Sophisticated</span>
+                    <h3 class="product-name">Leather &amp; Labdanum Larceny</h3>
+                    <p class="product-aka">Leather &amp; Labdanum</p>
+                    <p class="product-desc">Leather, tobacco, amber, and labdanum create a dark, earthy base lifted by bergamot, clove, lavender, and rose. Part treasure hunt, part larceny.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
@@ -1256,7 +1584,7 @@ function toggleMusic() {
             <!-- 17. Library -->
             <div class="product-card fade-up" data-scent="Library">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/Library_.PNG" alt="Maxwell with Library">
+                    <img loading="lazy" src="Scents/Library2.PNG" alt="Maxwell with Library">
                     <span class="polarizing-badge">Polarizing</span>
                 </div>
                 <div class="product-body">
@@ -1270,7 +1598,7 @@ function toggleMusic() {
             <!-- Lime Basil & Mandarin -->
             <div class="product-card fade-up" data-scent="Lime Basil &amp; Mandarin">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/MANDO.PNG" alt="Maxwell with Lime Basil & Mandarin" style="object-position: top;">
+                    <img loading="lazy" src="Scents/LimeBasilMandalorian.png" alt="Maxwell with Lime Basil & Mandarin" style="object-position: top;">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Citrus</span>
@@ -1280,6 +1608,77 @@ function toggleMusic() {
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
+
+            <!-- Limoncello Creme Crime Scene -->
+            <div class="product-card fade-up" data-scent="Limoncello Creme Crime Scene">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/LimoncelloCremeCrimeScene.PNG" alt="Maxwell with Limoncello Creme Crime Scene">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-bakery);">Bakery &amp; Sweet</span>
+                    <h3 class="product-name">Limoncello Creme Crime Scene</h3>
+                    <p class="product-aka">Limoncello Creme</p>
+                    <p class="product-desc">Bright citrus and fresh mint melt into sweet cake, creamy butter, warm tonka, and golden honey for an indulgent Italian-inspired treat. No witnesses. No alibi. Plenty of zest.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Magnolia & Peony Felony -->
+            <div class="product-card fade-up" data-scent="Magnolia & Peony Felony">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/MagnoliaPeonyFelony.PNG" alt="Maxwell with Magnolia &amp; Peony Felony">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-floral);">Floral</span>
+                    <h3 class="product-name">Magnolia &amp; Peony Felony</h3>
+                    <p class="product-aka">Magnolia &amp; Peony</p>
+                    <p class="product-desc">Magnolia and peony bloom alongside cherry blossom, freesia, and fresh green leaves, softened by warm amber and powder. A felony worth doing time for.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Mango & Gardenia Getaway -->
+            <div class="product-card fade-up" data-scent="Mango &amp; Gardenia Getaway">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/MangoGardeniaGetaway.PNG" alt="Maxwell with Mango &amp; Gardenia Getaway">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-floral);">Floral</span>
+                    <h3 class="product-name">Mango &amp; Gardenia Getaway</h3>
+                    <p class="product-aka">Mango &amp; Gardenia</p>
+                    <p class="product-desc">Juicy mango and creamy gardenia steal the spotlight, brightened by peach and coconut before settling into soft musk and warm tonka bean. One sweet escape. No return ticket.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Mango and Coconut Milk Mob -->
+            <div class="product-card fade-up" data-scent="Mango and Coconut Milk Mob">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/MangoCoconutMilkMob.PNG" alt="Maxwell with Mango and Coconut Milk Mob">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-sweet);">Sweet &amp; Fruity</span>
+                    <h3 class="product-name">Mango and Coconut Milk Mob</h3>
+                    <p class="product-aka">Mango and Coconut Milk</p>
+                    <p class="product-desc">Fresh mango and tropical fruit meet rich coconut milk and sugar in a creamy, sun-soaked blend. One whiff and you're in too deep.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Marrakesh Market Misdemeanor -->
+            <div class="product-card fade-up" data-scent="Marrakesh Market Misdemeanor">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/MarrakeshMarketMisdemeanor.PNG" alt="Maxwell with Marrakesh Market Misdemeanor">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
+                    <h3 class="product-name">Marrakesh Market Misdemeanor</h3>
+                    <p class="product-aka">Marrakesh Market</p>
+                    <p class="product-desc">Warm spices, saffron, incense, and smoked paprika create the feel of a bustling Marrakesh souk, grounded by patchouli, vetiver, and tobacco. The market looks legitimate. The paperwork does not.</p>
+                </div>
+            
+                    <button class="product-btn">Order This Scent</button>
+                </div>
 
             <!-- Maximus -->
             <div class="product-card fade-up" data-scent="Maximus">
@@ -1309,18 +1708,7 @@ function toggleMusic() {
                 </div>
             </div>
 
-            <!-- 18. Matcha and Bergamot -->
-            <div class="product-card fade-up" data-scent="Matcha and Bergamot">
-                <div class="product-img">
-                    <img loading="lazy" src="Scents/MatchaBergamot.PNG" alt="Maxwell with Matcha and Bergamot">
-                </div>
-                <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Floral</span>
-                    <h3 class="product-name">Matcha &amp; Bergamot</h3>
-                    <p class="product-desc">A serene tea-house blend of bright citrus and earthy matcha, softened with delicate floral notes, honeyed warmth, and smooth sandalwood.</p>
-                    <button class="product-btn">Order This Scent</button>
-                </div>
-            </div>
+
 
             <!-- 12. Maxwell House -->
             <div class="product-card fade-up" data-scent="Maxwell House">
@@ -1335,17 +1723,18 @@ function toggleMusic() {
                 </div>
             </div>
 
-            <!-- Midnight Alibi -->
-            <div class="product-card fade-up" data-scent="Midnight Alibi">
-                <div class="product-img">
-                    <img loading="lazy" src="Scents/MidnightAlibi.PNG" alt="Maxwell with Midnight Alibi">
+
+            <!-- Mistletoe Mix-Up -->
+            <div class="product-card fade-up" data-scent="Mistletoe Mix-Up">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/MistletoeMixUp.PNG" alt="Maxwell with Mistletoe Mix-Up">
+                    <span class="too-soon-badge">Too Soon</span>
                 </div>
                 <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-woody);">Woody &amp; Smoky</span>
-                    <h3 class="product-name">Midnight Alibi</h3>
-                    <p class="product-aka">Blue Ash &amp; Velvet Smoke</p>
-                    <p class="product-desc">Deep, woody, and smooth with smoke: spruce tips, crushed peppercorn, and clove meet charred pine sap, tobacco leaf, smoked cypress, blue ash, and black embers. Rich, dark, and deeply mysterious with one airtight alibi.</p>
-                    <button class="product-btn">Order This Scent</button>
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Floral</span>
+                    <h3 class="product-name">Mistletoe Mix-Up</h3>
+                    <p class="product-aka">Mistletoe</p>
+                    <p class="product-desc">Pine, fir, and clove bring holiday warmth to a crisp opening of eucalyptus and camphor, while cedarwood and patchouli provide a rich, grounded finish. Festive enough to make stealing a kiss feel completely acceptable.</p>
                 </div>
             </div>
 
@@ -1363,6 +1752,34 @@ function toggleMusic() {
                 </div>
             </div>
 
+            <!-- Moonflower Nectar Night Heist -->
+            <div class="product-card fade-up" data-scent="Moonflower Nectar Night Heist">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/MoonflowerNectarNightHeist.PNG" alt="Maxwell with Moonflower Nectar Night Heist">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-floral);">Floral</span>
+                    <h3 class="product-name">Moonflower Nectar Night Heist</h3>
+                    <p class="product-aka">Moonflower Nectar</p>
+                    <p class="product-desc">Juicy pear and sweet agave blend with delicate rose and cherry blossom, wrapped in airy marine notes, dark musk, amber, and soft powder. The sweetest scores happen after dark.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Moroccan Cashmere Crook -->
+            <div class="product-card fade-up" data-scent="Moroccan Cashmere Crook">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/MoroccanCashmereCrook.PNG" alt="Maxwell with Moroccan Cashmere Crook">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-soph);">Sophisticated</span>
+                    <h3 class="product-name">Moroccan Cashmere Crook</h3>
+                    <p class="product-aka">Moroccan Cashmere</p>
+                    <p class="product-desc">Soft lavender and vanilla mingle with bergamot and ylang ylang over warm amber, musk, and sandalwood. Some luxuries are simply too tempting to acquire legally.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
             <!-- Moss Wanted -->
             <div class="product-card fade-up" data-scent="Moss Wanted">
                 <div class="product-img">
@@ -1373,6 +1790,34 @@ function toggleMusic() {
                     <h3 class="product-name">Moss Wanted</h3>
                     <p class="product-aka">Oakmoss and Amber</p>
                     <p class="product-desc">Maxwell is officially Moss Wanted. Bright citrus and sage give way to lavender, earthy oakmoss, warm amber, and tonka for a rich, refined scent that's still at large.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Nordic Night Flight -->
+            <div class="product-card fade-up" data-scent="Nordic Night Flight">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/NordicNightFlight.PNG" alt="Maxwell with Nordic Night Flight">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Green</span>
+                    <h3 class="product-name">Nordic Night Flight</h3>
+                    <p class="product-aka">Nordic Night</p>
+                    <p class="product-desc">Cool eucalyptus and lavender sweep into crisp pine, cypress, and bayberry, grounded by cedar, rosemary, oakmoss, and peppercorn for a fresh, woodsy winter escape. The night was cold. The trail was hot.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Ocean Breeze Seize -->
+            <div class="product-card fade-up" data-scent="Ocean Breeze Seize">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/OceanBreezeSeize.PNG" alt="Maxwell with Ocean Breeze Seize">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-coastal);">Coastal</span>
+                    <h3 class="product-name">Ocean Breeze Seize</h3>
+                    <p class="product-aka">Ocean Breeze</p>
+                    <p class="product-desc">Salty ocean air and bright citrus open into fresh marine notes, violet, cotton blossom, musk, and smooth woods for an effortlessly clean, breezy fragrance. Authorities seized everything but the ocean air.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
@@ -1392,6 +1837,34 @@ function toggleMusic() {
                 </div>
             </div>
 
+            <!-- Orange Blossom Bust -->
+            <div class="product-card fade-up" data-scent="Orange Blossom Bust">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/OrangeBlossomBust.PNG" alt="Maxwell with Orange Blossom Bust">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-floral);">Floral</span>
+                    <h3 class="product-name">Orange Blossom Bust</h3>
+                    <p class="product-aka">Orange Blossom</p>
+                    <p class="product-desc">Fresh orange blossom and neroli mingle with bergamot, jasmine, and warm sandalwood for a delicate, sophisticated floral. The whole operation went bust at peak bloom.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Peach Nectar Breach -->
+            <div class="product-card fade-up" data-scent="Peach Nectar Breach">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/PeachNectarBreach.PNG" alt="Maxwell with Peach Nectar Breach">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-sweet);">Sweet &amp; Fruity</span>
+                    <h3 class="product-name">Peach Nectar Breach</h3>
+                    <p class="product-aka">Peach Nectar</p>
+                    <p class="product-desc">Ripe peach leads a tropical mix of mango, papaya, pear, banana, and lime, grounded by warm amaretto and tonka bean. No lock could contain something this juicy.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
             <!-- 19. Peach on Earth -->
             <div class="product-card fade-up" data-scent="Peach on Earth">
                 <div class="product-img">
@@ -1406,28 +1879,99 @@ function toggleMusic() {
                 </div>
             </div>
 
-            <!-- 20. Pomegranate Noir -->
-            <div class="product-card fade-up" data-scent="Pomegranate Noir">
+            <!-- Petrichor Perjury -->
+            <div class="product-card fade-up" data-scent="Petrichor Perjury">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/Pomegranate_Noir.PNG" alt="Maxwell with Pomegranate Noir">
+                    <img loading="lazy" src="Scents/PetrichorPerjury.PNG" alt="Maxwell with Petrichor Perjury">
                 </div>
                 <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-soph);">Dark &amp; Sultry</span>
-                    <h3 class="product-name">Pomegranate Noir</h3>
-                    <p class="product-desc">Juicy pomegranate and red berries layered over a dark, musky base. Deep, sultry, and elegant.</p>
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Green</span>
+                    <h3 class="product-name">Petrichor Perjury</h3>
+                    <p class="product-aka">Petrichor</p>
+                    <p class="product-desc">Fresh rain, damp soil, moss, and cool green notes blend with patchouli, cypress, and vetiver for an earthy, atmospheric scent. Caught lying in the rain.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
-            <!-- Pumpkin Chai -->
-            <div class="product-card fade-up" data-scent="Pumpkin Chai">
+            <!-- Pineapple Piracy -->
+            <div class="product-card fade-up" data-scent="Pineapple Piracy">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/PineapplePiracy.PNG" alt="Maxwell with Pineapple Piracy">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-sweet);">Sweet &amp; Fruity</span>
+                    <h3 class="product-name">Pineapple Piracy</h3>
+                    <p class="product-aka">Pineapple Element</p>
+                    <p class="product-desc">Pure, juicy pineapple explodes with tropical sweetness and a slightly tart finish. All that piracy for a little fruity booty.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Pink Sugar Crystal Meth -->
+            <div class="product-card fade-up" data-scent="Pink Sugar Crystal Meth">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/PinkSugarCrystalMeth.PNG" alt="Maxwell with Pink Sugar Crystal Meth">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-sweet);">Sweet &amp; Fruity</span>
+                    <h3 class="product-name">Pink Sugar Crystal Meth</h3>
+                    <p class="product-aka">Pink Sugar Crystals</p>
+                    <p class="product-desc">Sweet strawberry, raspberry, and black currant get an extra rush of sugar before melting into vanilla, warm tonka bean, and soft musk. One batch and you'll be hooked.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Pomegranate Cider Insider -->
+            <div class="product-card fade-up" data-scent="Pomegranate Cider Insider">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/PumpkinChai.PNG" alt="Maxwell with Pumpkin Chai">
+                    <img loading="lazy" src="Scents/PomegranateInsider.png" alt="Maxwell with Pomegranate Cider Insider">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-sweet);">Sweet &amp; Fruity</span>
+                    <h3 class="product-name">Pomegranate Cider Insider</h3>
+                    <p class="product-aka">Pomegranate Cider</p>
+                    <p class="product-desc">Tart pomegranate, cranberry, and red currant mingle with bright lemon peel, warm apple cider, and a touch of spice for a juicy, vibrant twist on classic cider. The sweetest secrets always come from the inside.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- 20. Pomegranate Noir Crime Czar -->
+            <div class="product-card fade-up" data-scent="Pomegranate Noir Crime Czar">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/PomegranateNoirCrimeCzar.png" alt="Maxwell with Pomegranate Noir Crime Czar">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-soph);">Dark &amp; Sultry</span>
+                    <h3 class="product-name">Pomegranate Noir Crime Czar</h3>
+                    <p class="product-aka">Pomegranate Noir</p>
+                    <p class="product-desc">Juicy pomegranate and ripe red berries sink into a dark, musky base for a deep, sultry fragrance with an elegant edge. Every empire has a dark side.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Cashmere Pumpkin Ponzi Scheme -->
+            <div class="product-card fade-up" data-scent="Cashmere Pumpkin Ponzi Scheme">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/CashmerePumkinPonzi.png" alt="Maxwell with Cashmere Pumpkin Ponzi Scheme">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
-                    <h3 class="product-name">Pumpkin Chai</h3>
-                    <p class="product-desc">The perfect hideout after a successful pumpkin heist. Warm pumpkin, brown sugar, vanilla, and cozy spices set the scene for laying low until the heat dies down.</p>
+                    <h3 class="product-name">Cashmere Pumpkin Ponzi Scheme</h3>
+                    <p class="product-desc">Upscale autumn pumpkin with green pumpkin vine, cinnamon, clove, smoky embers, moss, and soft caramel. Returns that smell too good to be true.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Pumpkin Chai Fall Guy -->
+            <div class="product-card fade-up" data-scent="Pumpkin Chai Fall Guy">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/PumpkinChaiFallGuy.PNG" alt="Maxwell with Pumpkin Chai Fall Guy">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
+                    <h3 class="product-name">Pumpkin Chai Fall Guy</h3>
+                    <p class="product-aka">Pumpkin Chai</p>
+                    <p class="product-desc">Pumpkin, brown sugar, vanilla, and cozy chai spices set the scene. Maxwell set up the fall guy.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
@@ -1436,45 +1980,100 @@ function toggleMusic() {
             <div class="product-card fade-up" data-scent="Pumpkin Soufflé Shakedown">
                 <div class="product-img" style="position: relative;">
                     <img loading="lazy" src="Scents/PumpkinSouffleShakedown.PNG" alt="Maxwell with Pumpkin Soufflé Shakedown">
-                    <span class="just-dropped-badge">NEW</span>
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
                     <h3 class="product-name">Pumpkin Soufflé Shakedown</h3>
                     <p class="product-aka">Pumpkin Soufflé</p>
                     <p class="product-desc">Warm cardamom, cinnamon, and sugar give way to rich pumpkin and a creamy, buttery pastry-and-vanilla finish. The pastry chef calls it extortion. Maxwell calls it quality control.</p>
+                </div>
+            
                     <button class="product-btn">Order This Scent</button>
                 </div>
-            </div>
 
             <!-- Toasted Pumpkin Spice Vice -->
             <div class="product-card fade-up" data-scent="Toasted Pumpkin Spice Vice">
                 <div class="product-img" style="position: relative;">
                     <img loading="lazy" src="Scents/ToastedPumpkinSpiceVice.png" alt="Maxwell with Toasted Pumpkin Spice Vice">
-                    <span class="just-dropped-badge">NEW</span>
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
                     <h3 class="product-name">Toasted Pumpkin Spice Vice</h3>
                     <p class="product-aka">Toasted Pumpkin Spice</p>
                     <p class="product-desc">Toasted cinnamon, nutmeg, and clove set the stage for pumpkin and silky buttercream, while smoked embers and vanilla leave behind a warm autumn haze. Sweet enough to lure you in, smoky enough to keep you there.</p>
+                </div>
+            
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+
+            <!-- Rosemary Sage Suspect -->
+            <div class="product-card fade-up" data-scent="Rosemary Sage Suspect">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/RosemarySageSuspect.PNG" alt="Maxwell with Rosemary Sage Suspect">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Herbal</span>
+                    <h3 class="product-name">Rosemary Sage Suspect</h3>
+                    <p class="product-aka">Rosemary Sage</p>
+                    <p class="product-desc">Rosemary and sage mingle with cooling eucalyptus, crisp pine, and warm cedar for a fresh herbal scent. The evidence was planted.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
-            <!-- 20. Sandalwood -->
-            <div class="product-card fade-up" data-scent="Sandalwood">
+            <!-- Sandalwood Safehouse -->
+            <div class="product-card fade-up" data-scent="Sandalwood Safehouse">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/Sandalwood2.PNG" alt="Maxwell with Sandalwood">
+                    <img loading="lazy" src="Scents/SandalwoodSafehouse.png" alt="Maxwell with Sandalwood Safehouse">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: #6b5030;">Meditative</span>
-                    <h3 class="product-name">Sandalwood</h3>
+                    <h3 class="product-name">Sandalwood Safehouse</h3>
+                    <p class="product-aka">Sandalwood</p>
                     <p class="product-desc">Creamy, smooth sandalwood with soft woody depth and subtle warmth. Clean yet rich, with a meditative character.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
+            <div class="product-card fade-up" data-scent="Santal &amp; Coconut Scandal">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/SantalCoconutScandal.png" alt="Maxwell with Santal and Coconut">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-woody);">Woody &amp; Tropical</span>
+                    <h3 class="product-name">Santal &amp; Coconut Scandal</h3>
+                    <p class="product-aka">Santal &amp; Coconut</p>
+                    <p class="product-desc">Luxe tropical coconut with a woody, less-sweet base of sandalwood, cedar, and amyris.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Sea Minerals Mastermind -->
+            <div class="product-card fade-up" data-scent="Sea Minerals Mastermind">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/SeaMineralsMastermind.PNG" alt="Maxwell with Sea Minerals Mastermind">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-coastal);">Coastal</span>
+                    <h3 class="product-name">Sea Minerals Mastermind</h3>
+                    <p class="product-aka">Sea Minerals</p>
+                    <p class="product-desc">Crisp ozone and clean linen meet eucalyptus, freesia, and fresh sea salt, softened by airy powder and earthy moss for a cool, sophisticated coastal escape. Clean, calculated, and always one step ahead.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Smoke Screen -->
+            <div class="product-card fade-up" data-scent="Smoke Screen">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/SmokeScreen.PNG" alt="Maxwell with Smoke Screen">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-woody);">Woody &amp; Smoky</span>
+                    <h3 class="product-name">Smoke Screen</h3>
+                    <p class="product-aka">Smoke Element</p>
+                    <p class="product-desc">Smoldering wood, smoky incense, and warm resins create a deep, mysterious fragrance with the nostalgic character of a glowing fireplace. Now you smell it. Now you don't.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
 
                         <div class="product-card fade-up" data-scent="Spa Day">
                 <div class="product-img" style="position: relative;">
@@ -1484,6 +2083,7 @@ function toggleMusic() {
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-fresh);">Fresh</span>
                     <h3 class="product-name">Spa Day</h3>
+                    <p class="product-aka">Day at the Spa</p>
                     <p class="product-desc">Lemongrass and black currant balanced with hints of patchouli and sugarcane. Calming, clean, and good any time of year.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
@@ -1502,28 +2102,30 @@ function toggleMusic() {
                 </div>
             </div>
 
-            <!-- 22. Straight Outta Hoboken -->
-            <div class="product-card fade-up" data-scent="Straight Outta Hoboken">
+
+            <!-- Strawberry Bergamot Mugshot -->
+            <div class="product-card fade-up" data-scent="Strawberry Bergamot Mugshot">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/HBKN.PNG" alt="Maxwell with Straight Outta Hoboken">
+                    <img loading="lazy" src="Scents/StrawBerryBergamot_Mugshot.png" alt="Maxwell with Strawberry Bergamot Mugshot">
                 </div>
                 <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-deep);">Warm &amp; Gourmand</span>
-                    <h3 class="product-name">Straight Outta Hoboken</h3>
-                    <p class="product-aka">Spiced Honey &amp; Tonka</p>
-                    <p class="product-desc">Honey, spice, amber, and tonka meet smoky oud, musk, and tobacco leaf. Refined enough for uptown Hoboken, tough enough for downtown Hoboken.</p>
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Fruity</span>
+                    <h3 class="product-name">Strawberry Bergamot Mugshot</h3>
+                    <p class="product-aka">Strawberry &amp; Bergamot</p>
+                    <p class="product-desc">Sweet strawberry meets bright bergamot and fresh green notes, finished with a soft, clean touch. Caught berry-handed and booked.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
-            <!-- 23. Sweet Strawberry -->
-            <div class="product-card fade-up" data-scent="Sweet Strawberry">
+            <!-- 23. Sweet Strawberry Stickup -->
+            <div class="product-card fade-up" data-scent="Sweet Strawberry Stickup">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/Sweet Strawberry.PNG" alt="Maxwell with Sweet Strawberry">
+                    <img loading="lazy" src="Scents/SweetStrawberryStickups.png" alt="Maxwell with Sweet Strawberry Stickup">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-sweet);">Sweet &amp; Fruity</span>
-                    <h3 class="product-name">Sweet Strawberry</h3>
+                    <h3 class="product-name">Sweet Strawberry Stickup</h3>
+                    <p class="product-aka">Sweet Strawberry</p>
                     <p class="product-desc">Bright, sweet strawberry with a candy-like profile. Cheerful, fruity, and immediately uplifting.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
@@ -1532,7 +2134,7 @@ function toggleMusic() {
             <!-- 24. Thug Life -->
             <div class="product-card fade-up" data-scent="Thug Life">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/Thug-Life.PNG" alt="Maxwell with Thug Life">
+                    <img loading="lazy" src="Scents/ThugLife.PNG" alt="Maxwell with Thug Life">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-woody);">Woody &amp; Smoky</span>
@@ -1542,24 +2144,39 @@ function toggleMusic() {
                 </div>
             </div>
 
-            <!-- Vanilla Coconut Cartel -->
-            <div class="product-card fade-up" data-scent="Vanilla Coconut Cartel">
+            <!-- Tonka & Spiced Honey Trap -->
+            <div class="product-card fade-up" data-scent="Tonka &amp; Spiced Honey Trap">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/VanillaCoconutCartelPilot.PNG" alt="Maxwell with Vanilla Coconut Cartel">
+                    <img loading="lazy" src="Scents/TonkaSpicedHoneyTrap.png" alt="Maxwell with Tonka &amp; Spiced Honey Trap">
                 </div>
                 <div class="product-body">
-                    <span class="product-tag" style="background: var(--tag-sweet);">Warm &amp; Sweet</span>
-                    <h3 class="product-name">Vanilla Coconut Cartel</h3>
-                    <p class="product-aka">Natural Creamy Vanilla &amp; Coconut Sugar</p>
-                    <p class="product-desc">Creamy vanilla and toasted coconut sugar come together in a warm, indulgent scent worth smuggling.</p>
+                    <span class="product-tag" style="background: var(--tag-deep);">Warm &amp; Gourmand</span>
+                    <h3 class="product-name">Tonka &amp; Spiced Honey Trap</h3>
+                    <p class="product-aka">Spiced Honey &amp; Tonka</p>
+                    <p class="product-desc">Golden honey, spice, and tonka unfold over warm amber, smoky oud, musk, and tobacco leaf. The sweetest traps are the hardest to escape.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
 
+            <!-- Vanilla Caramel Cartel -->
+            <div class="product-card fade-up" data-scent="Vanilla Caramel Cartel">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/VanillaCaramelCartel.PNG" alt="Maxwell with Vanilla Caramel Cartel">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-bakery);">Bakery &amp; Sweet</span>
+                    <h3 class="product-name">Vanilla Caramel Cartel</h3>
+                    <p class="product-aka">Sweet Vanilla Caramel</p>
+                    <p class="product-desc">Creamy vanilla and golden caramel blend with brown sugar, butterscotch, coffee, cinnamon, and chocolate for a rich, decadent gourmand. One whiff and you're in too deep.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+
             <!-- Vanilla Vice -->
             <div class="product-card fade-up" data-scent="Vanilla Vice">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/VanillaVice.PNG" alt="Maxwell with Vanilla Vice">
+                    <img loading="lazy" src="Scents/Vanilla_Vice.png" alt="Maxwell with Vanilla Vice">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-sweet);">Warm &amp; Sweet</span>
@@ -1570,16 +2187,58 @@ function toggleMusic() {
                 </div>
             </div>
 
+            <!-- Volcanic Sand & Sage Rampage -->
+            <div class="product-card fade-up" data-scent="Volcanic Sand &amp; Sage Rampage">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/VolcanicSandSageRampage.PNG" alt="Maxwell with Volcanic Sand &amp; Sage Rampage">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-woody);">Woody &amp; Earthy</span>
+                    <h3 class="product-name">Volcanic Sand &amp; Sage Rampage</h3>
+                    <p class="product-aka">Volcanic Sand &amp; Sage</p>
+                    <p class="product-desc">Fresh sage and chamomile meet juicy pear, delicate lavender and rose, grounded by smoky palo santo and earthy patchouli. Serene yet eruptive.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
             <!-- Walter White Oak & Vanilla -->
             <div class="product-card fade-up" data-scent="Walter White Oak &amp; Vanilla">
                 <div class="product-img">
-                    <img loading="lazy" src="Scents/WalterWhite.PNG" alt="Maxwell with Walter White Oak and Vanilla">
+                    <img loading="lazy" src="Scents/WalterWhiteVanilla.PNG" alt="Maxwell with Walter White Oak and Vanilla">
                 </div>
                 <div class="product-body">
                     <span class="product-tag" style="background: var(--tag-soph);">Warm &amp; Luxurious</span>
                     <h3 class="product-name">Walter White Oak &amp; Vanilla</h3>
                     <p class="product-aka">White Oak &amp; Vanilla</p>
                     <p class="product-desc">A carefully calculated blend of smooth white oak, soft woods, creamy vanilla, and subtle amber. Warm, refined, luxurious and made with serious chemistry.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Wassail Out on Bail -->
+            <div class="product-card fade-up" data-scent="Wassail Out on Bail">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/WassailOutOnBail.PNG" alt="Maxwell with Wassail Out on Bail">
+                    <span class="too-soon-badge">Too Soon</span>
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-spicy);">Warm &amp; Spicy</span>
+                    <h3 class="product-name">Wassail Out on Bail</h3>
+                    <p class="product-aka">Wassail</p>
+                    <p class="product-desc">Orange peel, cranberry, red currant, and apple cider mingle with cinnamon, red wine, and warm woods for a rich, festive holiday scent. Out on bail and straight back to the wassail.</p>
+                </div>
+            </div>
+
+            <!-- White Tea Crime Spree -->
+            <div class="product-card fade-up" data-scent="White Tea Crime Spree">
+                <div class="product-img">
+                    <img loading="lazy" src="Scents/WhiteTeaCrimeSpree.PNG" alt="Maxwell with White Tea Crime Spree">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Clean</span>
+                    <h3 class="product-name">White Tea Crime Spree</h3>
+                    <p class="product-aka">White Tea</p>
+                    <p class="product-desc">White tea, bergamot, mandarin, and jasmine create an elegant, uplifting scent with fresh lemongrass and a touch of ginger. The perfect cup of criminali-tea.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
@@ -1594,6 +2253,20 @@ function toggleMusic() {
                     <h3 class="product-name">Wood Sage &amp; Sea Salt Smuggler</h3>
                     <p class="product-aka">Wood Sage &amp; Sea Salt (Jo Malone)</p>
                     <p class="product-desc">Fresh off the coast, Maxwell slips through crashing waves with a haul of sea salt and wild coastal sage. Cool ocean air mingles with mineral-rich sea salt, earthy sage, and soft woods, capturing the rugged freshness of a windswept shoreline.</p>
+                    <button class="product-btn">Order This Scent</button>
+                </div>
+            </div>
+
+            <!-- Woodland Berries & Sage Road Rage -->
+            <div class="product-card fade-up" data-scent="Woodland Berries &amp; Sage Road Rage">
+                <div class="product-img" style="position: relative;">
+                    <img loading="lazy" src="Scents/WoodlandBerriesRoadRage.PNG" alt="Maxwell with Woodland Berries &amp; Sage Road Rage">
+                </div>
+                <div class="product-body">
+                    <span class="product-tag" style="background: var(--tag-fresh);">Fresh &amp; Green</span>
+                    <h3 class="product-name">Woodland Berries &amp; Sage Road Rage</h3>
+                    <p class="product-aka">Woodland Berries &amp; Sage</p>
+                    <p class="product-desc">Tart winter fruit and fresh herbs meet evergreen woods, moss, and soft musk for a sophisticated blend that's bright, crisp, and quietly earthy. Peaceful. Refined. Until the road rage began.</p>
                     <button class="product-btn">Order This Scent</button>
                 </div>
             </div>
