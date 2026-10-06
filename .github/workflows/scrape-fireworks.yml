@@ -2,8 +2,8 @@ name: Scrape Fireworks Events
 
 on:
   schedule:
-    # Run at 2:10pm and 8pm Eastern Time (2:10pm for testing)
-    - cron: '10 18 * * *'  # 2:10pm ET (18:10 UTC) - TEMPORARY FOR TESTING
+    # Run at 8am and 8pm Eastern Time
+    - cron: '0 12 * * *'  # 8am ET (12 UTC in winter, 13 in summer)
     - cron: '0 0 * * *'   # 8pm ET (00 UTC next day in winter, 01 in summer)
   workflow_dispatch:  # Allow manual trigger
 
