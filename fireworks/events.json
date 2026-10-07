@@ -1,7 +1,15 @@
 {
-  "last_updated": "2026-10-06T18:03:31.155743",
-  "event_count": 2,
+  "last_updated": "2026-10-07T03:32:08.987920",
+  "event_count": 3,
   "events": [
+    {
+      "title": "New Pediatrics And Adult Medical Practice, Baker Health, Opens In Hoboken",
+      "description": "Hoboken|News|8hNew Pediatrics And Adult Medical Practice, Baker Health, Opens In HobokenThe practice provides adult and pediatric medicine, yoga, and other wellness activities. It just held its grand ",
+      "source": "hoboken.patch.com",
+      "url": "https://hoboken.patch.com/",
+      "type": "event",
+      "confidence": "medium"
+    },
     {
       "title": "\ud83c\udf31 Patch AM: Want skyline views and local history on a Hoboken evening cruise?",
       "description": "Hoboken|News|2d\ud83c\udf31 Patch AM: Want skyline views and local history on a Hoboken evening cruise?Make time for Spencer Savings Bank Hosts Pet Adoption Day on the Hoboken Patch calendarPatch AM Team,Patch S",
