@@ -1,15 +1,7 @@
 {
-  "last_updated": "2026-10-09T18:06:16.886505",
-  "event_count": 2,
+  "last_updated": "2026-10-10T03:35:35.711454",
+  "event_count": 1,
   "events": [
-    {
-      "title": "New Pediatrics And Adult Medical Practice, Baker Health, Opens In Hoboken",
-      "description": "Hoboken|News|2dNew Pediatrics And Adult Medical Practice, Baker Health, Opens In HobokenThe practice provides adult and pediatric medicine, yoga, and other wellness activities. It just held its grand ",
-      "source": "hoboken.patch.com",
-      "url": "https://hoboken.patch.com/",
-      "type": "event",
-      "confidence": "medium"
-    },
     {
       "title": "Intel Drone Show (Check Website)",
       "description": "Potential upcoming drone show - check source for details",
