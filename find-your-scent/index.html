@@ -333,6 +333,68 @@
         }
         .no-results strong { color: var(--charcoal); }
 
+        /* TAB BAR */
+        .tab-bar {
+            background: var(--charcoal);
+            border-bottom: 2px solid rgba(232,160,48,0.15);
+            position: sticky; top: var(--nav-h); z-index: 800;
+        }
+        .tab-bar-inner {
+            max-width: 1100px; margin: 0 auto; padding: 0 40px;
+            display: flex; gap: 0;
+        }
+        .tab-btn {
+            font-size: 0.72rem; font-weight: 600;
+            letter-spacing: 0.14em; text-transform: uppercase;
+            color: rgba(255,249,242,0.5);
+            background: none; border: none; cursor: pointer;
+            padding: 18px 28px; border-bottom: 2.5px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+            margin-bottom: -2px;
+        }
+        .tab-btn:hover { color: rgba(255,249,242,0.8); }
+        .tab-btn.active { color: var(--honey); border-bottom-color: var(--honey); }
+
+        /* INGREDIENT SECTION */
+        .ing-section { padding: 72px 0 80px; background: var(--cream); }
+        .ing-search-wrap { max-width: 420px; margin: 0 auto 36px; }
+        .ing-search {
+            width: 100%; padding: 12px 18px;
+            font-family: 'Poppins', sans-serif; font-size: 0.85rem;
+            background: var(--ivory); color: var(--charcoal);
+            border: 1.5px solid rgba(92,56,40,0.18); border-radius: 2px;
+            outline: none; transition: border-color 0.2s;
+        }
+        .ing-search:focus { border-color: var(--ember); }
+        .ing-search::placeholder { color: var(--lgray); }
+        .ing-grid {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            justify-content: center; margin-bottom: 44px;
+        }
+        .ing-chip {
+            font-size: 0.72rem; font-weight: 500;
+            letter-spacing: 0.06em;
+            background: var(--ivory); color: var(--bark);
+            border: 1.5px solid rgba(92,56,40,0.18);
+            border-radius: 999px; padding: 7px 16px;
+            cursor: pointer; transition: all 0.15s var(--ease);
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        }
+        .ing-chip:hover { border-color: var(--ember); color: var(--ember); }
+        .ing-chip.selected {
+            background: var(--ember); color: #fff;
+            border-color: var(--ember);
+        }
+        .ing-chip.disabled { opacity: 0.35; cursor: not-allowed; }
+        .ing-chip.selected.disabled { opacity: 1; cursor: pointer; }
+        .ing-chip.hidden-chip { display: none; }
+        .ing-count-label {
+            text-align: center; margin-bottom: 28px;
+            font-size: 0.72rem; color: var(--gray);
+            letter-spacing: 0.06em;
+        }
+        .ing-count-label strong { color: var(--charcoal); }
+
         /* RESPONSIVE */
         @media (max-width: 900px) {
             .smell-grid { grid-template-columns: repeat(3, 1fr); }
@@ -344,6 +406,7 @@
             .hamburger { display: flex; }
             .inner { padding: 0 20px; }
             .results-grid { padding: 0 20px; }
+            .tab-bar-inner { padding: 0 20px; }
         }
         @media (max-width: 420px) {
             .smell-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -380,8 +443,16 @@
 <header class="page-header">
     <p class="page-eyebrow">&#9670; Maxwell's Candles &#9670;</p>
     <h1 class="page-title">Find Your Scent</h1>
-    <p class="page-sub">Too many candles, not enough nose. Pick up to 3 scent profiles and we'll narrow it down for you.</p>
+    <p class="page-sub" id="pageSubText">Too many candles, not enough nose. Pick up to 3 scent profiles and we'll narrow it down for you.</p>
 </header>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+    <div class="tab-bar-inner">
+        <button class="tab-btn active" data-panel="vibe">By Vibe</button>
+        <button class="tab-btn" data-panel="ingredient">By Ingredient</button>
+    </div>
+</div>
 
 <!-- QUIZ -->
 <section class="quiz-section" id="quizSection">
@@ -477,6 +548,40 @@
     </div>
 </section>
 
+<!-- INGREDIENT TAB -->
+<section class="ing-section hidden" id="ingSection">
+    <div class="inner">
+        <div class="quiz-instructions">
+            <h2>What's in your candle?</h2>
+            <p>Pick up to 3 ingredients — we'll show every candle that contains all of them.</p>
+            <span class="counter" id="ingCounter">0 of 3 selected</span>
+        </div>
+        <div class="ing-search-wrap">
+            <input type="text" class="ing-search" id="ingSearch" placeholder="Search ingredients...">
+        </div>
+        <div class="ing-grid" id="ingGrid"></div>
+        <div class="quiz-cta-wrap" style="margin-top:0">
+            <button class="btn-find" id="ingFindBtn" disabled>Show Candles</button>
+        </div>
+    </div>
+</section>
+
+<!-- INGREDIENT RESULTS -->
+<section class="results-section hidden" id="ingResultsSection">
+    <div class="results-header inner">
+        <p class="results-eyebrow">Ingredient Match</p>
+        <h2 class="results-title" id="ingResultsTitle">Your Candles</h2>
+        <p class="results-sub" id="ingResultsSub"></p>
+        <div class="selected-tags" id="ingSelectedTags"></div>
+    </div>
+    <div class="results-grid" id="ingResultsGrid"></div>
+    <div class="results-footer">
+        <button class="btn-reset" id="ingResetBtn">Start Over</button>
+        &nbsp;&nbsp;
+        <a href="../index.html#collection" class="btn-reset" style="display:inline-block;">Browse All Scents</a>
+    </div>
+</section>
+
 <script>
 // ── Scent catalog ──────────────────────────────────────────────────────────
 // families: citrus | fresh | floral | fruity | woody | spicy | sweet | bakery | smoky | tropical | herbal | seasonal
@@ -512,7 +617,7 @@ const SCENTS = [
   { name:"Coffee Beans Crime Scene",          img:"CoffeeBeans.PNG",            tag:"Warm & Cozy",          color:"var(--tag-bakery)",  aka:"Coffee Beans",                   desc:"Rich roasted coffee with deep smoky undertones. A bold, energizing scent that means business.",                                                                                                              families:["bakery","smoky"] },
   { name:"Cotton Criminal",                   img:"CottonCrimimalz.PNG",           tag:"Fresh & Clean",        color:"var(--tag-fresh)",   aka:"Cotton",                         desc:"Clean, light, and crisp with the warmth of freshly dried cotton. The softest crime spree you'll ever encounter.",                                                                                           families:["fresh","sweet"] },
   { name:"Cranberry Woods Stolen Goods",      img:"CranberryWoodsStolenGoods.PNG",tag:"Rich & Deep",          color:"var(--tag-deep)",    aka:"Cranberry Woods",                desc:"Tart cranberry and sweet woods create a lush, festive depth. What's in the bag? Stolen goods that smell this good.",                                                                                     families:["fruity","woody","seasonal"] },
-  { name:"Cucumber Melon Felon",              img:"CucumberMelonFelon.PNG",       tag:"Fresh & Green",        color:"var(--tag-fresh)",   aka:"Cucumber Melon",                 desc:"Crisp cucumber and sweet melon create a light, refreshing, and clean scent. Charged with being too fresh.",                                                                                               families:["fresh","fruity"] },
+  { name:"Cucumber Melon Felon",              img:"CucumberMelonFelon.png",       tag:"Fresh & Green",        color:"var(--tag-fresh)",   aka:"Cucumber Melon",                 desc:"Crisp cucumber and sweet melon create a light, refreshing, and clean scent. Charged with being too fresh.",                                                                                               families:["fresh","fruity"] },
   { name:"Cypress & Bayberry Burglary",       img:"CypressBayberryBurglary.PNG",  tag:"Woody & Fresh",        color:"var(--tag-woody)",   aka:"Cypress & Bayberry",             desc:"Crisp cypress and earthy bayberry create a fresh, forest-inspired scent. The heist was clean. The woods were not.",                                                                                       families:["woody","seasonal","fresh"] },
   { name:"Dark Orchard",                      img:"DarkOrchard.png",              tag:"Rich & Deep",          color:"var(--tag-deep)",    aka:"",                               desc:"A dark, moody twist on orchard fruit — deep, complex, and slightly mysterious.",                                                                                                                               families:["fruity","woody","smoky"] },
   { name:"Dragon's Blood",                    img:"DragonzBlood.PNG",             tag:"Rich & Deep",          color:"var(--tag-deep)",    aka:"",                               desc:"Resinous, incense-forward, and boldly complex. Dragon's Blood demands the room and keeps it.",                                                                                                               families:["smoky","spicy"] },
@@ -529,7 +634,7 @@ const SCENTS = [
   { name:"Jamaican Me Flee",                  img:"JamaicanMeCrazy.png",           tag:"Tropical",             color:"var(--tag-coastal)", aka:"Jamaica Me Crazy",               desc:"A lush tropical escape with pineapple, coconut, and sweet citrus. Maxwell's not going back.",                                                                                                               families:["tropical","fruity","citrus"] },
   { name:"Japanese Cherry Blossom Blackmail", img:"JapaneseCherryBlossomBlackmail.PNG",    tag:"Soft & Floral",        color:"var(--tag-floral)",  aka:"Japanese Cherry Blossom",        desc:"Delicate cherry blossom, jasmine, and light woods create a soft, feminine floral. They've got something on Maxwell, and it smells beautiful.",                                                          families:["floral","sweet","fruity"] },
   { name:"Lawn & Order",                      img:"LawnAndOrder.PNG",             tag:"Fresh & Green",        color:"var(--tag-fresh)",   aka:"Fresh Cut Grass",                desc:"Grass and green leaves at the heart, lifted by citrus and moss. A true-to-life homage to the most nostalgic scent of summer.",                                                                           families:["herbal","fresh","citrus"] },
-  { name:"Leafing the Scene",                 img:"LeafingTheScene.PNG",          tag:"Warm & Earthy",        color:"var(--tag-woody)",   aka:"Fallen Leaves",                  desc:"Damp earth, dry leaves, and a hint of spice capture the feeling of autumn's most brazen exit.",                                                                                                           families:["woody","seasonal","herbal"] },
+  { name:"Leafing the Scene",                 img:"LeafingTheScene.png",          tag:"Warm & Earthy",        color:"var(--tag-woody)",   aka:"Fallen Leaves",                  desc:"Damp earth, dry leaves, and a hint of spice capture the feeling of autumn's most brazen exit.",                                                                                                           families:["woody","seasonal","herbal"] },
   { name:"Leather & Labdanum Money Laundering",img:"LeatherLabdanumLarceny.PNG",       tag:"Rich & Deep",          color:"var(--tag-deep)",    aka:"Leather & Labdanum",             desc:"Warm leather, earthy labdanum, and deep resin. A sophisticated, complex scent for those who deal in high-value goods.",                                                                                families:["smoky","woody","spicy"] },
   { name:"Library",                           img:"Library2.PNG",                  tag:"Woody & Sophisticated",color:"var(--tag-woody)",   aka:"",                               desc:"Old paper, worn leather, and polished wood give this scent the quiet authority of a room full of secrets. The alibi is right there on the shelf.",                                                     families:["woody","smoky"] },
   { name:"Lime Basil & Mandarin",             img:"LimeBasilMandalorian.png",        tag:"Fresh & Citrus",       color:"var(--tag-fresh)",   aka:"",                               desc:"Zesty lime, aromatic basil, and bright mandarin create a sharp, sophisticated citrus-herbal blend. Clean, modern, and impossible to pin down.",                                                         families:["citrus","herbal","fresh"] },
@@ -542,7 +647,7 @@ const SCENTS = [
   { name:"Maximus Lime",                      img:"Maximum_Lime.PNG",              tag:"Fresh & Citrus",       color:"var(--tag-fresh)",   aka:"",                               desc:"The signature Maximus blend with a bright lime twist. Bold, fresh, and unapologetically Maxwell.",                                                                                                        families:["citrus","floral","fruity"] },
   { name:"Maxwell House",                     img:"Maxwell_House.PNG",             tag:"Cozy",                 color:"var(--tag-bakery)",  aka:"",                               desc:"Freshly brewed espresso with roasted bean notes and subtle sweetness. Cozy and irresistible.",                                                                                                             families:["bakery","smoky"] },
   { name:"Mistletoe Mix-Up",                  img:"MistletoeMixUp.PNG",           tag:"Fresh & Seasonal",     color:"var(--tag-fresh)",   aka:"Mistletoe",                      desc:"Crisp holiday greenery, light berries, and fresh air. The classic Christmas mix-up that smells entirely intentional.",                                                                                  families:["seasonal","herbal","fresh"] },
-  { name:"Moonflower Nectar Night Heist",     img:"MoonflowerNectar.PNG",         tag:"Soft & Floral",        color:"var(--tag-floral)",  aka:"Moonflower Nectar",              desc:"Moonflower, honeysuckle, and soft florals create a dreamy, nocturnal bloom. The heist happens at midnight.",                                                                                          families:["floral","sweet"] },
+  { name:"Moonflower Nectar Night Heist",     img:"MoonflowerNectarNightHeist.PNG",         tag:"Soft & Floral",        color:"var(--tag-floral)",  aka:"Moonflower Nectar",              desc:"Moonflower, honeysuckle, and soft florals create a dreamy, nocturnal bloom. The heist happens at midnight.",                                                                                          families:["floral","sweet"] },
   { name:"Moroccan Cashmere Crook",           img:"MoroccanCashmereCrook.PNG",         tag:"Warm & Luxurious",     color:"var(--tag-soph)",    aka:"Moroccan Cashmere",              desc:"Warm cashmere, exotic spices, and a whisper of resin. Rich, sophisticated, and effortlessly elusive.",                                                                                                families:["spicy","sweet","smoky"] },
   { name:"Moss Wanted",                       img:"MossWanted.PNG",               tag:"Woody & Earthy",       color:"var(--tag-woody)",   aka:"",                               desc:"Deep earthy moss, damp forest floor, and green herbs. Wanted in all 50 states for being too earthy.",                                                                                                  families:["herbal","woody","fresh"] },
   { name:"Nordic Night Flight",               img:"NordicNightFlight.PNG",        tag:"Woody & Fresh",        color:"var(--tag-woody)",   aka:"Nordic Night",                   desc:"Pine, cold air, and clean Nordic woods create a crisp, wintry escape. The flight leaves at midnight.",                                                                                                   families:["woody","seasonal","fresh"] },
@@ -550,8 +655,8 @@ const SCENTS = [
   { name:"Ocean Mist & Sea Salt Assault",     img:"OceanMistandSeaSalt.PNG",         tag:"Fresh & Coastal",      color:"var(--tag-coastal)", aka:"Ocean Mist & Sea Salt",          desc:"Cool ocean mist and crisp sea salt evoke a brisk coastal morning. An assault on the senses, in the best possible way.",                                                                               families:["fresh","tropical"] },
   { name:"Orange Blossom Bust",               img:"OrangeBlossomBust.PNG",        tag:"Soft & Floral",        color:"var(--tag-floral)",  aka:"Orange Blossom",                 desc:"Delicate orange blossom and soft citrus florals create a light, elegant, spring-like scent. Caught in the act of smelling incredible.",                                                               families:["floral","citrus","fresh"] },
   { name:"Peach Nectar Breach",               img:"PeachNectarBreach.PNG",        tag:"Sweet & Fruity",       color:"var(--tag-sweet)",   aka:"Peach Nectar",                   desc:"Ripe, juicy peach with a sweet nectar core and a soft, warm finish. The breach was never solved. The peaches were never recovered.",                                                                  families:["fruity","sweet"] },
-  { name:"Peach on Earth",                    img:"PeachOnEarth.PNG",             tag:"Sweet & Fruity",       color:"var(--tag-sweet)",   aka:"",                               desc:"A soft, sweet peach scent with warm undertones perfect for any season. Peace on earth. Peach on Maxwell.",                                                                                             families:["fruity","sweet","seasonal"] },
-  { name:"Petrichor Perjury",                 img:"Petrichor.PNG",                tag:"Fresh & Earthy",       color:"var(--tag-fresh)",   aka:"Petrichor",                      desc:"The smell of rain on dry earth — clean, earthy, and oddly comforting. Perjury never smelled this honest.",                                                                                              families:["fresh","herbal"] },
+  { name:"Peach on Earth",                    img:"PeachOnEarth.png",             tag:"Sweet & Fruity",       color:"var(--tag-sweet)",   aka:"",                               desc:"A soft, sweet peach scent with warm undertones perfect for any season. Peace on earth. Peach on Maxwell.",                                                                                             families:["fruity","sweet","seasonal"] },
+  { name:"Petrichor Perjury",                 img:"PetrichorPerjury.PNG",                tag:"Fresh & Earthy",       color:"var(--tag-fresh)",   aka:"Petrichor",                      desc:"The smell of rain on dry earth — clean, earthy, and oddly comforting. Perjury never smelled this honest.",                                                                                              families:["fresh","herbal"] },
   { name:"Pineapple Piracy",                  img:"PineapplePiracy.PNG",          tag:"Tropical",             color:"var(--tag-coastal)", aka:"Pineapple Element",              desc:"Bold, juicy pineapple with a tropical twist. Everything was taken. Maxwell has no regrets.",                                                                                                              families:["tropical","fruity","citrus"] },
   { name:"Pink Sugar Crystal Meth",           img:"PinkSugarCrystalMeth.PNG",                tag:"Sweet & Floral",       color:"var(--tag-sweet)",   aka:"Pink Sugar Crystals",            desc:"Sugary pink sweetness with a hint of soft floral and candied fruit. The sweetest addiction Maxwell has ever peddled.",                                                                                 families:["sweet","floral","fruity"] },
   { name:"Pomegranate Cider Insider",         img:"PomegranateInsider.png",       tag:"Sweet & Fruity",       color:"var(--tag-sweet)",   aka:"Pomegranate Cider",              desc:"Tart pomegranate and warm apple cider blend into a bold, fruity-spiced scent. Maxwell's in deep. The pomegranates know too much.",                                                                   families:["fruity","spicy"] },
@@ -569,7 +674,7 @@ const SCENTS = [
   { name:"Sweet Strawberry Stickup",          img:"SweetStrawberryStickups.png",  tag:"Sweet & Fruity",       color:"var(--tag-sweet)",   aka:"Sweet Strawberry",               desc:"Bright, ripe strawberry with a juicy, fresh-picked sweetness. Hand over the strawberries and nobody gets hurt.",                                                                                    families:["fruity","sweet"] },
   { name:"The Final Rose",                    img:"TheFinalRose.PNG",             tag:"Soft & Floral",        color:"var(--tag-floral)",  aka:"",                               desc:"A rich, velvety rose at full bloom. The last rose left at the scene.",                                                                                                                                  families:["floral","sweet"] },
   { name:"Thug Life",                         img:"ThugLife.PNG",                 tag:"Woody & Smoky",        color:"var(--tag-woody)",   aka:"Lucifer's Letter",               desc:"Rich tobacco and smoked woods pull up with warm amber for a candle-scent drive-by. Maxwell chose this life.",                                                                                          families:["smoky","woody","spicy"] },
-  { name:"Toasted Pumpkin Spice Vice",        img:"ToastedPumpkinSpiceVice.PNG",  tag:"Warm & Spicy",         color:"var(--tag-spicy)",   aka:"Toasted Pumpkin Spice",          desc:"Toasted pumpkin, warm spices, and brown sugar create a bold, indulgent autumn scent. The vice is real. Resistance is futile.",                                                                      families:["bakery","spicy","seasonal"] },
+  { name:"Toasted Pumpkin Spice Vice",        img:"ToastedPumpkinSpiceVice.png",  tag:"Warm & Spicy",         color:"var(--tag-spicy)",   aka:"Toasted Pumpkin Spice",          desc:"Toasted pumpkin, warm spices, and brown sugar create a bold, indulgent autumn scent. The vice is real. Resistance is futile.",                                                                      families:["bakery","spicy","seasonal"] },
   { name:"Tonka & Spiced Honey Trap",         img:"TonkaSpicedHoneyTrap.png",         tag:"Warm & Sweet",         color:"var(--tag-bakery)",  aka:"Tonka & Spiced Honey",           desc:"Creamy tonka bean, warm honey, and a whisper of spice. Sweet enough to be a trap, bold enough to be intentional.",                                                                                 families:["sweet","spicy","bakery"] },
   { name:"Vanilla Caramel Cartel",            img:"VanillaCaramelCartel.PNG",     tag:"Sweet & Warm",         color:"var(--tag-sweet)",   aka:"Sweet Vanilla Caramel",          desc:"Rich vanilla and buttery caramel run the sweetest operation in the game. The cartel doesn't negotiate, but it does smell outstanding.",                                                               families:["sweet","bakery"] },
   { name:"Vanilla Vice",                      img:"Vanilla_Vice.png",              tag:"Sweet & Warm",         color:"var(--tag-sweet)",   aka:"",                               desc:"Pure, warm vanilla with creamy depth. The oldest vice in the book, and Maxwell has no plans to stop.",                                                                                                families:["sweet"] },
@@ -698,6 +803,263 @@ function closeMenu() { mobileMenu.classList.remove('open'); mobileOverlay.classL
 hamburger.addEventListener('click', openMenu);
 mobileClose.addEventListener('click', closeMenu);
 mobileOverlay.addEventListener('click', closeMenu);
+
+// ── Tab bar ────────────────────────────────────────────────────────────────
+const tabBtns   = document.querySelectorAll('.tab-btn');
+const pageSubEl = document.getElementById('pageSubText');
+const VIBE_SUB  = 'Too many candles, not enough nose. Pick up to 3 scent profiles and we\'ll narrow it down for you.';
+const ING_SUB   = 'Know exactly what you\'re after? Pick up to 3 ingredients to find every candle that contains them.';
+
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const panel = btn.dataset.panel;
+    tabBtns.forEach(b => b.classList.toggle('active', b === btn));
+    if (panel === 'vibe') {
+      ingSection.classList.add('hidden');
+      ingResultsSection.classList.add('hidden');
+      if (!resultsSection.classList.contains('hidden')) {
+        // already showing vibe results, keep them
+      } else {
+        quizSection.classList.remove('hidden');
+      }
+      pageSubEl.textContent = VIBE_SUB;
+    } else {
+      quizSection.classList.add('hidden');
+      resultsSection.classList.add('hidden');
+      ingResultsSection.classList.add('hidden');
+      ingSection.classList.remove('hidden');
+      pageSubEl.textContent = ING_SUB;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+// ── Ingredient catalog ─────────────────────────────────────────────────────
+const INGREDIENTS = [
+  {key:"amber"},      {key:"apple"},        {key:"bamboo"},      {key:"basil"},
+  {key:"bergamot"},   {key:"berry"},        {key:"caramel"},     {key:"cedar"},
+  {key:"cinnamon"},   {key:"citrus"},       {key:"clove"},       {key:"coconut"},
+  {key:"coffee"},     {key:"cranberry"},    {key:"cucumber"},    {key:"eucalyptus"},
+  {key:"ginger"},     {key:"grapefruit"},   {key:"green tea"},   {key:"honey"},
+  {key:"jasmine"},    {key:"leather"},      {key:"lemon"},       {key:"lemongrass"},
+  {key:"lime"},       {key:"mango"},        {key:"mandarin"},    {key:"mint"},
+  {key:"moss"},       {key:"musk"},         {key:"oak"},         {key:"orange blossom"},
+  {key:"patchouli"},  {key:"peach"},        {key:"pine"},        {key:"pineapple"},
+  {key:"pomegranate"},{key:"pumpkin"},      {key:"rose"},        {key:"rosemary"},
+  {key:"sage"},       {key:"sandalwood"},   {key:"sea salt"},    {key:"smoke"},
+  {key:"strawberry"}, {key:"tobacco"},      {key:"vanilla"},     {key:"vetiver"},
+];
+
+const SCENT_INGREDIENTS = {
+  "Amber Noir Final Score":              ["amber","musk","jasmine","citrus","berry"],
+  "Apple Cinnamon Crime Ring":           ["apple","cinnamon"],
+  "Apple Pie Alibi":                     ["apple","cinnamon","vanilla","caramel"],
+  "Apricot Grove Smuggler's Cove":       ["vanilla","jasmine","patchouli","vetiver"],
+  "Autumn Ambrette Roulette":            ["cinnamon","vanilla","sandalwood","orange blossom"],
+  "Autumn Glow on the Low":              ["apple","cinnamon","clove","cranberry","eucalyptus","pine","cedar"],
+  "BAIES & Switch":                      ["rose","berry","citrus"],
+  "Baccarat Rogue Five-O":               ["jasmine","cedar","amber","musk"],
+  "Bamboo & Coconut Bamboozled":         ["mint","pineapple","bamboo","coconut"],
+  "Bamboo Bandit":                       ["bamboo","jasmine","citrus"],
+  "Banana Nut Bread Break-In":           ["vanilla","honey"],
+  "Basil Breakout":                      ["basil"],
+  "Beachwood Crime Wave":                ["sea salt","sage","moss","cedar"],
+  "Bergamot Crime Plot":                 ["bergamot","citrus"],
+  "Black Currant Black Market":          ["berry","musk"],
+  "Brunson Burner":                      ["smoke","amber","cedar","cinnamon"],
+  "Cactus Flower & Jade Desert Raid":    ["patchouli"],
+  "Campfire Marshmallow":                ["smoke","eucalyptus","vanilla","oak"],
+  "Capri Blue":                          ["citrus","vanilla"],
+  "Cashmere Pumpkin Ponzi Scheme":       ["pumpkin","cinnamon","clove","caramel","moss"],
+  "Certified O.G.":                      ["cinnamon","clove","vanilla","honey"],
+  "Cinnamon Chai Hideaway":              ["cinnamon","clove","vanilla"],
+  "Cinnamon Stick-Up":                   ["cinnamon"],
+  "Citron & Mandarin Manhunt":           ["mandarin","grapefruit","lemon","peach","vanilla"],
+  "Citronella Goodfella":                ["lemongrass","citrus"],
+  "Citrus Agave Acquittal":              ["grapefruit","mandarin","lemon","lime","peach"],
+  "Coconut Element of Surprise":         ["coconut"],
+  "Coconut Lime Hard Time":              ["lime","mango","coconut","pineapple"],
+  "Coffee Beans Crime Scene":            ["coffee"],
+  "Cotton Criminal":                     ["musk"],
+  "Cranberry Woods Stolen Goods":        ["cranberry","cedar"],
+  "Cucumber Melon Felon":                ["cucumber","musk"],
+  "Cypress & Bayberry Burglary":         ["pine","cedar"],
+  "Dark Orchard":                        ["apple","musk","smoke"],
+  "Dragon's Blood":                      ["amber","smoke","musk"],
+  "Foraged Red Currant Warrant":         ["berry","citrus"],
+  "Frasier Fir Fugitive":                ["pine","cedar"],
+  "Garden Mint Prison Stint":            ["mint"],
+  "Ginger & Spice & Everything Vice":    ["ginger","cinnamon"],
+  "Grand Theft Apple":                   ["apple","cinnamon"],
+  "Grapefruit & Mangosteen Guilty Plea": ["grapefruit","citrus"],
+  "Grapefruit Mint Sprint":              ["grapefruit","mint"],
+  "Green Tea & Lemongrass Larceny":      ["green tea","lemongrass","citrus"],
+  "Himalayan Bamboo Bounty":             ["bamboo"],
+  "House Arrest":                        ["mint","eucalyptus","sea salt","musk"],
+  "Jamaican Me Flee":                    ["pineapple","coconut","citrus"],
+  "Japanese Cherry Blossom Blackmail":   ["jasmine","cedar","vanilla"],
+  "Lawn & Order":                        ["moss","citrus"],
+  "Leafing the Scene":                   ["moss","amber"],
+  "Leather & Labdanum Money Laundering": ["leather","amber","musk"],
+  "Library":                             ["leather","cedar","musk"],
+  "Lime Basil & Mandarin":               ["lime","basil","mandarin"],
+  "Limoncello Creme Crime Scene":        ["lemon","vanilla"],
+  "Magnolia & Peony Felony":             ["jasmine"],
+  "Mango & Coconut Milk Mob":            ["mango","coconut","vanilla"],
+  "Mango & Gardenia Getaway":            ["mango","jasmine"],
+  "Marrakesh Market Misdemeanor":        ["amber","smoke","cedar","cinnamon"],
+  "Maximus":                             ["pomegranate","rose","musk","berry"],
+  "Maximus Lime":                        ["lime","pomegranate","rose"],
+  "Maxwell House":                       ["coffee"],
+  "Mistletoe Mix-Up":                    ["pine","berry"],
+  "Moonflower Nectar Night Heist":       ["jasmine","honey"],
+  "Moroccan Cashmere Crook":             ["amber","musk","cinnamon"],
+  "Moss Wanted":                         ["moss","sage","vetiver"],
+  "Nordic Night Flight":                 ["pine","cedar"],
+  "Ocean Breeze Seize":                  ["sea salt","musk"],
+  "Ocean Mist & Sea Salt Assault":       ["sea salt","musk"],
+  "Orange Blossom Bust":                 ["orange blossom","jasmine","citrus"],
+  "Peach Nectar Breach":                 ["peach","honey","vanilla"],
+  "Peach on Earth":                      ["peach","vanilla"],
+  "Petrichor Perjury":                   ["moss","vetiver"],
+  "Pineapple Piracy":                    ["pineapple","citrus"],
+  "Pink Sugar Crystal Meth":             ["vanilla","rose","caramel"],
+  "Pomegranate Cider Insider":           ["pomegranate","apple","cinnamon"],
+  "Pomegranate Noir Crime Czar":         ["pomegranate","musk","amber","berry"],
+  "Pumpkin Chai Fall Guy":               ["pumpkin","cinnamon","clove","ginger"],
+  "Pumpkin Soufflé Shakedown":           ["pumpkin","vanilla","cinnamon"],
+  "Rosemary Sage Suspect":               ["sage","rosemary","cedar"],
+  "Sandalwood Safehouse":                ["sandalwood","vanilla"],
+  "Santal & Coconut Scandal":            ["sandalwood","coconut"],
+  "Sea Minerals Mastermind":             ["eucalyptus","sea salt","moss"],
+  "Smoke Screen":                        ["smoke","amber","cedar"],
+  "Spa Day":                             ["eucalyptus","jasmine"],
+  "Speakeasy":                           ["leather","pine","musk"],
+  "Strawberry Bergamot Mugshot":         ["strawberry","bergamot","citrus"],
+  "Sweet Strawberry Stickup":            ["strawberry","vanilla"],
+  "The Final Rose":                      ["rose"],
+  "Thug Life":                           ["tobacco","smoke","amber","cedar"],
+  "Toasted Pumpkin Spice Vice":          ["pumpkin","cinnamon","clove","caramel"],
+  "Tonka & Spiced Honey Trap":           ["vanilla","honey","cinnamon"],
+  "Vanilla Caramel Cartel":              ["vanilla","caramel"],
+  "Vanilla Vice":                        ["vanilla"],
+  "Volcanic Sand & Sage Rampage":        ["sage","cedar","amber"],
+  "Walter White Oak & Vanilla":          ["vanilla","oak","cedar"],
+  "Wassail Out on Bail":                 ["apple","clove","cinnamon","citrus"],
+  "White Tea Crime Spree":               ["green tea","musk"],
+  "Wood Sage & Sea Salt Smuggler":       ["sage","sea salt","cedar"],
+  "Woodland Berries & Sage Road Rage":   ["sage","cedar","berry"],
+  "Work From Home":                      ["musk","vanilla"],
+};
+
+// ── Ingredient tab logic ───────────────────────────────────────────────────
+const MAX_ING = 3;
+let ingSelected = new Set();
+
+const ingSection        = document.getElementById('ingSection');
+const ingResultsSection = document.getElementById('ingResultsSection');
+const ingGrid           = document.getElementById('ingGrid');
+const ingCounter        = document.getElementById('ingCounter');
+const ingFindBtn        = document.getElementById('ingFindBtn');
+const ingSearch         = document.getElementById('ingSearch');
+const ingResultsTitle   = document.getElementById('ingResultsTitle');
+const ingResultsSub     = document.getElementById('ingResultsSub');
+const ingSelectedTags   = document.getElementById('ingSelectedTags');
+const ingResultsGrid    = document.getElementById('ingResultsGrid');
+
+// Build ingredient chips
+INGREDIENTS.forEach(({key}) => {
+  const chip = document.createElement('button');
+  chip.className = 'ing-chip';
+  chip.dataset.key = key;
+  chip.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+  chip.addEventListener('click', () => toggleIngredient(chip, key));
+  ingGrid.appendChild(chip);
+});
+
+function toggleIngredient(chip, key) {
+  if (ingSelected.has(key)) {
+    ingSelected.delete(key);
+    chip.classList.remove('selected');
+  } else {
+    if (ingSelected.size >= MAX_ING) return;
+    ingSelected.add(key);
+    chip.classList.add('selected');
+  }
+  updateIngState();
+}
+
+function updateIngState() {
+  const n = ingSelected.size;
+  ingCounter.textContent = `${n} of ${MAX_ING} selected`;
+  ingCounter.classList.toggle('full', n === MAX_ING);
+  ingFindBtn.disabled = n === 0;
+  document.querySelectorAll('.ing-chip').forEach(c => {
+    const isSelected = ingSelected.has(c.dataset.key);
+    c.classList.toggle('disabled', n >= MAX_ING && !isSelected);
+  });
+}
+
+ingSearch.addEventListener('input', () => {
+  const q = ingSearch.value.toLowerCase().trim();
+  document.querySelectorAll('.ing-chip').forEach(c => {
+    c.classList.toggle('hidden-chip', q && !c.dataset.key.includes(q));
+  });
+});
+
+ingFindBtn.addEventListener('click', showIngResults);
+document.getElementById('ingResetBtn').addEventListener('click', resetIng);
+
+function showIngResults() {
+  const picks = [...ingSelected];
+  const matches = SCENTS.filter(s => {
+    const notes = SCENT_INGREDIENTS[s.name] || [];
+    return picks.every(p => notes.includes(p));
+  });
+
+  ingSelectedTags.innerHTML = picks.map(p =>
+    `<span class="sel-tag">${p.charAt(0).toUpperCase() + p.slice(1)}</span>`).join('');
+
+  const count = matches.length;
+  ingResultsTitle.textContent = count === 1 ? '1 Candle Found' : `${count} Candles Found`;
+  ingResultsSub.textContent = count
+    ? `Every candle below contains ${picks.join(', ')}.`
+    : 'No candles match all selected ingredients. Try removing one.';
+
+  if (count === 0) {
+    ingResultsGrid.innerHTML = `<div class="no-results"><strong>No exact matches.</strong><br>Try fewer ingredients or a different combination.</div>`;
+  } else {
+    ingResultsGrid.innerHTML = matches.map(s => `
+      <div class="product-card">
+        <div class="product-img">
+          <img loading="lazy" src="../Scents/${s.img}" alt="Maxwell with ${s.name}">
+        </div>
+        <div class="product-body">
+          <span class="product-tag" style="background:${s.color}">${s.tag}</span>
+          ${s.aka ? `<p class="product-aka">${s.aka}</p>` : ''}
+          <h3 class="product-name">${s.name}</h3>
+          <p class="product-desc">${s.desc}</p>
+          <a href="../order.html" class="product-btn">Order This Scent</a>
+        </div>
+      </div>`).join('');
+  }
+
+  ingSection.classList.add('hidden');
+  ingResultsSection.classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetIng() {
+  ingSelected.clear();
+  ingSearch.value = '';
+  document.querySelectorAll('.ing-chip').forEach(c => {
+    c.classList.remove('selected','disabled','hidden-chip');
+  });
+  updateIngState();
+  ingResultsSection.classList.add('hidden');
+  ingSection.classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 </script>
 </body>
 </html>
