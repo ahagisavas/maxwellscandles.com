@@ -334,6 +334,21 @@
         }
         .no-results strong { color: var(--charcoal); }
 
+        /* CHEMIST BANNER */
+        .chemist-banner {
+            width: 100%; height: 320px; overflow: hidden;
+            background: var(--charcoal);
+        }
+        .chemist-banner img {
+            width: 100%; height: 100%;
+            object-fit: cover; object-position: center 22%;
+            display: block;
+        }
+        @media (max-width: 700px) {
+            .chemist-banner { height: 200px; }
+            .chemist-banner img { object-position: center 18%; }
+        }
+
         /* TAB BAR */
         .tab-bar {
             background: var(--charcoal);
@@ -446,6 +461,11 @@
     <h1 class="page-title">Your perfect candle is right under your nose.</h1>
     <p class="page-sub" id="pageSubText">Pick up to 3 scent profiles and we'll help you find it.</p>
 </header>
+
+<!-- CHEMIST BANNER -->
+<div class="chemist-banner">
+    <img src="MaxwellChemist.webp" alt="Maxwell the fragrance chemist mixing scents in his lab">
+</div>
 
 <!-- TAB BAR -->
 <div class="tab-bar">
