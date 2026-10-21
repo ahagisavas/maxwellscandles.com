@@ -472,6 +472,7 @@
     <div class="tab-bar-inner">
         <button class="tab-btn active" data-panel="vibe">By Vibe</button>
         <button class="tab-btn" data-panel="ingredient">By Ingredient</button>
+        <button class="tab-btn" data-panel="note">By Fragrance Note</button>
     </div>
 </div>
 
@@ -598,6 +599,40 @@
     <div class="results-grid" id="ingResultsGrid"></div>
     <div class="results-footer">
         <button class="btn-reset" id="ingResetBtn">Start Over</button>
+        &nbsp;&nbsp;
+        <a href="../index.html#collection" class="btn-reset" style="display:inline-block;">Browse All Scents</a>
+    </div>
+</section>
+
+<!-- FRAGRANCE NOTE TAB -->
+<section class="ing-section hidden" id="noteSection">
+    <div class="inner">
+        <div class="quiz-instructions">
+            <h2>Follow the Evidence Trail</h2>
+            <p>Pick up to 3 fragrance notes and we'll find every candle that contains them.</p>
+            <span class="counter" id="noteCounter">0 of 3 selected</span>
+        </div>
+        <div class="ing-search-wrap">
+            <input type="text" class="ing-search" id="noteSearch" placeholder="Filter notes...">
+        </div>
+        <div class="ing-grid" id="noteGrid"></div>
+        <div class="quiz-cta-wrap" style="margin-top:0">
+            <button class="btn-find" id="noteFindBtn" disabled>Show Candles</button>
+        </div>
+    </div>
+</section>
+
+<!-- FRAGRANCE NOTE RESULTS -->
+<section class="results-section hidden" id="noteResultsSection">
+    <div class="results-header inner">
+        <p class="results-eyebrow">Fragrance Note Match</p>
+        <h2 class="results-title" id="noteResultsTitle">Your Candles</h2>
+        <p class="results-sub" id="noteResultsSub"></p>
+        <div class="selected-tags" id="noteSelectedTags"></div>
+    </div>
+    <div class="results-grid" id="noteResultsGrid"></div>
+    <div class="results-footer">
+        <button class="btn-reset" id="noteResetBtn">Start Over</button>
         &nbsp;&nbsp;
         <a href="../index.html#collection" class="btn-reset" style="display:inline-block;">Browse All Scents</a>
     </div>
@@ -830,6 +865,7 @@ const tabBtns   = document.querySelectorAll('.tab-btn');
 const pageSubEl = document.getElementById('pageSubText');
 const VIBE_SUB  = 'Pick up to 3 scent profiles and we\'ll help you find it.';
 const ING_SUB   = 'Know exactly what you\'re after? Pick up to 3 ingredients to find every candle that contains them.';
+const NOTE_SUB  = 'Know what notes you love? Pick up to 3 fragrance notes and find every candle that contains them.';
 
 tabBtns.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -838,18 +874,30 @@ tabBtns.forEach(btn => {
     if (panel === 'vibe') {
       ingSection.classList.add('hidden');
       ingResultsSection.classList.add('hidden');
+      noteSection.classList.add('hidden');
+      noteResultsSection.classList.add('hidden');
       if (!resultsSection.classList.contains('hidden')) {
         // already showing vibe results, keep them
       } else {
         quizSection.classList.remove('hidden');
       }
       pageSubEl.textContent = VIBE_SUB;
-    } else {
+    } else if (panel === 'ingredient') {
       quizSection.classList.add('hidden');
       resultsSection.classList.add('hidden');
+      noteSection.classList.add('hidden');
+      noteResultsSection.classList.add('hidden');
       ingResultsSection.classList.add('hidden');
       ingSection.classList.remove('hidden');
       pageSubEl.textContent = ING_SUB;
+    } else {
+      quizSection.classList.add('hidden');
+      resultsSection.classList.add('hidden');
+      ingSection.classList.add('hidden');
+      ingResultsSection.classList.add('hidden');
+      noteResultsSection.classList.add('hidden');
+      noteSection.classList.remove('hidden');
+      pageSubEl.textContent = NOTE_SUB;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
@@ -972,6 +1020,254 @@ const SCENT_INGREDIENTS = {
   "Woodland Berries & Sage Road Rage":   ["sage","cedar","berry"],
   "Work From Home":                      ["musk","vanilla"],
 };
+
+// ── Fragrance note catalog ─────────────────────────────────────────────────
+const SCENT_NOTES = {
+  'Amber Noir Final Score': ['Plum', 'Citrus', 'Amber', 'Jasmine', 'Dark Musk', 'Amyris', 'Benzoin'],
+  'Apple Pie Alibi': ['Apple', 'Cinnamon', 'Sugar', 'Nutmeg', 'Ginger', 'Clove', 'Golden Baked Crust'],
+  'Apricot Grove Smuggler\'s Cove': ['Pear', 'Nectarine', 'Apricot', 'Jasmine', 'Patchouli', 'Vetiver', 'Vanilla'],
+  'Autumn Ambrette Roulette': ['Maple', 'Cinnamon', 'Milk', 'Sandalwood', 'Orange Blossom', 'Vanilla', 'Heliotrope'],
+  'Autumn Glow on the Low': ['Apple', 'Cinnamon', 'Clove', 'Pine', 'Eucalyptus', 'Juniper', 'Cranberry', 'Cedar'],
+  'Bamboo & Coconut Bamboozled': ['Spearmint', 'Pineapple', 'Bamboo', 'Green Floral', 'Coconut', 'Coconut Milk'],
+  'Banana Nut Bread Break-In': ['Banana', 'Lemon Peel', 'Walnut', 'Sugar', 'Nutmeg', 'Tonka Bean', 'Butter', 'Vanilla'],
+  'Basil Breakout': ['Basil'],
+  'Beachwood Crime Wave': ['Sea Salt', 'Orange Peel', 'Grass', 'Eucalyptus', 'Sage', 'Marine', 'Patchouli', 'Teakwood', 'Moss'],
+  'Bergamot Crime Plot': ['Bergamot'],
+  'Black Currant Black Market': ['Cassis'],
+  'Brunson Burner': ['Pink Pepper', 'Neroli', 'Clove', 'Chestnut', 'Guaiac Wood', 'Juniper', 'Vanilla', 'Peru Balsam', 'Kashmir Wood'],
+  'Cactus Flower & Jade Desert Raid': ['Aloe', 'Agave', 'Chrysanthemum', 'Green Floral', 'Green Leaves', 'Patchouli'],
+  'Campfire Marshmallow': ['Eucalyptus', 'Ozone', 'Marshmallow', 'Sugar', 'Patchouli', 'Embers', 'Smoke', 'Oak'],
+  'Cashmere Pumpkin Ponzi Scheme': ['Green Leaves', 'Pumpkin Vine', 'Cinnamon', 'Clove', 'Caramel', 'Moss', 'Embers'],
+  'Cinnamon Chai Hideaway': ['Orange Peel', 'Cardamom', 'Cinnamon', 'Peppercorn', 'Cream', 'Nutmeg', 'Black Tea', 'Vanilla', 'Clove'],
+  'Cinnamon Stick-Up': ['Cinnamon', 'Clove', 'Orange', 'Vanilla'],
+  'Citron & Mandarin Manhunt': ['Grapefruit', 'Mandarin', 'Lemon', 'Peach', 'Orange', 'Vanilla'],
+  'Citronella Goodfella': ['Lemon Peel', 'Camphor', 'Lemongrass', 'Citronella', 'Powder'],
+  'Citrus Agave Acquittal': ['Lemon Peel', 'Orange Peel', 'Grapefruit', 'Mandarin', 'Orange', 'Tangerine', 'Agave', 'Citrus', 'Lime', 'Sugar', 'Peach'],
+  'Coconut Element of Surprise': ['Coconut'],
+  'Coconut Lime Hard Time': ['Lime', 'Mango', 'Coconut', 'Pineapple', 'Coconut Milk', 'Tonka Bean', 'Cream'],
+  'Coffee Beans Crime Scene': ['Coffee'],
+  'Cotton Criminal': ['Citrus', 'Green', 'Floral', 'Woody', 'Musk', 'Cedar'],
+  'Cranberry Woods Stolen Goods': ['Red Currant', 'Cinnamon', 'Cranberry', 'Black Currant', 'Green Leaves', 'Vanilla', 'Fir', 'Pine'],
+  'Cucumber Melon Felon': ['Pear', 'Cucumber', 'Peach', 'Mandarin', 'Honeydew', 'Cantaloupe', 'Musk', 'Cedarwood'],
+  'Cypress & Bayberry Burglary': ['Eucalyptus', 'Cypress', 'Moss', 'Bayberry', 'Fir', 'Incense', 'Patchouli'],
+  'Dark Orchard': ['Plum', 'Orange', 'Cherry', 'Violet', 'Cinnamon', 'Cedar', 'Vanilla'],
+  'Dragon\'s Blood': ['Orange', 'Orange Blossom', 'Cedar', 'Patchouli', 'Clove', 'Incense', 'Tonka Bean'],
+  'Foraged Red Currant Warrant': ['Red Currant', 'Green Leaves', 'Peppercorn', 'Blackberry', 'Blueberry', 'Grass', 'Moss', 'Cedar', 'Amber'],
+  'Frasier Fir Fugitive': ['Cypress', 'Lemon Peel', 'Evergreen', 'Cedar', 'Fir', 'Amber', 'Moss'],
+  'Garden Mint Prison Stint': ['Spearmint', 'Eucalyptus', 'Tomato Leaf', 'Anise', 'Mint', 'Wood', 'Powder'],
+  'Ginger & Spice & Everything Vice': ['Lemon', 'Orange', 'Ginger', 'Sugar', 'Vanilla', 'Cinnamon', 'Clove', 'Nutmeg', 'Allspice'],
+  'Grand Theft Apple': ['Orange Peel', 'Cinnamon', 'Nutmeg', 'Apple', 'Clove', 'Vanilla'],
+  'Grapefruit & Mangosteen Guilty Plea': ['Orange', 'Orange Peel', 'Mango', 'Grapefruit', 'Peach', 'Cedar', 'Red Currant'],
+  'Grapefruit Mint Sprint': ['Grapefruit', 'Mint', 'Rhubarb', 'Rose', 'Lavender', 'Apple', 'Vanilla'],
+  'Green Tea & Lemongrass Larceny': ['Lemongrass', 'Orange', 'Ozone', 'Lemon', 'Jasmine', 'Green Tea', 'Light Musk'],
+  'Himalayan Bamboo Bounty': ['Aloe', 'Lime', 'Cantaloupe', 'Bamboo', 'Green Leaves', 'Moss', 'Chrysanthemum', 'Amber'],
+  'House Arrest': ['Marine', 'Spearmint', 'Lemon', 'Eucalyptus', 'Sea Salt', 'Powder', 'Juniper'],
+  'Jamaican Me Flee': ['Tangerine', 'Orange Peel', 'Lemon', 'Pineapple', 'Coconut', 'Orange', 'Rum', 'Sugar'],
+  'Japanese Cherry Blossom Blackmail': ['Ozone', 'Cherry Blossom', 'Magnolia', 'Rose', 'Cherry', 'Tonka Bean', 'Sandalwood'],
+  'Lawn & Order': ['Citrus', 'Lemongrass', 'Grass', 'Green Leaves', 'Sage', 'Moss'],
+  'Leafing the Scene': ['Cinnamon', 'Citrus', 'Chrysanthemum', 'Berry', 'Green Leaves', 'Apple', 'Pecan', 'Cedar'],
+  'Leather & Labdanum Money Laundering': ['Clove', 'Bergamot', 'Rose', 'Lavender', 'Labdanum', 'Leather', 'Tobacco Leaves', 'Amber'],
+  'Library': ['Teakwood', 'Leather', 'Cedar', 'Amyris', 'Dark Musk', 'Sandalwood', 'Patchouli'],
+  'Limoncello Creme Crime Scene': ['Lemon', 'Sugar', 'Bergamot', 'Orange', 'Mint', 'Cake', 'Butter', 'Tonka Bean', 'Honey'],
+  'Magnolia & Peony Felony': ['Cherry Blossom', 'Bergamot', 'Magnolia', 'Peony', 'Green Leaves', 'Freesia', 'Amber', 'Powder'],
+  'Mango & Coconut Milk Mob': ['Pineapple', 'Orange', 'Mango', 'Peach', 'Coconut Milk', 'Sugar'],
+  'Mango & Gardenia Getaway': ['Coconut', 'Peach', 'Gardenia', 'Mango', 'Light Musk', 'Tonka Bean'],
+  'Marrakesh Market Misdemeanor': ['Peppercorn', 'Cardamom', 'Bergamot', 'Saffron', 'Incense', 'Paprika', 'Patchouli', 'Vetiver', 'Tobacco Leaves'],
+  'Maximus Lime': ['Lemongrass', 'Lime', 'Black Currant', 'Sage', 'Thyme', 'Patchouli', 'Light Musk'],
+  'Mistletoe Mix-Up': ['Eucalyptus', 'Camphor', 'Red Currant', 'Clove', 'Pine', 'Fir', 'Patchouli', 'Cedar'],
+  'Moonflower Nectar Night Heist': ['Pear', 'Agave', 'Rose', 'Marine', 'Cherry Blossom', 'Powder', 'Dark Musk', 'Amber'],
+  'Moroccan Cashmere Crook': ['Bergamot', 'Powder', 'Sugar', 'Lavender', 'Vanilla', 'Ylang Ylang', 'Amber', 'Musk', 'Sandalwood'],
+  'Moss Wanted': ['Sage', 'Orange', 'Grapefruit', 'Lavender', 'Amber', 'Tonka Bean', 'Oakmoss'],
+  'Nordic Night Flight': ['Lavender', 'Eucalyptus', 'Pine', 'Cypress', 'Bayberry', 'Peppercorn', 'Oakmoss', 'Cedar', 'Rosemary'],
+  'Ocean Breeze Seize': ['Lemon', 'Lime', 'Sea Salt', 'Ozone', 'Marine', 'Green Floral', 'Cotton Blossom', 'Musk', 'Violet', 'Wood'],
+  'Orange Blossom Bust': ['Bergamot', 'Petitgrain', 'Neroli', 'Orange Blossom', 'Jasmine', 'Sandalwood'],
+  'Peach Nectar Breach': ['Amaretto', 'Lime', 'Banana', 'Papaya', 'Peach', 'Mango', 'Pear', 'Green Leaves', 'Tonka Bean'],
+  'Petrichor Perjury': ['Marine', 'Green Floral', 'Cucumber', 'Earth', 'Patchouli', 'Moss'],
+  'Pineapple Piracy': ['Pineapple'],
+  'Pink Sugar Crystal Meth': ['Strawberry', 'Black Currant', 'Raspberry', 'Sugar', 'Freesia', 'Vanilla', 'Light Musk', 'Tonka Bean'],
+  'Pomegranate Cider Insider': ['Lemon Peel', 'Pomegranate', 'Cranberry', 'Red Currant', 'Apple Cider', 'Spice'],
+  'Pumpkin Chai Fall Guy': ['Cardamom', 'Apple', 'Pumpkin', 'Brown Sugar', 'Black Pepper', 'Vanilla', 'Clove', 'Cinnamon', 'Cream', 'Praline'],
+  'Pumpkin Souffle Shakedown': ['Cardamom', 'Pumpkin', 'Sugar', 'Cinnamon', 'Pie Crust', 'Butter', 'Cream', 'Vanilla'],
+  'Rosemary Sage Suspect': ['Eucalyptus', 'Pine', 'Rosemary', 'Green Floral', 'Sage', 'Cedar'],
+  'Sandalwood Safehouse': ['Coriander', 'Amyris', 'Amber', 'Dark Musk', 'Sandalwood'],
+  'Santal & Coconut Scandal': ['Benzoin', 'Coconut Milk', 'Coconut', 'Sandalwood', 'Cedar', 'Tonka Bean', 'Amyris'],
+  'Sea Minerals Mastermind': ['Ozone', 'Linen', 'Eucalyptus', 'Sea Salt', 'Freesia', 'Moss', 'Powder'],
+  'Smoke Screen': ['Smoke'],
+  'Spa Day': ['Lemon', 'Lime', 'Lemongrass', 'Jasmine', 'Black Currant', 'Sugar', 'Patchouli', 'Powder'],
+  'Speakeasy': ['Peppercorn', 'Orange', 'Violet', 'Pine', 'Sage', 'Leather', 'Juniper'],
+  'The Final Rose': ['Basil', 'Grapefruit', 'Rose', 'Magnolia', 'Patchouli'],
+  'Toasted Pumpkin Spice Vice': ['Clove', 'Cinnamon', 'Nutmeg', 'Pumpkin', 'Buttercream', 'Vanilla', 'Smoke'],
+  'Vanilla Caramel Cartel': ['Cinnamon', 'Coffee', 'Caramel', 'Brown Sugar', 'Butterscotch', 'Chocolate', 'Vanilla'],
+  'Vanilla Vice': ['Anise', 'Orange', 'Cinnamon', 'Nutmeg', 'Caramelized Sugar', 'Vanilla'],
+  'Volcanic Sand & Sage Rampage': ['Chamomile', 'Pear', 'Sage', 'Rose', 'Lavender', 'Palo Santo', 'Patchouli'],
+  'Walter White Oak & Vanilla': ['Palm', 'Aloe', 'Oak', 'Leather', 'Patchouli', 'Smoke', 'Vanilla', 'Whiskey'],
+  'Wassail Out on Bail': ['Orange Peel', 'Cinnamon', 'Lemon', 'Cranberry', 'Red Currant', 'Apple Cider', 'Red Wine', 'Wood'],
+  'White Tea Crime Spree': ['Mandarin', 'Lemon', 'Bergamot', 'Ginger', 'Jasmine', 'White Tea'],
+  'Woodland Berries & Sage Road Rage': ['Blackberry', 'Cranberry', 'Orange', 'Thyme', 'Sage', 'Plum', 'Fir', 'Musk', 'Moss', 'Teakwood'],
+  'Work From Home': ['Lemon', 'Tropical Fruits', 'Freesia', 'Lily Of The Valley', 'Ocean', 'Rose', 'Oakmoss', 'Woods', 'Ambergris', 'Musk'],
+  'Tonka & Spiced Honey Trap': ['Bergamot', 'Coriander', 'Honey', 'Amber', 'Tobacco Leaves', 'Oud', 'Tonka Bean', 'Dark Musk'],
+  'Wood Sage & Sea Salt Smuggler': ['Himalayan Sea Salt', 'Crushed Sage', 'Oud Wood'],
+  'Bamboo Bandit': ['Lemon', 'Cyclamen', 'Citron Leaf', 'Star Jasmine', 'Wild Lily', 'White Rose', 'Bamboo', 'Eucalyptus', 'Dewy Grass'],
+  'BAIES & Switch': ['Cassis', 'Peppercorn', 'Bergamot', 'White Rose', 'Geranium', 'Tonka Bean', 'Oakmoss', 'Cedarwood', 'Sheer Musk'],
+  'Baccarat Rogue Five-O': ['Bergamot', 'Oud', 'Lemon Zest', 'Oakmoss', 'Tuberose', 'Amber Crystal', 'Vetiver', 'Magnolia', 'Musk'],
+  'Maxwell House': ['Coffee', 'Cardamom', 'Nuts', 'Woody', 'Tonka Beans', 'Vanilla'],
+  'Capri Blue': ['Citrus Fruit', 'Vanilla', 'Amber'],
+  'Peach on Earth': ['Bergamot', 'Blackcurrant', 'Peach', 'Rose', 'Honey', 'Vanilla', 'Cedarwood'],
+  'Thug Life': ['Tobacco', 'Lemon', 'Spice', 'Pepper', 'Vanilla', 'Coumarin', 'Cocoa', 'Patchouli', 'Sandalwood', 'Ambergris'],
+  'Apple Cinnamon Crime Ring': ['Green Apple', 'Tonka', 'Peach', 'Cinnamon', 'Clove'],
+  'Ocean Mist & Sea Salt Assault': ['Sea Mist', 'Mandarin Peel', 'Coastal Lavender', 'Lily Of The Valley', 'Mediterranean Jasmine', 'Kalahari Melon Water', 'Sun-Bleached Driftwood', 'Coconut Husk', 'White Amber', 'Warm Sandalwood'],
+  'Sweet Strawberry Stickup': ['Ripe Strawberry', 'Green Accord', 'Sugar', 'Sheer Musk'],
+  'Maximus': ['Apple', 'Green', 'Orange', 'Basil', 'Grapefruit', 'Lavender', 'Jasmine', 'Clove', 'Rose', 'Magnolia', 'Wood', 'Raspberry', 'Patchouli'],
+  'Strawberry Bergamot Mugshot': ['Bergamot', 'Basil', 'Grapefruit', 'Rose', 'Magnolia', 'Patchouli'],
+  'Pomegranate Noir Crime Czar': ['Apple', 'Green', 'Orange', 'Lavender', 'Jasmine', 'Clove', 'Wood', 'Raspberry'],
+};
+
+const FRAGRANCE_NOTES = [
+  'Agave', 'Allspice', 'Aloe', 'Amaretto', 'Amber', 'Amber Crystal', 'Ambergris',
+  'Amyris', 'Anise', 'Apple', 'Apple Cider', 'Apricot', 'Bamboo', 'Banana',
+  'Basil', 'Bayberry', 'Benzoin', 'Bergamot', 'Berry', 'Black Currant',
+  'Black Pepper', 'Black Tea', 'Blackberry', 'Blackcurrant', 'Blueberry',
+  'Brown Sugar', 'Butter', 'Buttercream', 'Butterscotch', 'Cake', 'Camphor',
+  'Cantaloupe', 'Caramel', 'Caramelized Sugar', 'Cardamom', 'Cassis', 'Cedar',
+  'Cedarwood', 'Chamomile', 'Cherry', 'Cherry Blossom', 'Chestnut', 'Chocolate',
+  'Chrysanthemum', 'Cinnamon', 'Citron Leaf', 'Citronella', 'Citrus',
+  'Citrus Fruit', 'Clove', 'Coastal Lavender', 'Cocoa', 'Coconut',
+  'Coconut Husk', 'Coconut Milk', 'Coffee', 'Coriander', 'Cotton Blossom',
+  'Coumarin', 'Cranberry', 'Cream', 'Crushed Sage', 'Cucumber', 'Cyclamen',
+  'Cypress', 'Dark Musk', 'Dewy Grass', 'Earth', 'Embers', 'Eucalyptus',
+  'Evergreen', 'Fir', 'Floral', 'Freesia', 'Gardenia', 'Geranium', 'Ginger',
+  'Golden Baked Crust', 'Grapefruit', 'Grass', 'Green', 'Green Accord',
+  'Green Apple', 'Green Floral', 'Green Leaves', 'Green Tea', 'Guaiac Wood',
+  'Heliotrope', 'Himalayan Sea Salt', 'Honey', 'Honeydew', 'Incense', 'Jasmine',
+  'Juniper', 'Kalahari Melon Water', 'Kashmir Wood', 'Labdanum', 'Lavender',
+  'Leather', 'Lemon', 'Lemon Peel', 'Lemon Zest', 'Lemongrass', 'Light Musk',
+  'Lily Of The Valley', 'Lime', 'Linen', 'Magnolia', 'Mandarin', 'Mandarin Peel',
+  'Mango', 'Maple', 'Marine', 'Marshmallow', 'Mediterranean Jasmine', 'Milk',
+  'Mint', 'Moss', 'Musk', 'Nectarine', 'Neroli', 'Nutmeg', 'Nuts', 'Oak',
+  'Oakmoss', 'Ocean', 'Orange', 'Orange Blossom', 'Orange Peel', 'Oud',
+  'Oud Wood', 'Ozone', 'Palm', 'Palo Santo', 'Papaya', 'Paprika', 'Patchouli',
+  'Peach', 'Pear', 'Pecan', 'Peony', 'Pepper', 'Peppercorn', 'Peru Balsam',
+  'Petitgrain', 'Pie Crust', 'Pine', 'Pineapple', 'Pink Pepper', 'Plum',
+  'Pomegranate', 'Powder', 'Praline', 'Pumpkin', 'Pumpkin Vine', 'Raspberry',
+  'Red Currant', 'Red Wine', 'Rhubarb', 'Ripe Strawberry', 'Rose', 'Rosemary',
+  'Rum', 'Saffron', 'Sage', 'Sandalwood', 'Sea Mist', 'Sea Salt', 'Sheer Musk',
+  'Smoke', 'Spearmint', 'Spice', 'Star Jasmine', 'Strawberry', 'Sugar',
+  'Sun-Bleached Driftwood', 'Tangerine', 'Teakwood', 'Thyme', 'Tobacco',
+  'Tobacco Leaves', 'Tomato Leaf', 'Tonka', 'Tonka Bean', 'Tonka Beans',
+  'Tropical Fruits', 'Tuberose', 'Vanilla', 'Vetiver', 'Violet', 'Walnut',
+  'Warm Sandalwood', 'Whiskey', 'White Amber', 'White Rose', 'White Tea',
+  'Wild Lily', 'Wood', 'Woods', 'Woody', 'Ylang Ylang',
+];
+
+// ── Fragrance note tab logic ───────────────────────────────────────────────
+const MAX_NOTE = 3;
+let noteSelected = new Set();
+
+const noteSection        = document.getElementById('noteSection');
+const noteResultsSection = document.getElementById('noteResultsSection');
+const noteGrid           = document.getElementById('noteGrid');
+const noteCounter        = document.getElementById('noteCounter');
+const noteFindBtn        = document.getElementById('noteFindBtn');
+const noteSearch         = document.getElementById('noteSearch');
+const noteResultsTitle   = document.getElementById('noteResultsTitle');
+const noteResultsSub     = document.getElementById('noteResultsSub');
+const noteSelectedTags   = document.getElementById('noteSelectedTags');
+const noteResultsGrid    = document.getElementById('noteResultsGrid');
+
+FRAGRANCE_NOTES.forEach(note => {
+  const chip = document.createElement('button');
+  chip.className = 'ing-chip';
+  chip.dataset.key = note;
+  chip.textContent = note;
+  chip.addEventListener('click', () => toggleNote(chip, note));
+  noteGrid.appendChild(chip);
+});
+
+function toggleNote(chip, key) {
+  if (noteSelected.has(key)) {
+    noteSelected.delete(key);
+    chip.classList.remove('selected');
+  } else {
+    if (noteSelected.size >= MAX_NOTE) return;
+    noteSelected.add(key);
+    chip.classList.add('selected');
+  }
+  updateNoteState();
+}
+
+function updateNoteState() {
+  const n = noteSelected.size;
+  noteCounter.textContent = `${n} of ${MAX_NOTE} selected`;
+  noteCounter.classList.toggle('full', n === MAX_NOTE);
+  noteFindBtn.disabled = n === 0;
+  document.querySelectorAll('#noteGrid .ing-chip').forEach(c => {
+    const isSel = noteSelected.has(c.dataset.key);
+    c.classList.toggle('disabled', n >= MAX_NOTE && !isSel);
+  });
+}
+
+noteSearch.addEventListener('input', () => {
+  const q = noteSearch.value.toLowerCase().trim();
+  document.querySelectorAll('#noteGrid .ing-chip').forEach(c => {
+    c.classList.toggle('hidden-chip', q && !c.dataset.key.toLowerCase().includes(q));
+  });
+});
+
+noteFindBtn.addEventListener('click', showNoteResults);
+document.getElementById('noteResetBtn').addEventListener('click', resetNote);
+
+function showNoteResults() {
+  const picks = [...noteSelected];
+  const scored = SCENTS.map(s => {
+    const sNotes = SCENT_NOTES[s.name] || [];
+    const hits = picks.filter(p => sNotes.includes(p)).length;
+    return { ...s, hits };
+  }).filter(s => s.hits > 0)
+    .sort((a, b) => b.hits - a.hits);
+
+  noteSelectedTags.innerHTML = picks.map(p =>
+    `<span class="sel-tag">${p}</span>`).join('');
+
+  const count = scored.length;
+  noteResultsTitle.textContent = count === 1 ? '1 Candle Found' : `${count} Candles Found`;
+  noteResultsSub.textContent = count
+    ? `Candles featuring ${picks.join(', ')}, ranked by how many notes they share.`
+    : 'No candles match those notes. Try a different combination.';
+
+  if (count === 0) {
+    noteResultsGrid.innerHTML = `<div class="no-results"><strong>No matches found.</strong><br>Try a different note combination.</div>`;
+  } else {
+    noteResultsGrid.innerHTML = scored.map(s => `
+      <div class="product-card">
+        <div class="product-img">
+          <img loading="lazy" src="../Scents/${s.img}" alt="Maxwell with ${s.name}">
+        </div>
+        <div class="product-body">
+          <span class="product-tag" style="background:${s.color}">${s.tag}</span>
+          ${s.aka ? `<p class="product-aka">${s.aka}</p>` : ''}
+          <h3 class="product-name">${s.name}</h3>
+          <p class="product-desc">${s.desc}</p>
+          <a href="../order.html" class="product-btn">Order This Scent</a>
+        </div>
+      </div>`).join('');
+  }
+
+  noteSection.classList.add('hidden');
+  noteResultsSection.classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetNote() {
+  noteSelected.clear();
+  noteSearch.value = '';
+  document.querySelectorAll('#noteGrid .ing-chip').forEach(c => {
+    c.classList.remove('selected', 'disabled', 'hidden-chip');
+  });
+  updateNoteState();
+  noteResultsSection.classList.add('hidden');
+  noteSection.classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 // ── Ingredient tab logic ───────────────────────────────────────────────────
 const MAX_ING = 3;
