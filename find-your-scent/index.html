@@ -1290,9 +1290,14 @@ const ingSelectedTags   = document.getElementById('ingSelectedTags');
 const ingResultsGrid    = document.getElementById('ingResultsGrid');
 
 // Build ingredient chips
-INGREDIENTS.forEach(({key}) => {
+const ING_COUNTS = {};
+Object.values(SCENT_INGREDIENTS).forEach(ings => ings.forEach(k => { ING_COUNTS[k] = (ING_COUNTS[k] || 0) + 1; }));
+const SORTED_INGREDIENTS = [...INGREDIENTS].sort((a, b) => (ING_COUNTS[b.key] || 0) - (ING_COUNTS[a.key] || 0) || a.key.localeCompare(b.key));
+
+SORTED_INGREDIENTS.forEach(({key}) => {
   const chip = document.createElement('button');
   chip.className = 'ing-chip';
+  if ((ING_COUNTS[key] || 0) >= 4) chip.style.fontWeight = '700';
   chip.dataset.key = key;
   chip.textContent = key.charAt(0).toUpperCase() + key.slice(1);
   chip.addEventListener('click', () => toggleIngredient(chip, key));
