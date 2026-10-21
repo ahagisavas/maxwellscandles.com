@@ -1181,6 +1181,7 @@ const SORTED_NOTES = [...FRAGRANCE_NOTES].sort((a, b) => (NOTE_COUNTS[b] || 0) -
 SORTED_NOTES.forEach(note => {
   const chip = document.createElement('button');
   chip.className = 'ing-chip';
+  if ((NOTE_COUNTS[note] || 0) >= 4) chip.style.fontWeight = '700';
   chip.dataset.key = note;
   chip.textContent = note;
   chip.addEventListener('click', () => toggleNote(chip, note));
