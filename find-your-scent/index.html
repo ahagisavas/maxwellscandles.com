@@ -1174,7 +1174,11 @@ const noteResultsSub     = document.getElementById('noteResultsSub');
 const noteSelectedTags   = document.getElementById('noteSelectedTags');
 const noteResultsGrid    = document.getElementById('noteResultsGrid');
 
-FRAGRANCE_NOTES.forEach(note => {
+const NOTE_COUNTS = {};
+Object.values(SCENT_NOTES).forEach(notes => notes.forEach(n => { NOTE_COUNTS[n] = (NOTE_COUNTS[n] || 0) + 1; }));
+const SORTED_NOTES = [...FRAGRANCE_NOTES].sort((a, b) => (NOTE_COUNTS[b] || 0) - (NOTE_COUNTS[a] || 0) || a.localeCompare(b));
+
+SORTED_NOTES.forEach(note => {
   const chip = document.createElement('button');
   chip.className = 'ing-chip';
   chip.dataset.key = note;
