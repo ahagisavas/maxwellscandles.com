@@ -1297,7 +1297,7 @@ const SORTED_INGREDIENTS = [...INGREDIENTS].sort((a, b) => (ING_COUNTS[b.key] ||
 SORTED_INGREDIENTS.forEach(({key}) => {
   const chip = document.createElement('button');
   chip.className = 'ing-chip';
-  if ((ING_COUNTS[key] || 0) >= 4) chip.style.fontWeight = '700';
+  if ((ING_COUNTS[key] || 0) >= 5) chip.style.fontWeight = '700';
   chip.dataset.key = key;
   chip.textContent = key.charAt(0).toUpperCase() + key.slice(1);
   chip.addEventListener('click', () => toggleIngredient(chip, key));
