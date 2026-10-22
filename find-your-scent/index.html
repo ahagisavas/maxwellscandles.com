@@ -403,6 +403,11 @@
         .ing-chip.disabled { opacity: 0.35; cursor: not-allowed; }
         .ing-chip.selected.disabled { opacity: 1; cursor: pointer; }
         .ing-chip.hidden-chip { display: none; }
+        .ing-chip.popular {
+            font-weight: 700;
+            background: rgba(232,160,48,0.1);
+            border-color: rgba(232,160,48,0.45);
+        }
         .ing-count-label {
             text-align: center; margin-bottom: 28px;
             font-size: 0.72rem; color: var(--gray);
@@ -1177,12 +1182,12 @@ const noteResultsGrid    = document.getElementById('noteResultsGrid');
 
 const NOTE_COUNTS = {};
 Object.values(SCENT_NOTES).forEach(notes => notes.forEach(n => { NOTE_COUNTS[n] = (NOTE_COUNTS[n] || 0) + 1; }));
-const SORTED_NOTES = [...FRAGRANCE_NOTES].sort((a, b) => (NOTE_COUNTS[b] || 0) - (NOTE_COUNTS[a] || 0) || a.localeCompare(b));
+const SORTED_NOTES = [...FRAGRANCE_NOTES].sort((a, b) => a.localeCompare(b));
 
 SORTED_NOTES.forEach(note => {
   const chip = document.createElement('button');
   chip.className = 'ing-chip';
-  if ((NOTE_COUNTS[note] || 0) >= 4) chip.style.fontWeight = '700';
+  if ((NOTE_COUNTS[note] || 0) >= 4) chip.classList.add('popular');
   chip.dataset.key = note;
   chip.textContent = note;
   chip.addEventListener('click', () => toggleNote(chip, note));
@@ -1293,12 +1298,12 @@ const ingResultsGrid    = document.getElementById('ingResultsGrid');
 // Build ingredient chips
 const ING_COUNTS = {};
 Object.values(SCENT_INGREDIENTS).forEach(ings => ings.forEach(k => { ING_COUNTS[k] = (ING_COUNTS[k] || 0) + 1; }));
-const SORTED_INGREDIENTS = [...INGREDIENTS].sort((a, b) => (ING_COUNTS[b.key] || 0) - (ING_COUNTS[a.key] || 0) || a.key.localeCompare(b.key));
+const SORTED_INGREDIENTS = [...INGREDIENTS].sort((a, b) => a.key.localeCompare(b.key));
 
 SORTED_INGREDIENTS.forEach(({key}) => {
   const chip = document.createElement('button');
   chip.className = 'ing-chip';
-  if ((ING_COUNTS[key] || 0) >= 5) chip.style.fontWeight = '700';
+  if ((ING_COUNTS[key] || 0) >= 5) chip.classList.add('popular');
   chip.dataset.key = key;
   chip.textContent = key.charAt(0).toUpperCase() + key.slice(1);
   chip.addEventListener('click', () => toggleIngredient(chip, key));
