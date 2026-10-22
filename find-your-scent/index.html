@@ -405,8 +405,15 @@
         .ing-chip.hidden-chip { display: none; }
         .ing-chip.popular {
             font-weight: 700;
-            background: rgba(232,160,48,0.1);
-            border-color: rgba(232,160,48,0.45);
+            padding-right: 10px;
+        }
+        .ing-chip.popular::after {
+            content: '★';
+            font-size: 0.55rem;
+            color: var(--honey);
+            margin-left: 5px;
+            vertical-align: middle;
+            line-height: 1;
         }
         .ing-count-label {
             text-align: center; margin-bottom: 28px;
