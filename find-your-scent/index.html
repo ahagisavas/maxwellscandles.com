@@ -1310,7 +1310,7 @@ const SORTED_INGREDIENTS = [...INGREDIENTS].sort((a, b) => a.key.localeCompare(b
 SORTED_INGREDIENTS.forEach(({key}) => {
   const chip = document.createElement('button');
   chip.className = 'ing-chip';
-  if ((ING_COUNTS[key] || 0) >= 5) chip.classList.add('popular');
+  if ((ING_COUNTS[key] || 0) >= 4) chip.classList.add('popular');
   chip.dataset.key = key;
   chip.textContent = key.charAt(0).toUpperCase() + key.slice(1);
   chip.addEventListener('click', () => toggleIngredient(chip, key));
