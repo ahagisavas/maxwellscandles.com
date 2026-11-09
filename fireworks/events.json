@@ -1,7 +1,15 @@
 {
-  "last_updated": "2026-11-08T17:44:40.810831",
-  "event_count": 1,
+  "last_updated": "2026-11-09T03:52:01.936948",
+  "event_count": 2,
   "events": [
+    {
+      "title": "Hearing Fireworks In Hoboken Or Jersey City? Here's Why",
+      "description": "Hoboken|News|1hHearing Fireworks In Hoboken Or Jersey City? Here's WhyResidents of Hoboken, Jersey City, and NYC often take to the internet when they hear fireworks.Caren Lissner,Patch Staff",
+      "source": "hoboken.patch.com",
+      "url": "https://hoboken.patch.com/",
+      "type": "fireworks",
+      "confidence": "medium"
+    },
     {
       "title": "Intel Drone Show (Check Website)",
       "description": "Potential upcoming drone show - check source for details",
