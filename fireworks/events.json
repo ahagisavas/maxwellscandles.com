@@ -1,7 +1,15 @@
 {
-  "last_updated": "2026-11-25T21:16:30.376567",
-  "event_count": 1,
+  "last_updated": "2026-11-26T06:09:57.882363",
+  "event_count": 2,
   "events": [
+    {
+      "title": "Mendham-Chester, NJ",
+      "description": "Mendham-Chester, NJ|Breaking News|8hMacy's Thanksgiving Day Parade Postponed: See DetailsThe centennial celebration is being moved due to the powerful nor'easter forecast to hit the region on Thursday",
+      "source": "hoboken.patch.com",
+      "url": "https://hoboken.patch.com/",
+      "type": "event",
+      "confidence": "medium"
+    },
     {
       "title": "Intel Drone Show (Check Website)",
       "description": "Potential upcoming drone show - check source for details",
